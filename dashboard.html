@@ -1027,11 +1027,32 @@
 
   // Set today's date as default for vaccine date field
   document.getElementById('vaxDate').value = new Date().toISOString().split('T')[0];
-  // Restore session on refresh
+  // Load recent clients on page load
+async function loadRecentClients() {
+  const list = document.getElementById('clientList');
+  list.innerHTML = '<li class="empty-state">Loading…</li>';
+  try {
+    const clients = await sbGet('clients?order=created_at.desc&limit=5');
+    if (!clients.length) {
+      list.innerHTML = '<li class="empty-state">No clients yet.</li>';
+      return;
+    }
+    list.innerHTML = clients.map(c => `
+      <li class="client-item" onclick="selectClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+        <div class="client-name">${c.name}</div>
+        <div class="client-meta">${[c.phone, c.email].filter(Boolean).join(' · ') || 'No contact info'}</div>
+      </li>
+    `).join('');
+  } catch (err) {
+    list.innerHTML = `<li class="empty-state" style="color:#a00">Error: ${err.message}</li>`;
+  }
+}
+ // Restore session on refresh
 const savedToken = localStorage.getItem('php_token');
 if (savedToken) {
   accessToken = savedToken;
   showScreen('dashScreen');
+  loadRecentClients();
 }
 </script>
 </body>
