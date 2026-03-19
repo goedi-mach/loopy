@@ -742,6 +742,7 @@
       if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
 
       accessToken = data.access_token;
+      localStorage.setItem('php_token', data.access_token);
       showScreen('dashScreen');
     } catch (err) {
       showMsg(msg, 'error', err.message);
@@ -1026,6 +1027,12 @@
 
   // Set today's date as default for vaccine date field
   document.getElementById('vaxDate').value = new Date().toISOString().split('T')[0];
+  // Restore session on refresh
+const savedToken = localStorage.getItem('php_token');
+if (savedToken) {
+  accessToken = savedToken;
+  showScreen('dashScreen');
+}
 </script>
 </body>
 </html>
