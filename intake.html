@@ -378,9 +378,13 @@
         <label>Weight (lbs) / <span class="es">Peso (libras)</span></label>
         <input type="number" name="pet_weight_${i}" min="0" step="0.1" placeholder="25" />
       </div>
-      <div class="checkbox-row">
-        <input type="checkbox" name="pet_sn_${i}" id="sn${i}" />
-        <label for="sn${i}">Spayed / Neutered &nbsp;·&nbsp; <span class="es">Esterilizado/a</span></label>
+      <div class="field">
+        <label>Spayed / Neutered &nbsp;·&nbsp; <span class="es">Esterilizado/a</span></label>
+        <select name="pet_sn_${i}">
+          <option value="unknown">Not sure / No sé</option>
+          <option value="yes">Yes / Sí</option>
+          <option value="no">No</option>
+        </select>
       </div>
     `;
   }
@@ -469,7 +473,7 @@
           breed: fd.get(`pet_breed_${i}`)?.trim() || null,
           age: fd.get(`pet_age_${i}`) ? +fd.get(`pet_age_${i}`) : null,
           weight: fd.get(`pet_weight_${i}`) ? +fd.get(`pet_weight_${i}`) : null,
-          spayed_neutered: fd.get(`pet_sn_${i}`) === 'on'
+          spayed_neutered: fd.get(`pet_sn_${i}`) || 'unknown'
         });
       }
 
