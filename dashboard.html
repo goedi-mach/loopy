@@ -518,6 +518,7 @@
 
   <nav class="topnav">
     <div class="topnav-brand">🐾 PHP Staff Dashboard</div>
+<div style="font-size:0.8rem; opacity:0.8;" id="loggedInUser"></div>
     <button class="btn-logout" onclick="logout()">Sign Out</button>
   </nav>
 
@@ -891,6 +892,8 @@ let currentFilter  = 'all';
 
       accessToken = data.access_token;
 localStorage.setItem('php_token', data.access_token);
+localStorage.setItem('php_email', email);
+document.getElementById('loggedInUser').textContent = `👋 ${email}`;
 showScreen('dashScreen');
 loadRecentClients();
     } catch (err) {
@@ -903,6 +906,10 @@ loadRecentClients();
   function logout() {
     accessToken   = null;
     localStorage.removeItem('php_token');
+    accessToken   = null;
+localStorage.removeItem('php_token');
+localStorage.removeItem('php_email');
+document.getElementById('loggedInUser').textContent = '';
     currentClient = null;
     selectedPetId = null;
     document.getElementById('clientList').innerHTML = '<li class="empty-state">Search to find a client.</li>';
@@ -1350,6 +1357,8 @@ async function logMicrochip() {
 const savedToken = localStorage.getItem('php_token');
 if (savedToken) {
   accessToken = savedToken;
+  const savedEmail = localStorage.getItem('php_email');
+  if (savedEmail) document.getElementById('loggedInUser').textContent = `👋 ${savedEmail}`;
   showScreen('dashScreen');
   loadRecentClients();
 }
