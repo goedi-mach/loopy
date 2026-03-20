@@ -683,8 +683,8 @@
               </select>
             </div>
             <div class="form-field">
-              <label>Other (if selected above)</label>
-              <input type="text" id="vaxNameOther" placeholder="Vaccine name" />
+              <label>Lot Number</label>
+              <input type="text" id="vaxLot" placeholder="ABC123" />
             </div>
           </div>
           <div class="form-row">
@@ -990,8 +990,7 @@
   async function logVaccine() {
     const msg  = document.getElementById('logVaxMsg');
     const vaxSelect = document.getElementById('vaxName').value;
-    const vaxOther  = document.getElementById('vaxNameOther').value.trim();
-    const vaccineName = vaxSelect === 'Other' ? vaxOther : vaxSelect;
+    const vaccineName = vaxSelect;
     const dateGiven = document.getElementById('vaxDate').value;
 
     if (!selectedPetId) { showMsg(msg, 'error', 'Please select a pet first.'); return; }
@@ -1002,6 +1001,7 @@
       await sbPost('vaccinations', {
         pet_id:          selectedPetId,
         vaccine_name:    vaccineName,
+        lot_number: document.getElementById('vaxLot').value.trim() || null,
         date_given:      dateGiven,
         next_due:        document.getElementById('vaxNextDue').value || null,
         administered_by: document.getElementById('vaxAdmin').value.trim() || null
@@ -1010,7 +1010,7 @@
       showMsg(msg, 'success', `${vaccineName} logged for ${selectedPetObj.name}!`);
       // Clear form
       document.getElementById('vaxName').value     = '';
-      document.getElementById('vaxNameOther').value = '';
+      document.getElementById('vaxLot').value = '';
       document.getElementById('vaxDate').value      = '';
       document.getElementById('vaxNextDue').value   = '';
       document.getElementById('vaxAdmin').value     = '';
@@ -1066,6 +1066,7 @@ async function logMicrochip() {
             <thead>
               <tr>
                 <th>Vaccine</th>
+                <th>Lot #</th>
                 <th>Date Given</th>
                 <th>Next Due</th>
                 <th>Administered By</th>
@@ -1075,6 +1076,7 @@ async function logMicrochip() {
               ${records.map(r => `
                 <tr>
                   <td><strong>${r.vaccine_name}</strong></td>
+                  <td>${r.lot_number || '—'}</td>
                   <td>${fmt(r.date_given)}</td>
                   <td>${fmt(r.next_due)}</td>
                   <td>${r.administered_by || '—'}</td>
