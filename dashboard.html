@@ -788,7 +788,9 @@
       if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
 
       accessToken = data.access_token;
-      showScreen('dashScreen');
+localStorage.setItem('php_token', data.access_token);
+showScreen('dashScreen');
+loadRecentClients();
     } catch (err) {
       showMsg(msg, 'error', err.message);
       btn.disabled    = false;
@@ -798,6 +800,7 @@
 
   function logout() {
     accessToken   = null;
+    localStorage.removeItem('php_token');
     currentClient = null;
     selectedPetId = null;
     document.getElementById('clientList').innerHTML = '<li class="empty-state">Search to find a client.</li>';
@@ -1113,6 +1116,13 @@ async function logMicrochip() {
 
   // Set today's date as default for vaccine date field
   document.getElementById('vaxDate').value = new Date().toISOString().split('T')[0];
+  // Restore session on refresh
+const savedToken = localStorage.getItem('php_token');
+if (savedToken) {
+  accessToken = savedToken;
+  showScreen('dashScreen');
+  loadRecentClients();
+}
 </script>
 </body>
 </html>
