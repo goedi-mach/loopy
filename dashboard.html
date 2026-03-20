@@ -610,11 +610,47 @@
                 </select>
               </div>
             </div>
+             <div class="form-row">
+              <div class="form-field">
+                <label>Microchipped?</label>
+                <select id="newPetMicrochipped">
+                  <option value="unknown">Not sure</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Microchip Number</label>
+                <input type="text" id="newPetMicrochip" placeholder="985112345678901" />
+              </div>
+            </div>
             <button class="btn-primary" onclick="addPet()">Save Pet</button>
           </div>
         </div>
       </div>
-
+<!-- Microchip Log -->
+ <div class="card" id="microchipCard" style="display:none">
+  <div class="card-header">
+    <button class="section-toggle" onclick="toggleSection('microchipSection', 'microchipToggleIcon')">
+      <span>🔖 Log Microchip</span>
+      <span class="toggle-icon open" id="microchipToggleIcon">▼</span>
+    </button>
+  </div>
+  <div class="card-body collapsible open" id="microchipSection">
+    <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:0.85rem">
+      Select a pet above, then enter the microchip number being implanted today.
+    </p>
+    <div id="microchipPetBadge" style="margin-bottom:0.85rem; display:none">
+      Logging for: <strong id="microchipPetName"></strong>
+    </div>
+    <div id="logMicrochipMsg" class="msg"></div>
+    <div class="form-field">
+      <label>Microchip Number *</label>
+      <input type="text" id="microchipNumber" placeholder="985112345678901" />
+    </div>
+    <button class="btn-primary" onclick="logMicrochip()" id="logMicrochipBtn" disabled>Save Microchip</button>
+  </div>
+</div>
       <!-- Vaccine log section -->
       <div class="card" id="vaxCard" style="display:none">
         <div class="card-header">
@@ -832,7 +868,7 @@
       'Client since ' + new Date(client.created_at).toLocaleDateString('en-US', { month:'short', year:'numeric' });
 
     // Show cards
-    ['petsCard','vaxCard','historyCard'].forEach(id => document.getElementById(id).style.display = 'block');
+    ['petsCard','vaxCard','historyCard','microchipCard'].forEach(id => document.getElementById(id).style.display = 'block');
 
     // Reset vaccine section
     clearSelectedPet();
@@ -869,6 +905,10 @@
             ${p.breed ? `<span>${p.breed}</span>` : ''}
             ${p.age   ? `<span>${p.age} yrs</span>` : ''}
             ${p.weight ? `<span>${p.weight} lbs</span>` : ''}
+            ${p.microchipped === 'yes' ? '<span>🔖 Microchipped</span>' :
+  p.microchipped === 'no'  ? '<span>No microchip</span>' :
+  '<span>Microchip unknown</span>'}
+            ${p.microchip_number ? `<span># ${p.microchip_number}</span>` : ''}
           </div>
         </div>
       `).join('');
@@ -889,6 +929,9 @@
     document.getElementById('selectedPetBadge').style.display = 'block';
     document.getElementById('selectedPetName').textContent    = pet.name;
     document.getElementById('logVaxBtn').disabled             = false;
+    document.getElementById('microchipPetBadge').style.display = 'block';
+    document.getElementById('microchipPetName').textContent    = pet.name;
+    document.getElementById('logMicrochipBtn').disabled        = false;
 
     // Load vaccine history for this pet
     await loadVaxHistory(pet.id, pet.name);
@@ -900,6 +943,8 @@
     document.querySelectorAll('.pet-card').forEach(el => el.classList.remove('selected'));
     document.getElementById('selectedPetBadge').style.display = 'none';
     document.getElementById('logVaxBtn').disabled             = true;
+    document.getElementById('microchipPetBadge').style.display = 'none';
+    document.getElementById('logMicrochipBtn').disabled        = true;
   }
 
   // ─── ADD PET ───────────────────────────────────────────────────
@@ -907,6 +952,7 @@
     const msg  = document.getElementById('addPetMsg');
     const name = document.getElementById('newPetName').value.trim();
     const spec = document.getElementById('newPetSpecies').value;
+    
 
     if (!name)  { showMsg(msg, 'error', 'Pet name is required.'); return; }
     if (!spec)  { showMsg(msg, 'error', 'Please select a species.'); return; }
@@ -920,7 +966,9 @@
         age:             document.getElementById('newPetAge').value    ? +document.getElementById('newPetAge').value    : null,
         weight:          document.getElementById('newPetWeight').value ? +document.getElementById('newPetWeight').value : null,
         sex:             document.getElementById('newPetSex').value     || 'unknown',
-        altered:         document.getElementById('newPetAltered').value  || 'unknown'
+        altered:         document.getElementById('newPetAltered').value  || 'unknown',
+        microchipped:     document.getElementById('newPetMicrochipped').value || 'unknown',
+        microchip_number: document.getElementById('newPetMicrochip').value.trim() || null,
       });
 
       showMsg(msg, 'success', `${name} added!`);
@@ -929,6 +977,8 @@
       document.getElementById('newPetSpecies').value = '';
       document.getElementById('newPetSex').value     = 'unknown';
       document.getElementById('newPetAltered').value  = 'unknown';
+      document.getElementById('newPetMicrochipped').value = 'unknown';
+      document.getElementById('newPetMicrochip').value = '';
       // Reload pets
       await loadPets(currentClient.id);
     } catch (err) {
@@ -970,7 +1020,28 @@
       showMsg(msg, 'error', err.message);
     }
   }
+async function logMicrochip() {
+  const msg    = document.getElementById('logMicrochipMsg');
+  const number = document.getElementById('microchipNumber').value.trim();
 
+  if (!selectedPetId) { showMsg(msg, 'error', 'Please select a pet first.'); return; }
+  if (!number)        { showMsg(msg, 'error', 'Please enter a microchip number.'); return; }
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/pets?id=eq.${selectedPetId}`, {
+      method:  'PATCH',
+      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      body:    JSON.stringify({ microchipped: 'yes', microchip_number: number })
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
+
+    showMsg(msg, 'success', `Microchip ${number} saved for ${selectedPetObj.name}!`);
+    document.getElementById('microchipNumber').value = '';
+    await loadPets(currentClient.id);
+  } catch (err) {
+    showMsg(msg, 'error', err.message);
+  }
+}
   // ─── VAX HISTORY ───────────────────────────────────────────────
   async function loadVaxHistory(petId, petName) {
     const content = document.getElementById('vaxHistoryContent');
@@ -1022,7 +1093,7 @@
   function resetDetailPanel() {
     document.getElementById('detailEmpty').style.display = 'block';
     document.getElementById('clientInfo').style.display  = 'none';
-    ['petsCard','vaxCard','historyCard'].forEach(id => document.getElementById(id).style.display = 'none');
+    ['petsCard','vaxCard','historyCard','microchipCard'].forEach(id => document.getElementById(id).style.display = 'none');
   }
 
   function showMsg(el, type, text) {
