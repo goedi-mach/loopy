@@ -418,6 +418,14 @@
             <option value="no">No</option>
           </select>
         </div>
+        <div class="field">
+  <label>Is your pet microchipped? / <span class="es">¿Tiene microchip su mascota?</span></label>
+  <select name="pet_microchipped_${i}">
+    <option value="unknown">Not sure / No sé</option>
+    <option value="yes">Yes / Sí</option>
+    <option value="no">No</option>
+  </select>
+</div>
       </div>
     `;
   }
@@ -496,7 +504,9 @@
           age: fd.get(`pet_age_${i}`) ? +fd.get(`pet_age_${i}`) : null,
           weight: fd.get(`pet_weight_${i}`) ? +fd.get(`pet_weight_${i}`) : null,
           sex:     fd.get(`pet_sex_${i}`)     || 'unknown',
-          altered: fd.get(`pet_altered_${i}`) || 'unknown'
+          altered: fd.get(`pet_altered_${i}`) || 'unknown',
+          microchipped: fd.get(`pet_microchipped_${i}`) || 'unknown',
+          microchip_number: null,
         });
       }
 
