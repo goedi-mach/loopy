@@ -30,7 +30,26 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+.filter-btn {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.filter-btn.active {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: white;
+}
+.badge-registered { background: var(--amber-light); color: var(--amber); }
+.badge-checked_in { background: var(--green-light); color: var(--green); }
+.badge-seen { background: #e5e7eb; color: #6b7280; }
     body {
       font-family: 'Nunito Sans', sans-serif;
       background: var(--bg);
@@ -507,8 +526,17 @@
     <!-- LEFT: Search + client list -->
     <div>
       <div class="card">
-        <div class="card-header">🔍 Search Clients / Buscar Clientes</div>
+        <div class="card-header" style="justify-content:space-between;">
+  <span>🔍 Search Clients / Buscar Clientes</span>
+  <button class="btn-primary" style="font-size:0.78rem; padding:0.3rem 0.75rem;" onclick="openWalkin()">+ Walk-in</button>
+</div>
         <div class="card-body">
+          <div style="display:flex; gap:0.4rem; margin-bottom:0.85rem; flex-wrap:wrap;">
+  <button class="filter-btn active" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" onclick="setFilter('checked_in')">Checked In</button>
+  <button class="filter-btn" onclick="setFilter('registered')">Registered</button>
+  <button class="filter-btn" onclick="setFilter('seen')">Seen</button>
+</div>
           <div class="search-wrap">
             <input type="text" id="searchInput" placeholder="Name, email, or phone…"
               onkeydown="if(event.key==='Enter') searchClients()" />
@@ -523,6 +551,74 @@
 
     <!-- RIGHT: Client detail -->
     <div id="detailPanel">
+      <!-- Walk-in form-->
+       <div class="card" id="walkinCard" style="display:none">
+  <div class="card-header">🚶 Walk-in Registration</div>
+  <div class="card-body">
+    <div id="walkinMsg" class="msg"></div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Client Name *</label>
+        <input type="text" id="walkinName" placeholder="Jane Smith" />
+      </div>
+      <div class="form-field">
+        <label>Phone</label>
+        <input type="tel" id="walkinPhone" placeholder="(773) 555-0100" />
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Email</label>
+      <input type="email" id="walkinEmail" placeholder="correo@ejemplo.com" />
+    </div>
+    <hr style="margin:0.75rem 0; border-color:var(--border);" />
+    <div class="form-row">
+      <div class="form-field">
+        <label>Pet Name *</label>
+        <input type="text" id="walkinPetName" placeholder="Fido" />
+      </div>
+      <div class="form-field">
+        <label>Species *</label>
+        <select id="walkinPetSpecies">
+          <option value="">— Select —</option>
+          <option value="dog">Dog</option>
+          <option value="cat">Cat</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Breed</label>
+        <input type="text" id="walkinPetBreed" placeholder="Mixed" />
+      </div>
+      <div class="form-field">
+        <label>Age (yrs)</label>
+        <input type="number" id="walkinPetAge" min="0" max="30" step="0.5" placeholder="2" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>Sex</label>
+        <select id="walkinPetSex">
+          <option value="unknown">Not sure</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Spayed / Neutered</label>
+        <select id="walkinPetAltered">
+          <option value="unknown">Not sure</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
+      <button class="btn-primary" onclick="submitWalkin()">Save & Check In</button>
+      <button onclick="closeWalkin()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; font-size:0.88rem;">Cancel</button>
+    </div>
+  </div>
+</div>
       <div class="card">
         <div class="card-body">
           <div class="empty-state" id="detailEmpty" style="display:block">
@@ -536,7 +632,12 @@
                 <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.3rem; color:var(--navy)" id="clientName"></div>
                 <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.3rem" id="clientContact"></div>
               </div>
-              <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
+             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
+  <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
+  <div id="clientStatusBadge"></div>
+  <button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
+  <button id="seenBtn" class="btn-coral" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="markSeen()">✓ Mark as Seen</button>
+</div>
             </div>
           </div>
         </div>
@@ -730,10 +831,11 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6ZmhkemtsZm1teGJmbXlzY2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzA4MTAsImV4cCI6MjA4OTUwNjgxMH0.3nDc8afk-_ufnSQ4ozKCdaYheMZkm6qjNf9ibyo03uk';
 
   // ─── STATE ─────────────────────────────────────────────────────
-  let accessToken    = null;
-  let currentClient  = null;
-  let selectedPetId  = null;
-  let selectedPetObj = null;
+let accessToken    = null;
+let currentClient  = null;
+let selectedPetId  = null;
+let selectedPetObj = null;
+let currentFilter  = 'all';
 
   // ─── SUPABASE HELPERS ──────────────────────────────────────────
   function authHeaders() {
@@ -819,7 +921,98 @@ loadRecentClients();
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
   }
+// ─── FILTER ────────────────────────────────────────────────────
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  loadRecentClients();
+}
 
+// ─── RECENT CLIENTS ────────────────────────────────────────────
+async function loadRecentClients() {
+  const list = document.getElementById('clientList');
+  list.innerHTML = '<li class="empty-state">Loading…</li>';
+  try {
+    let path = `clients?order=checked_in_at.asc.nullslast,created_at.desc&limit=30`;
+    if (currentFilter !== 'all') path += `&status=eq.${currentFilter}`;
+    const clients = await sbGet(path);
+    renderClientList(clients);
+  } catch (err) {
+    list.innerHTML = `<li class="empty-state" style="color:#a00">Error: ${err.message}</li>`;
+  }
+}
+
+// ─── RENDER CLIENT LIST ────────────────────────────────────────
+function renderClientList(clients) {
+  const list = document.getElementById('clientList');
+  if (!clients.length) {
+    list.innerHTML = '<li class="empty-state">No clients found.</li>';
+    return;
+  }
+  const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 'Seen' };
+  list.innerHTML = clients.map(c => `
+    <li class="client-item" onclick="selectClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="client-name">${c.name}</div>
+        <span class="badge badge-${c.status || 'registered'}">${statusLabel[c.status || 'registered']}</span>
+      </div>
+      <div class="client-meta">${[c.phone, c.email].filter(Boolean).join(' · ') || 'No contact info'}</div>
+    </li>
+  `).join('');
+}
+
+// ─── WALK-IN ───────────────────────────────────────────────────
+function openWalkin() {
+  document.getElementById('walkinCard').style.display = 'block';
+  document.getElementById('detailEmpty').style.display = 'none';
+}
+
+function closeWalkin() {
+  document.getElementById('walkinCard').style.display = 'none';
+  document.getElementById('detailEmpty').style.display = 'block';
+  ['walkinName','walkinPhone','walkinEmail','walkinPetName','walkinPetBreed','walkinPetAge'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('walkinPetSpecies').value = '';
+  document.getElementById('walkinPetSex').value = 'unknown';
+  document.getElementById('walkinPetAltered').value = 'unknown';
+}
+
+async function submitWalkin() {
+  const msg     = document.getElementById('walkinMsg');
+  const name    = document.getElementById('walkinName').value.trim();
+  const petName = document.getElementById('walkinPetName').value.trim();
+  const petSpec = document.getElementById('walkinPetSpecies').value;
+
+  if (!name)    { showMsg(msg, 'error', 'Client name is required.'); return; }
+  if (!petName) { showMsg(msg, 'error', 'Pet name is required.'); return; }
+  if (!petSpec) { showMsg(msg, 'error', 'Please select a species.'); return; }
+
+  try {
+    const [client] = await sbPost('clients', {
+      name,
+      phone:        document.getElementById('walkinPhone').value.trim() || null,
+      email:        document.getElementById('walkinEmail').value.trim() || null,
+      status:       'checked_in',
+      checked_in_at: new Date().toISOString()
+    });
+
+    await sbPost('pets', {
+      client_id: client.id,
+      name:      petName,
+      species:   petSpec,
+      breed:     document.getElementById('walkinPetBreed').value.trim() || null,
+      age:       document.getElementById('walkinPetAge').value ? +document.getElementById('walkinPetAge').value : null,
+      sex:       document.getElementById('walkinPetSex').value || 'unknown',
+      altered:   document.getElementById('walkinPetAltered').value || 'unknown'
+    });
+
+    closeWalkin();
+    await loadRecentClients();
+    showMsg(document.getElementById('walkinMsg'), 'success', `${name} checked in!`);
+  } catch (err) {
+    showMsg(msg, 'error', err.message);
+  }
+}
   // ─── SEARCH ────────────────────────────────────────────────────
   async function searchClients() {
     const q    = document.getElementById('searchInput').value.trim();
@@ -840,12 +1033,7 @@ loadRecentClients();
         return;
       }
 
-      list.innerHTML = clients.map(c => `
-        <li class="client-item" onclick="selectClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">
-          <div class="client-name">${c.name}</div>
-          <div class="client-meta">${[c.phone, c.email].filter(Boolean).join(' · ') || 'No contact info'}</div>
-        </li>
-      `).join('');
+      renderClientList(clients);
     } catch (err) {
       list.innerHTML = `<li class="empty-state" style="color:#a00">Error: ${err.message}</li>`;
     }
@@ -869,7 +1057,12 @@ loadRecentClients();
       [client.phone, client.email, client.address].filter(Boolean).join(' · ') || 'No contact info';
     document.getElementById('clientSince').textContent    =
       'Client since ' + new Date(client.created_at).toLocaleDateString('en-US', { month:'short', year:'numeric' });
-
+const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 'Seen' };
+const status = client.status || 'registered';
+document.getElementById('clientStatusBadge').innerHTML =
+  `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
+document.getElementById('checkinBtn').style.display = status === 'registered' ? 'block' : 'none';
+document.getElementById('seenBtn').style.display    = status === 'checked_in' ? 'block' : 'none';
     // Show cards
     ['petsCard','vaxCard','historyCard','microchipCard'].forEach(id => document.getElementById(id).style.display = 'block');
 
@@ -940,7 +1133,7 @@ loadRecentClients();
     await loadVaxHistory(pet.id, pet.name);
   }
 
-  function clearSelectedPet() {
+ function clearSelectedPet() {
     selectedPetId  = null;
     selectedPetObj = null;
     document.querySelectorAll('.pet-card').forEach(el => el.classList.remove('selected'));
@@ -948,6 +1141,43 @@ loadRecentClients();
     document.getElementById('logVaxBtn').disabled             = true;
     document.getElementById('microchipPetBadge').style.display = 'none';
     document.getElementById('logMicrochipBtn').disabled        = true;
+  }
+
+  // ─── STATUS UPDATES ────────────────────────────────────────────
+  async function checkInClient() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
+        method:  'PATCH',
+        headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+        body:    JSON.stringify({ status: 'checked_in', checked_in_at: new Date().toISOString() })
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
+      currentClient.status = 'checked_in';
+      document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-checked_in">Checked In</span>';
+      document.getElementById('checkinBtn').style.display = 'none';
+      document.getElementById('seenBtn').style.display    = 'block';
+      await loadRecentClients();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function markSeen() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
+        method:  'PATCH',
+        headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+        body:    JSON.stringify({ status: 'seen', seen_at: new Date().toISOString() })
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
+      currentClient.status = 'seen';
+      document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-seen">Seen</span>';
+      document.getElementById('checkinBtn').style.display = 'none';
+      document.getElementById('seenBtn').style.display    = 'none';
+      await loadRecentClients();
+    } catch (err) {
+      alert(err.message);
+    }
   }
 
   // ─── ADD PET ───────────────────────────────────────────────────
