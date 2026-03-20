@@ -498,7 +498,7 @@
 <div id="dashScreen" class="screen">
 
   <nav class="topnav">
-    <div class="topnav-brand">🐾 Staff Dashboard</div>
+    <div class="topnav-brand">🐾 PHP Staff Dashboard</div>
     <button class="btn-logout" onclick="logout()">Sign Out</button>
   </nav>
 
@@ -507,7 +507,7 @@
     <!-- LEFT: Search + client list -->
     <div>
       <div class="card">
-        <div class="card-header">🔍 Search Clients</div>
+        <div class="card-header">🔍 Search Clients / Buscar Clientes</div>
         <div class="card-body">
           <div class="search-wrap">
             <input type="text" id="searchInput" placeholder="Name, email, or phone…"
@@ -592,8 +592,18 @@
                 <input type="number" id="newPetWeight" min="0" step="0.1" placeholder="25" />
               </div>
               <div class="form-field">
+                <label>Sex</label>
+                <select id="newPetSex">
+                  <option value="unknown">Not sure</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
                 <label>Spayed / Neutered</label>
-                <select id="newPetSN">
+                <select id="newPetAltered">
                   <option value="unknown">Not sure</option>
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
@@ -680,8 +690,8 @@
 
 <script>
   // ─── CONFIG ────────────────────────────────────────────────────
-  const SUPABASE_URL = 'https://lzfhdzklfmmxbfmyscfl.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6ZmhkemtsZm1teGJmbXlzY2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzA4MTAsImV4cCI6MjA4OTUwNjgxMH0.3nDc8afk-_ufnSQ4ozKCdaYheMZkm6qjNf9ibyo03uk';
+  const SUPABASE_URL     = 'https://YOUR_PROJECT_REF.supabase.co';
+  const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
 
   // ─── STATE ─────────────────────────────────────────────────────
   let accessToken    = null;
@@ -742,7 +752,6 @@
       if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
 
       accessToken = data.access_token;
-      localStorage.setItem('php_token', data.access_token);
       showScreen('dashScreen');
     } catch (err) {
       showMsg(msg, 'error', err.message);
@@ -851,8 +860,10 @@
             ${p.species === 'dog' ? '🐶' : p.species === 'cat' ? '🐱' : '🐾'}
             ${p.name}
             <span class="badge ${p.species || ''}">${p.species || '?'}</span>
-            ${p.spayed_neutered === 'yes' ? '<span class="badge sn-yes">S/N</span>' :
-              p.spayed_neutered === 'no'  ? '<span class="badge sn-no">Intact</span>' : ''}
+            ${p.sex === 'male'   ? '<span class="badge" style="background:#dbeafe;color:#1e40af">♂ Male</span>'   :
+              p.sex === 'female' ? '<span class="badge" style="background:#fce7f3;color:#9d174d">♀ Female</span>' : ''}
+            ${p.altered === 'yes' ? '<span class="badge sn-yes">S/N</span>' :
+              p.altered === 'no'  ? '<span class="badge sn-no">Intact</span>' : ''}
           </div>
           <div class="pet-card-meta">
             ${p.breed ? `<span>${p.breed}</span>` : ''}
@@ -908,14 +919,16 @@
         breed:           document.getElementById('newPetBreed').value.trim()  || null,
         age:             document.getElementById('newPetAge').value    ? +document.getElementById('newPetAge').value    : null,
         weight:          document.getElementById('newPetWeight').value ? +document.getElementById('newPetWeight').value : null,
-        spayed_neutered: document.getElementById('newPetSN').value     || 'unknown'
+        sex:             document.getElementById('newPetSex').value     || 'unknown',
+        altered:         document.getElementById('newPetAltered').value  || 'unknown'
       });
 
       showMsg(msg, 'success', `${name} added!`);
       // Clear form
       ['newPetName','newPetBreed','newPetAge','newPetWeight'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('newPetSpecies').value = '';
-      document.getElementById('newPetSN').value = 'unknown';
+      document.getElementById('newPetSex').value     = 'unknown';
+      document.getElementById('newPetAltered').value  = 'unknown';
       // Reload pets
       await loadPets(currentClient.id);
     } catch (err) {
@@ -1027,33 +1040,6 @@
 
   // Set today's date as default for vaccine date field
   document.getElementById('vaxDate').value = new Date().toISOString().split('T')[0];
-  // Load recent clients on page load
-async function loadRecentClients() {
-  const list = document.getElementById('clientList');
-  list.innerHTML = '<li class="empty-state">Loading…</li>';
-  try {
-    const clients = await sbGet('clients?order=created_at.desc&limit=5');
-    if (!clients.length) {
-      list.innerHTML = '<li class="empty-state">No clients yet.</li>';
-      return;
-    }
-    list.innerHTML = clients.map(c => `
-      <li class="client-item" onclick="selectClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">
-        <div class="client-name">${c.name}</div>
-        <div class="client-meta">${[c.phone, c.email].filter(Boolean).join(' · ') || 'No contact info'}</div>
-      </li>
-    `).join('');
-  } catch (err) {
-    list.innerHTML = `<li class="empty-state" style="color:#a00">Error: ${err.message}</li>`;
-  }
-}
- // Restore session on refresh
-const savedToken = localStorage.getItem('php_token');
-if (savedToken) {
-  accessToken = savedToken;
-  showScreen('dashScreen');
-  loadRecentClients();
-}
 </script>
 </body>
 </html>
