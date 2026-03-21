@@ -521,7 +521,10 @@
 <div style="font-size:0.8rem; opacity:0.8;" id="loggedInUser"></div>
     <button class="btn-logout" onclick="logout()">Sign Out</button>
   </nav>
-
+<div id="clinicBanner" style="display:none; background:var(--navy); color:white; padding:0.75rem 1.5rem; font-size:0.88rem; display:flex; align-items:center; gap:0.75rem;">
+    <span style="font-size:1.1rem;">📅</span>
+    <span id="clinicBannerText"></span>
+  </div>
   <div class="dash-body">
 
     <!-- LEFT: Search + client list -->
@@ -543,12 +546,57 @@
               onkeydown="if(event.key==='Enter') searchClients()" />
             <button class="btn-search" onclick="searchClients()">Search</button>
           </div>
+
           <ul class="client-list" id="clientList">
             <li class="empty-state">Search to find a client.</li>
           </ul>
         </div>
       </div>
-    </div>
+
+      <div class="card" style="margin-top:1.5rem;">
+        <div class="card-header">
+          <button class="section-toggle" onclick="toggleSection('eventsSection', 'eventsToggleIcon')">
+            <span>📅 Upcoming Events</span>
+            <span class="toggle-icon open" id="eventsToggleIcon">▼</span>
+          </button>
+        </div>
+        <div class="card-body collapsible open" id="eventsSection">
+          <div id="eventsList"></div>
+          <button class="section-toggle" style="margin-top:0.75rem"
+            onclick="toggleSection('addEventForm', 'addEventIcon')">
+            <span style="font-size:0.85rem; font-weight:700; color:var(--navy)">+ Add event</span>
+            <span class="toggle-icon" id="addEventIcon">▼</span>
+          </button>
+          <div class="collapsible" id="addEventForm" style="margin-top:0.75rem">
+            <div id="addEventMsg" class="msg"></div>
+            <div class="form-field">
+              <label>Location *</label>
+              <input type="text" id="newEventLocation" placeholder="Pilsen Community Center" />
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Date *</label>
+                <input type="date" id="newEventDate" />
+              </div>
+              <div class="form-field">
+                <label>Start Time *</label>
+                <input type="time" id="newEventStart" />
+              </div>
+            </div>
+            <div class="form-field">
+              <label>End Time</label>
+              <input type="time" id="newEventEnd" />
+            </div>
+            <div class="form-field">
+              <label>Notes</label>
+              <input type="text" id="newEventNotes" placeholder="Bring extra carriers…" />
+            </div>
+            <button class="btn-primary" onclick="addEvent()">Save Event</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /left column -->
 
     <!-- RIGHT: Client detail -->
     <div id="detailPanel">
@@ -921,6 +969,7 @@ localStorage.setItem('php_email', email);
 document.getElementById('loggedInUser').textContent = `👋 ${email}`;
 showScreen('dashScreen');
 loadRecentClients();
+loadEvents();
     } catch (err) {
       showMsg(msg, 'error', err.message);
       btn.disabled    = false;
@@ -1039,8 +1088,90 @@ async function submitWalkin() {
     });
 
     closeWalkin();
-    await loadRecentClients();
-    showMsg(document.getElementById('walkinMsg'), 'success', `${name} checked in!`);
+await loadRecentClients();
+  } catch (err) {
+    showMsg(msg, 'error', err.message);
+  }
+}
+// ─── EVENTS ────────────────────────────────────────────────────
+async function loadEvents() {
+  const list = document.getElementById('eventsList');
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const events = await sbGet(`events?event_date=gte.${today}&order=event_date.asc,start_time.asc&limit=10`);
+
+    if (!events.length) {
+      list.innerHTML = '<div class="empty-state">No upcoming events.</div>';
+      updateClinicBanner(null);
+      return;
+    }
+
+    const fmt = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+    const fmtTime = t => {
+      const [h, m] = t.split(':');
+      const hour = +h;
+      return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+    };
+
+    list.innerHTML = events.map(e => `
+      <div style="padding:0.75rem 0; border-bottom:1px solid var(--border);">
+        <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.9rem; color:var(--navy)">${e.location}</div>
+        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
+          ${fmt(e.event_date)} · ${fmtTime(e.start_time)}${e.end_time ? ` – ${fmtTime(e.end_time)}` : ''}
+        </div>
+        ${e.notes ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; font-style:italic">${e.notes}</div>` : ''}
+      </div>
+    `).join('');
+
+    // Show banner for today's event if there is one
+    const todayEvent = events.find(e => e.event_date === today);
+    updateClinicBanner(todayEvent || null);
+
+  } catch (err) {
+    list.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
+  }
+}
+
+function updateClinicBanner(event) {
+  const banner = document.getElementById('clinicBanner');
+  const text   = document.getElementById('clinicBannerText');
+  if (!event) { banner.style.display = 'none'; return; }
+
+  const fmtTime = t => {
+    const [h, m] = t.split(':');
+    const hour = +h;
+    return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+  };
+
+  text.textContent = `📅 Today's Clinic: ${event.location} · ${fmtTime(event.start_time)}${event.end_time ? ` – ${fmtTime(event.end_time)}` : ''}`;
+  banner.style.display = 'flex';
+}
+
+async function addEvent() {
+  const msg      = document.getElementById('addEventMsg');
+  const location = document.getElementById('newEventLocation').value.trim();
+  const date     = document.getElementById('newEventDate').value;
+  const start    = document.getElementById('newEventStart').value;
+
+  if (!location) { showMsg(msg, 'error', 'Location is required.'); return; }
+  if (!date)     { showMsg(msg, 'error', 'Date is required.'); return; }
+  if (!start)    { showMsg(msg, 'error', 'Start time is required.'); return; }
+
+  try {
+    await sbPost('events', {
+      location,
+      event_date: date,
+      start_time: start,
+      end_time:   document.getElementById('newEventEnd').value || null,
+      notes:      document.getElementById('newEventNotes').value.trim() || null
+    });
+
+    showMsg(msg, 'success', 'Event saved!');
+    ['newEventLocation','newEventNotes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('newEventDate').value  = '';
+    document.getElementById('newEventStart').value = '';
+    document.getElementById('newEventEnd').value   = '';
+    await loadEvents();
   } catch (err) {
     showMsg(msg, 'error', err.message);
   }
@@ -1386,6 +1517,7 @@ if (savedToken) {
   if (savedEmail) document.getElementById('loggedInUser').textContent = `👋 ${savedEmail}`;
   showScreen('dashScreen');
   loadRecentClients();
+  loadEvents();
 }
 </script>
 </body>
