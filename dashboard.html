@@ -529,6 +529,7 @@
 
     <!-- LEFT: Search + client list -->
     <div>
+      <div style="font-family:'Nunito',sans-serif; font-weight:700; font-size:0.88rem; color:var(--text-muted); margin-bottom:0.75rem;" id="todayCount"></div>
       <div class="card">
         <div class="card-header" style="justify-content:space-between;">
   <span>🔍 Search Clients</span>
@@ -734,7 +735,7 @@
                 <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.3rem; color:var(--navy)" id="clientName"></div>
                 <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.3rem" id="clientContact"></div>
               </div>
-             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
+             <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
   <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
   <div id="clientStatusBadge"></div>
 <button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
@@ -1756,6 +1757,26 @@ async function toggleArchivePet(petId, currentlyArchived) {
   document.getElementById('vaxDate').value = new Date().toISOString().split('T')[0];
   // Restore session on refresh
 const savedToken = localStorage.getItem('php_token');
+async function loadTodayCount() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/clients?event_date=eq.${today}`,
+      {
+        method: 'HEAD',
+        headers: {
+          ...authHeaders(),
+          'Prefer': 'count=exact'
+        }
+      }
+    );
+    const count = res.headers.get('content-range')?.split('/')[1] ?? '0';
+    document.getElementById('todayCount').textContent =
+      `👥 ${count} owner${count == 1 ? '' : 's'} registered today`;
+  } catch (err) {
+    console.warn('Could not load count:', err);
+  }
+}
 if (savedToken) {
   accessToken = savedToken;
   const savedEmail = localStorage.getItem('php_email');
@@ -1763,6 +1784,7 @@ if (savedToken) {
   showScreen('dashScreen');
   loadRecentClients();
   loadEvents();
+  loadTodayCount();
 }
 </script>
 </body>
