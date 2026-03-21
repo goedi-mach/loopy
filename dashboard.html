@@ -942,7 +942,7 @@
           <div class="form-row">
             <div class="form-field">
               <label>Vaccine Name *</label>
-              <select id="vaxName">
+              <select id="vaxName" onchange="onVaxNameChange()">
                 <option value="">— Select —</option>
                 <option value="Rabies">Rabies</option>
                 <option value="DHPP">DHPP (Dog)</option>
@@ -953,10 +953,14 @@
               </select>
             </div>
             <div class="form-field">
-              <label>Lot Number</label>
+              <label>Lot / Serial #</label>
               <input type="text" id="vaxLot" placeholder="ABC123" />
             </div>
           </div>
+          <div class="form-field">
+  <label>Vaccine Serial Number</label>
+  <input type="text" id="vaxSerial" placeholder="e.g. 12345678" />
+</div>
           <div class="form-row">
             <div class="form-field">
               <label>Date Given *</label>
@@ -969,9 +973,75 @@
           </div>
           <div class="form-field">
             <label>Administered By</label>
-            <input type="text" id="vaxAdmin" placeholder="Dr. Garcia" />
+            <input type="text" id="vaxAdmin" placeholder="Dr. Valbuena" />
           </div>
-          <button class="btn-coral" onclick="logVaccine()" id="logVaxBtn" disabled>Log Vaccine</button>
+          <!-- ── RABIES-ONLY FIELDS ───────────────────────────────────── -->
+<div id="rabiesFields" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1.5px dashed var(--border);">
+  <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.82rem; color:var(--navy); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.75rem;">
+    📋 NASPHV Form 51 — Rabies Certificate Fields
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label>Rabies Tag #</label>
+      <input type="text" id="rabiesTagNum" placeholder="e.g. 2025-00123" />
+    </div>
+    <div class="form-field">
+      <label>Colors / Markings</label>
+      <input type="text" id="rabiesColors" placeholder="e.g. Black & white, tabby" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label>Vaccine Product Name</label>
+      <input type="text" id="rabiesProduct" placeholder="e.g. IMRAB 3" />
+    </div>
+    <div class="form-field">
+      <label>Manufacturer (first 3 letters)</label>
+      <input type="text" id="rabiesMan" maxlength="3" placeholder="e.g. MER" style="text-transform:uppercase;" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label>USDA License Duration</label>
+      <select id="rabiesUSDA">
+        <option value="">— Select —</option>
+        <option value="1yr">1-Year vaccine</option>
+        <option value="3yr">3-Year vaccine</option>
+        <option value="4yr">4-Year vaccine</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label>Dose Type</label>
+      <select id="rabiesDose">
+        <option value="">— Select —</option>
+        <option value="initial">Initial</option>
+        <option value="booster">Booster</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label>Animal Control License #</label>
+      <input type="text" id="rabiesACNum" placeholder="Optional" />
+    </div>
+    <div class="form-field">
+      <label>AC License Type</label>
+      <select id="rabiesACType">
+        <option value="">— Select —</option>
+        <option value="1yr">1-Year</option>
+        <option value="3yr">3-Year</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+  </div>
+</div>
+<!-- ── END RABIES FIELDS ─────────────────────────────────────── -->
+
+<div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-top:0.25rem;">
+  <button class="btn-coral" onclick="logVaccine()" id="logVaxBtn" disabled>Log Vaccine</button>
+  <button id="downloadCertBtn" style="display:none; padding:0.55rem 1.2rem; border-radius:999px; border:1.5px solid var(--navy); background:none; color:var(--navy); font-family:inherit; font-weight:700; font-size:0.88rem; cursor:pointer;" onclick="downloadRabiesCert()">⬇ Download Rabies Certificate</button>
+  <button id="emailCertBtn" style="display:none; padding:0.55rem 1.2rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); font-family:inherit; font-weight:700; font-size:0.88rem; cursor:pointer;" onclick="emailRabiesCert()">✉ Email to Client</button>
+</div>
         </div>
       </div>
 
@@ -1495,36 +1565,65 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
       showMsg(msg, 'error', err.message);
     }
   }
+// ─── VAX NAME CHANGE ───────────────────────────────────────────
+  function onVaxNameChange() {
+    const isRabies = document.getElementById('vaxName').value === 'Rabies';
+    document.getElementById('rabiesFields').style.display = isRabies ? 'block' : 'none';
+    document.getElementById('downloadCertBtn').style.display = 'none';
+    document.getElementById('emailCertBtn').style.display    = 'none';
+  }
 
+  let lastRabiesRecord = null;
   // ─── LOG VACCINE ───────────────────────────────────────────────
-  async function logVaccine() {
-    const msg  = document.getElementById('logVaxMsg');
-    const vaxSelect = document.getElementById('vaxName').value;
-    const vaccineName = vaxSelect;
-    const dateGiven = document.getElementById('vaxDate').value;
+async function logVaccine() {
+    const msg         = document.getElementById('logVaxMsg');
+    const vaccineName = document.getElementById('vaxName').value;
+    const dateGiven   = document.getElementById('vaxDate').value;
 
     if (!selectedPetId) { showMsg(msg, 'error', 'Please select a pet first.'); return; }
     if (!vaccineName)   { showMsg(msg, 'error', 'Please select or enter a vaccine name.'); return; }
     if (!dateGiven)     { showMsg(msg, 'error', 'Please enter the date given.'); return; }
 
+    const payload = {
+      pet_id:          selectedPetId,
+      vaccine_name:    vaccineName,
+      lot_number:      document.getElementById('vaxLot').value.trim() || null,
+      date_given:      dateGiven,
+      next_due:        document.getElementById('vaxNextDue').value || null,
+      administered_by: document.getElementById('vaxAdmin').value.trim() || null,
+    };
+
+    if (vaccineName === 'Rabies') {
+      payload.rabies_tag_number = document.getElementById('rabiesTagNum').value.trim()  || null;
+      payload.colors_markings   = document.getElementById('rabiesColors').value.trim()  || null;
+      payload.product_name      = document.getElementById('rabiesProduct').value.trim() || null;
+      payload.manufacturer      = document.getElementById('rabiesMan').value.trim().toUpperCase() || null;
+      payload.usda_duration     = document.getElementById('rabiesUSDA').value           || null;
+      payload.dose_type         = document.getElementById('rabiesDose').value           || null;
+      payload.ac_license_number = document.getElementById('rabiesACNum').value.trim()  || null;
+      payload.ac_license_type   = document.getElementById('rabiesACType').value         || null;
+    }
+
     try {
-      await sbPost('vaccinations', {
-        pet_id:          selectedPetId,
-        vaccine_name:    vaccineName,
-        lot_number: document.getElementById('vaxLot').value.trim() || null,
-        date_given:      dateGiven,
-        next_due:        document.getElementById('vaxNextDue').value || null,
-        administered_by: document.getElementById('vaxAdmin').value.trim() || null
-      });
+      await sbPost('vaccinations', payload);
 
       showMsg(msg, 'success', `${vaccineName} logged for ${selectedPetObj.name}!`);
-      // Clear form
-      document.getElementById('vaxName').value     = '';
-      document.getElementById('vaxLot').value = '';
-      document.getElementById('vaxDate').value      = '';
-      document.getElementById('vaxNextDue').value   = '';
-      document.getElementById('vaxAdmin').value     = '';
-      // Reload history
+
+      if (vaccineName === 'Rabies') {
+        lastRabiesRecord = { ...payload, pet: selectedPetObj, client: currentClient };
+        document.getElementById('downloadCertBtn').style.display = 'inline-block';
+        document.getElementById('emailCertBtn').style.display    = 'inline-block';
+      }
+
+      document.getElementById('vaxName').value    = '';
+      document.getElementById('vaxLot').value     = '';
+      document.getElementById('vaxDate').value    = '';
+      document.getElementById('vaxNextDue').value = '';
+      document.getElementById('vaxAdmin').value   = '';
+      document.getElementById('rabiesFields').style.display = 'none';
+      ['rabiesTagNum','rabiesColors','rabiesProduct','rabiesMan','rabiesACNum'].forEach(id => document.getElementById(id).value = '');
+      ['rabiesUSDA','rabiesDose','rabiesACType'].forEach(id => document.getElementById(id).value = '');
+
       await loadVaxHistory(selectedPetId, selectedPetObj.name);
     } catch (err) {
       showMsg(msg, 'error', err.message);
@@ -1684,6 +1783,177 @@ async function toggleArchivePet(petId, currentlyArchived) {
     alert(err.message);
   }
 }
+// ─── RABIES CERT PDF ───────────────────────────────────────────
+  async function downloadRabiesCert() {
+    if (!lastRabiesRecord) return;
+    const btn = document.getElementById('downloadCertBtn');
+    btn.textContent = '⏳ Generating…';
+    btn.disabled = true;
+    try {
+      const pdf = await generateRabiesCertPDF(lastRabiesRecord);
+      const url = URL.createObjectURL(pdf);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = `RabiesCert_${lastRabiesRecord.pet.name}_${lastRabiesRecord.date_given}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('PDF generation failed: ' + err.message);
+    } finally {
+      btn.textContent = '⬇ Download Rabies Certificate';
+      btn.disabled = false;
+    }
+  }
+
+  async function emailRabiesCert() {
+    if (!lastRabiesRecord) return;
+    const email = lastRabiesRecord.client?.email;
+    if (!email) { alert('No email address on file for this client.'); return; }
+    const btn = document.getElementById('emailCertBtn');
+    btn.textContent = '⏳ Sending…';
+    btn.disabled = true;
+    try {
+      const pdf      = await generateRabiesCertPDF(lastRabiesRecord);
+      const arrayBuf = await pdf.arrayBuffer();
+      const base64   = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)));
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-rabies-cert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          to:        email,
+          petName:   lastRabiesRecord.pet.name,
+          pdfBase64: base64,
+          filename:  `RabiesCert_${lastRabiesRecord.pet.name}_${lastRabiesRecord.date_given}.pdf`,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Email failed');
+      alert(`✅ Certificate emailed to ${email}`);
+    } catch (err) {
+      alert('Email failed: ' + err.message);
+    } finally {
+      btn.textContent = '✉ Email to Client';
+      btn.disabled = false;
+    }
+  }
+
+  async function generateRabiesCertPDF(r) {
+    if (!window.PDFLib) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    const { PDFDocument } = window.PDFLib;
+
+    const templateUrl   = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/RabiesVacCert.pdf';
+    const templateBytes = await fetch(templateUrl).then(res => res.arrayBuffer());
+    const pdfDoc        = await PDFDocument.load(templateBytes);
+    const form          = pdfDoc.getForm();
+
+    const pet    = r.pet;
+    const client = r.client;
+
+    function setText(fieldId, value) {
+      try { if (value) form.getTextField(fieldId).setText(String(value)); } catch(_) {}
+    }
+    function setRadio(fieldId, value) {
+      try { if (value != null) form.getRadioGroup(fieldId).select(value); } catch(_) {}
+    }
+    function setCheck(fieldId, checked) {
+      try { checked ? form.getCheckBox(fieldId).check() : form.getCheckBox(fieldId).uncheck(); } catch(_) {}
+    }
+
+    // Owner
+    const nameParts = (client.name || '').trim().split(' ');
+    setText('First Name', nameParts[0]);
+    setText('Last Name',  nameParts.slice(1).join(' ') || '');
+    setText('Telephone #', client.phone || '');
+
+    const addr = client.address || '';
+    const addrMatch = addr.match(/^(.*?),\s*(.*?),\s*([A-Z]{2})\s+(\d{5}.*)$/);
+    if (addrMatch) {
+      setText('Street',   addrMatch[1]);
+      setText('City',     addrMatch[2]);
+      setText('State',    addrMatch[3]);
+      setText('Zip Code', addrMatch[4]);
+    } else {
+      setText('Owner\'s Address', addr);
+    }
+
+    // Pet
+    setText('Animal Name',  pet.name || '');
+    setText('Microchip #',  pet.microchip_number || '');
+
+    const speciesMap = { dog: '/0', cat: '/1', ferret: '/2' };
+    setRadio('Species', speciesMap[pet.species?.toLowerCase()] ?? '/3');
+
+    const ageNum = parseFloat(pet.age);
+    if (!isNaN(ageNum)) {
+      if (ageNum < 1) {
+        setText('Age', String(Math.round(ageNum * 12)));
+        setRadio('Months/Years', '/0');
+      } else {
+        setText('Age', String(ageNum));
+        setRadio('Months/Years', '/1');
+      }
+    }
+
+    const w = parseFloat(pet.weight);
+    if (!isNaN(w)) setRadio('Size', w < 20 ? '/0' : w <= 50 ? '/1' : '/2');
+
+    setText('Predominent Breed', pet.breed || '');
+
+    if (pet.sex === 'male')   setRadio('Sex', '/0');
+    if (pet.sex === 'female') setRadio('Sex', '/1');
+    setCheck('Neutered', pet.altered === 'yes');
+
+    // Rabies-specific
+    setText('Rabies Tag #',                r.rabies_tag_number || '');
+    setText('Predominemt Colors/Markings', r.colors_markings   || '');
+    setText('Product Name',                r.product_name      || '');
+    setText('Vaccine Serial Number',       r.lot_number        || '');
+
+    const man = (r.manufacturer || '').padEnd(3, ' ');
+    setText('Manufacturer', man[0]);
+    setText('Man2',         man[1]);
+    setText('Man3',         man[2]);
+
+    const usdaMap = { '1yr': '/0', '3yr': '/1', '4yr': '/2' };
+    setRadio('USDA Licensed Vaccine', usdaMap[r.usda_duration] ?? null);
+
+    if (r.dose_type === 'initial')  setRadio('Dose', '/0');
+    if (r.dose_type === 'booster')  setRadio('Dose', '/1');
+
+    setText('License Number', r.ac_license_number || '');
+    if (r.ac_license_type === '1yr')   setCheck('AC 1 year', true);
+    if (r.ac_license_type === '3yr')   setCheck('AC 3 year', true);
+    if (r.ac_license_type === 'other') setCheck('AC other',  true);
+
+    const fmtDate = iso => iso
+      ? new Date(iso).toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' })
+      : '';
+    setText('Date Vaccinated',       fmtDate(r.date_given));
+    setText('Next Vaccination Date', fmtDate(r.next_due));
+
+    setText('Veterinarian\'s Name',    r.administered_by || 'Dr. Ana Valbuena');
+    setText('Veterinarian\'s address', 'People Helping Pets — Chicago, IL');
+
+    // Ana's signature
+    try {
+      const sigBytes = await fetch(
+        'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/ana_signature.png'
+      ).then(res => res.arrayBuffer());
+      const sigImg = await pdfDoc.embedPng(sigBytes);
+      const page   = pdfDoc.getPages()[0];
+      page.drawImage(sigImg, { x: 370, y: 792 - 442, width: 185, height: 48 });
+    } catch (_) { /* signature optional */ }
+
+    form.flatten();
+    const pdfBytes = await pdfDoc.save();
+    return new Blob([pdfBytes], { type: 'application/pdf' });
+  }
   // ─── VAX HISTORY ───────────────────────────────────────────────
   async function loadVaxHistory(petId, petName) {
     const content = document.getElementById('vaxHistoryContent');
@@ -1709,6 +1979,7 @@ async function toggleArchivePet(petId, currentlyArchived) {
               <tr>
                 <th>Vaccine</th>
                 <th>Lot #</th>
+                <th>Serial #</th>
                 <th>Date Given</th>
                 <th>Next Due</th>
                 <th>Administered By</th>
@@ -1719,6 +1990,7 @@ async function toggleArchivePet(petId, currentlyArchived) {
                 <tr>
                   <td><strong>${r.vaccine_name}</strong></td>
                   <td>${r.lot_number || '—'}</td>
+                  <td>${r.serial_number || '—'}</td>
                   <td>${fmt(r.date_given)}</td>
                   <td>${fmt(r.next_due)}</td>
                   <td>${r.administered_by || '—'}</td>
