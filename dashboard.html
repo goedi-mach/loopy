@@ -1954,6 +1954,93 @@ async function toggleArchivePet(petId, currentlyArchived) {
     const pdfBytes = await pdfDoc.save();
     return new Blob([pdfBytes], { type: 'application/pdf' });
   }
+  // ─── EDIT / DELETE VAX ─────────────────────────────────────────
+  let editingVaxRecord = null;
+
+  function openEditVax(record) {
+    editingVaxRecord = record;
+
+    // Build or reuse the inline edit row
+    let editRow = document.getElementById('vaxEditRow');
+    if (!editRow) {
+      const tbody = document.querySelector('.vax-table tbody');
+      editRow = document.createElement('tr');
+      editRow.id = 'vaxEditRow';
+      editRow.style.background = 'var(--navy-light)';
+      tbody.prepend(editRow);
+    }
+
+    editRow.innerHTML = `
+      <td colspan="7" style="padding:0.75rem;">
+        <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:0.82rem;color:var(--navy);margin-bottom:0.6rem;">
+          Editing: <strong>${record.vaccine_name}</strong>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.6rem;">
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Lot #</label>
+            <input id="editVaxLot" type="text" value="${record.lot_number || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Serial #</label>
+            <input id="editVaxSerial" type="text" value="${record.serial_number || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Date Given</label>
+            <input id="editVaxDate" type="date" value="${record.date_given || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Next Due</label>
+            <input id="editVaxNextDue" type="date" value="${record.next_due || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button onclick="saveEditVax()" style="padding:0.35rem 1rem;border-radius:999px;border:none;background:var(--navy);color:white;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;">Save</button>
+          <button onclick="closeEditVax()" style="padding:0.35rem 1rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--text-muted);font-family:inherit;font-size:0.82rem;cursor:pointer;">Cancel</button>
+        </div>
+      </td>
+    `;
+  }
+
+  function closeEditVax() {
+    const editRow = document.getElementById('vaxEditRow');
+    if (editRow) editRow.remove();
+    editingVaxRecord = null;
+  }
+
+  async function saveEditVax() {
+    if (!editingVaxRecord) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccinations?id=eq.${editingVaxRecord.id}`, {
+        method:  'PATCH',
+        headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+        body: JSON.stringify({
+          lot_number:    document.getElementById('editVaxLot').value.trim()    || null,
+          serial_number: document.getElementById('editVaxSerial').value.trim() || null,
+          date_given:    document.getElementById('editVaxDate').value          || null,
+          next_due:      document.getElementById('editVaxNextDue').value       || null,
+        })
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
+      closeEditVax();
+      await loadVaxHistory(selectedPetId, selectedPetObj.name);
+    } catch (err) {
+      alert('Save failed: ' + err.message);
+    }
+  }
+
+  async function deleteVax(id, vaccineName) {
+    if (!confirm(`Delete the ${vaccineName} record? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccinations?id=eq.${id}`, {
+        method:  'DELETE',
+        headers: authHeaders()
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
+      await loadVaxHistory(selectedPetId, selectedPetObj.name);
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
+  }
   // ─── VAX HISTORY ───────────────────────────────────────────────
   async function loadVaxHistory(petId, petName) {
     const content = document.getElementById('vaxHistoryContent');
@@ -1983,6 +2070,7 @@ async function toggleArchivePet(petId, currentlyArchived) {
                 <th>Date Given</th>
                 <th>Next Due</th>
                 <th>Administered By</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -1994,6 +2082,10 @@ async function toggleArchivePet(petId, currentlyArchived) {
                   <td>${fmt(r.date_given)}</td>
                   <td>${fmt(r.next_due)}</td>
                   <td>${r.administered_by || '—'}</td>
+                  <td style="white-space:nowrap">
+                    <button onclick="openEditVax(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--text-muted);cursor:pointer;font-family:inherit;">✏️</button>
+                    <button onclick="deleteVax('${r.id}','${r.vaccine_name}')" style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--coral-dark);cursor:pointer;font-family:inherit;">✕</button>
+                  </td>
                 </tr>
               `).join('')}
             </tbody>
