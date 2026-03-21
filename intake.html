@@ -289,7 +289,6 @@
       <span class="sub">Registro para Clínica de Vacunas</span>
     </h1>
     <p class="org-name">People Helping Pets</p>
-    <p id="todayCount" style="margin-top: 0.6rem; font-size: 0.85rem; color: var(--navy); opacity: 0.7; font-weight: 600; min-height: 1.2em;"></p>
   </div>
 </header>
 
@@ -370,27 +369,7 @@
     }
     return res.json();
   }
-async function loadTodayCount() {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/clients?event_date=eq.${today}`,
-      {
-        method: 'HEAD',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Prefer': 'count=exact'
-        }
-      }
-    );
-    const count = res.headers.get('content-range')?.split('/')[1] ?? '0';
-    document.getElementById('todayCount').textContent =
-      `${count} owner${count == 1 ? '' : 's'} registered today`;
-  } catch (err) {
-    console.warn('Could not load count:', err);
-  }
-}
+
   function buildPetPanel(i) {
     const panel = document.getElementById(`petPanel${i}`);
     panel.innerHTML = `
@@ -538,7 +517,6 @@ async function loadTodayCount() {
       showStatus('success',
         "✅ Registration complete!\n✅ ¡Registro completo!"
       );
-      loadTodayCount();
       submitBtn.textContent = 'Submitted ✓ / Enviado ✓';
 
     } catch (err) {
@@ -550,7 +528,6 @@ async function loadTodayCount() {
       submitBtn.textContent = 'Submit Registration / Enviar Registro';
     }
   });
-  loadTodayCount();
 </script>
 </body>
 </html>
