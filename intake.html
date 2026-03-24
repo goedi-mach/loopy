@@ -369,7 +369,59 @@
     }
     return res.json();
   }
+async function supabaseSelect(table, query) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}&limit=1`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      }
+    });
+    if (!res.ok) throw new Error(`Select from ${table} failed (${res.status})`);
+    return res.json();
+  }
 
+  async function supabaseUpdate(table, query, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`Update on ${table} failed (${res.status})`);
+    return res.json();
+  }
+
+  async function upsertClient(data) {
+    const conditions = [];
+    if (data.email) conditions.push(`email.eq.${encodeURIComponent(data.email)}`);
+    if (data.phone) conditions.push(`phone.eq.${encodeURIComponent(data.phone)}`);
+    if (conditions.length > 0) {
+      const existing = await supabaseSelect('clients', `or=(${conditions.join(',')})`);
+      if (existing.length > 0) {
+        await supabaseUpdate('clients', `id=eq.${existing[0].id}`, data);
+        return existing[0].id;
+      }
+    }
+    const [created] = await supabaseInsert('clients', data);
+    return created.id;
+  }
+
+  async function upsertPet(clientId, petData) {
+    const existing = await supabaseSelect(
+      'pets',
+      `client_id=eq.${clientId}&name=ilike.${encodeURIComponent(petData.name)}`
+    );
+    if (existing.length > 0) {
+      await supabaseUpdate('pets', `id=eq.${existing[0].id}`, petData);
+    } else {
+      await supabaseInsert('pets', petData);
+    }
+  }
   function buildPetPanel(i) {
     const panel = document.getElementById(`petPanel${i}`);
     panel.innerHTML = `
@@ -484,34 +536,31 @@
     submitBtn.textContent = 'Submitting… / Enviando…';
     statusBanner.className = 'status';
 
-    try {
-      const [client] = await supabaseInsert('clients', {
-        name: fd.get('name').trim(),
-        email: fd.get('email')?.trim() || null,
-        phone: fd.get('phone')?.trim() || null,
-        address: fd.get('address')?.trim() || null,
-        event_date: new Date().toISOString().split('T')[0]  // "2026-03-20"
+try {
+      const clientId = await upsertClient({
+        name:       fd.get('name').trim(),
+        email:      fd.get('email')?.trim()   || null,
+        phone:      fd.get('phone')?.trim()   || null,
+        address:    fd.get('address')?.trim() || null,
+        event_date: new Date().toISOString().split('T')[0]
       });
 
-      const pets = [];
       for (let i = 0; i < 3; i++) {
         const name = fd.get(`pet_name_${i}`)?.trim();
         if (!name) continue;
-        pets.push({
-          client_id: client.id,
+        await upsertPet(clientId, {
+          client_id:        clientId,
           name,
-          species: fd.get(`pet_species_${i}`) || null,
-          breed: fd.get(`pet_breed_${i}`)?.trim() || null,
-          age: fd.get(`pet_age_${i}`) ? +fd.get(`pet_age_${i}`) : null,
-          weight: fd.get(`pet_weight_${i}`) ? +fd.get(`pet_weight_${i}`) : null,
-          sex:     fd.get(`pet_sex_${i}`)     || 'unknown',
-          altered: fd.get(`pet_altered_${i}`) || 'unknown',
-          microchipped: fd.get(`pet_microchipped_${i}`) || 'unknown',
+          species:          fd.get(`pet_species_${i}`)      || null,
+          breed:            fd.get(`pet_breed_${i}`)?.trim() || null,
+          age:              fd.get(`pet_age_${i}`)    ? +fd.get(`pet_age_${i}`)    : null,
+          weight:           fd.get(`pet_weight_${i}`) ? +fd.get(`pet_weight_${i}`) : null,
+          sex:              fd.get(`pet_sex_${i}`)          || 'unknown',
+          altered:          fd.get(`pet_altered_${i}`)      || 'unknown',
+          microchipped:     fd.get(`pet_microchipped_${i}`) || 'unknown',
           microchip_number: null,
         });
       }
-
-      if (pets.length) await supabaseInsert('pets', pets);
 
       form.reset();
       showStatus('success',
