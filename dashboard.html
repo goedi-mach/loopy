@@ -1996,7 +1996,7 @@ function setRadio(fieldName, index) {
         'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/ana_signature.png'
       ).then(res => res.arrayBuffer());
       const sigImg = await pdfDoc.embedPng(sigBytes);
-      page.drawImage(sigImg, { x: 370, y: 792 - 442, width: 185, height: 48 });
+      page.drawImage(sigImg, { x: 370, y: 452, width: 175, height: 28 });
     } catch (_) {}
 
     form.flatten();
