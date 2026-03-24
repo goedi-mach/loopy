@@ -1846,6 +1846,7 @@ async function generateRabiesCertPDF(r) {
       });
     }
     const { PDFDocument, PDFName, PDFString } = window.PDFLib;
+    console.log('PDFName type:', typeof PDFName, '| PDFString type:', typeof PDFString);
 
     const templateUrl   = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/RabiesVacCert.pdf';
     const templateRes   = await fetch(templateUrl);
@@ -1863,7 +1864,7 @@ async function generateRabiesCertPDF(r) {
     const page          = pdfDoc.getPages()[0];
 
     // ── Set text with explicit font size ───────────────────────
-    function setText(fieldName, value, fontSize) {
+   function setText(fieldName, value, fontSize) {
       try {
         if (!value) return;
         const field = form.getTextField(fieldName);
@@ -1874,13 +1875,13 @@ async function generateRabiesCertPDF(r) {
         for (const w of field.acroField.getWidgets()) {
           w.dict.set(PDFName.of('V'), v);
         }
-      } catch(_) {}
+      } catch(e) { console.warn(`setText "${fieldName}" failed:`, e.message); }
     }
 
     // ── Select radio by position index ─────────────────────────
     // These radios all have duplicate option values so we must
     // set /AS directly on each widget's dict
-    function setRadio(fieldName, index) {
+function setRadio(fieldName, index) {
       try {
         if (index == null) return;
         const field = form.getRadioGroup(fieldName);
@@ -1892,7 +1893,8 @@ async function generateRabiesCertPDF(r) {
           );
         }
         field.acroField.dict.set(PDFName.of('V'), onKey);
-      } catch(_) {}
+        console.log(`setRadio "${fieldName}" index=${index} ✓`);
+      } catch(e) { console.warn(`setRadio "${fieldName}" failed:`, e.message); }
     }
 
     function setCheck(fieldName, checked) {
