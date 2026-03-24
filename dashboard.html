@@ -1848,7 +1848,16 @@ async function generateRabiesCertPDF(r) {
     const { PDFDocument, PDFName, PDFString } = window.PDFLib;
 
     const templateUrl   = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/RabiesVacCert.pdf';
-    const templateBytes = await fetch(templateUrl).then(res => res.arrayBuffer());
+    const templateRes   = await fetch(templateUrl);
+    console.log('Template fetch status:', templateRes.status, templateRes.headers.get('content-type'));
+    const templateBytes = await templateRes.arrayBuffer();
+    console.log('Template size bytes:', templateBytes.byteLength);
+    console.log('PDFLib loaded:', !!window.PDFLib);
+    console.log('PDFName available:', !!window.PDFLib?.PDFName);
+    console.log('r.pet:', JSON.stringify(r.pet));
+    console.log('r.client:', JSON.stringify(r.client));
+    console.log('r.dose_type:', r.dose_type, '| r.usda_duration:', r.usda_duration);
+    console.log('r.rabies_tag_number:', r.rabies_tag_number);
     const pdfDoc        = await PDFDocument.load(templateBytes);
     const form          = pdfDoc.getForm();
     const page          = pdfDoc.getPages()[0];
