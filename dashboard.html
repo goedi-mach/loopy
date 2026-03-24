@@ -1836,7 +1836,7 @@ async function toggleArchivePet(petId, currentlyArchived) {
     }
   }
 
-  async function generateRabiesCertPDF(r) {
+async function generateRabiesCertPDF(r) {
     if (!window.PDFLib) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
@@ -1845,108 +1845,163 @@ async function toggleArchivePet(petId, currentlyArchived) {
         document.head.appendChild(s);
       });
     }
-    const { PDFDocument } = window.PDFLib;
+    const { PDFDocument, StandardFonts, rgb } = window.PDFLib;
 
     const templateUrl   = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/RabiesVacCert.pdf';
     const templateBytes = await fetch(templateUrl).then(res => res.arrayBuffer());
     const pdfDoc        = await PDFDocument.load(templateBytes);
     const form          = pdfDoc.getForm();
+    const page          = pdfDoc.getPages()[0];
+    const pageHeight    = page.getHeight(); // 792
 
-    const pet    = r.pet;
-    const client = r.client;
-
-    function setText(fieldId, value) {
-      try { if (value) form.getTextField(fieldId).setText(String(value)); } catch(_) {}
+    // ── Helpers ────────────────────────────────────────────────
+    function setText(fieldId, value, fontSize) {
+      try {
+        if (!value) return;
+        const field = form.getTextField(fieldId);
+        field.setText(String(value));
+        if (fontSize) field.setFontSize(fontSize);
+      } catch(_) {}
     }
+
+    // pdf-lib radio selection — tries both with and without slash prefix
     function setRadio(fieldId, value) {
-      try { if (value != null) form.getRadioGroup(fieldId).select(value); } catch(_) {}
+      try {
+        if (value == null) return;
+        const rg = form.getRadioGroup(fieldId);
+        // pdf-lib expects the value without the leading slash
+        const clean = String(value).replace(/^\//, '');
+        rg.select(clean);
+      } catch(_) {}
     }
+
     function setCheck(fieldId, checked) {
-      try { checked ? form.getCheckBox(fieldId).check() : form.getCheckBox(fieldId).uncheck(); } catch(_) {}
+      try {
+        if (checked) form.getCheckBox(fieldId).check();
+        else form.getCheckBox(fieldId).uncheck();
+      } catch(_) {}
     }
 
-    // Owner
-    const nameParts = (client.name || '').trim().split(' ');
-    setText('First Name', nameParts[0]);
+    const pet    = r.pet    || {};
+    const client = r.client || {};
+
+    // ── Owner name ─────────────────────────────────────────────
+    const fullName  = (client.name || '').trim();
+    const nameParts = fullName.split(' ');
+    setText('First Name', nameParts[0] || '');
     setText('Last Name',  nameParts.slice(1).join(' ') || '');
-    setText('Telephone #', client.phone || '');
+    setText('Telephone #', client.phone || '', 9);
 
-    const addr = client.address || '';
-    const addrMatch = addr.match(/^(.*?),\s*(.*?),\s*([A-Z]{2})\s+(\d{5}.*)$/);
-    if (addrMatch) {
-      setText('Street',   addrMatch[1]);
-      setText('City',     addrMatch[2]);
-      setText('State',    addrMatch[3]);
-      setText('Zip Code', addrMatch[4]);
-    } else {
-      setText('Owner\'s Address', addr);
+    // ── Address ────────────────────────────────────────────────
+    // Format: "1234 W Cermak Rd, Chicago, IL 60608"
+    const addr = (client.address || '').trim();
+    if (addr) {
+      const addrMatch = addr.match(/^(.*?),\s*(.*?),\s*([A-Z]{2})\s+(\d[\d-]*)$/);
+      if (addrMatch) {
+        setText('Street',   addrMatch[1].trim());
+        setText('City',     addrMatch[2].trim());
+        setText('State',    addrMatch[3].trim());
+        setText('Zip Code', addrMatch[4].trim());
+      } else {
+        // fallback: try to split on commas
+        const parts = addr.split(',').map(s => s.trim());
+        if (parts.length >= 1) setText('Street', parts[0]);
+        if (parts.length >= 2) setText('City', parts[1]);
+        if (parts.length >= 3) {
+          const stateZip = parts[2].trim().split(' ');
+          setText('State',    stateZip[0] || '');
+          setText('Zip Code', stateZip[1] || '');
+        }
+      }
     }
 
-    // Pet
-    setText('Animal Name',  pet.name || '');
-    setText('Microchip #',  pet.microchip_number || '');
+    // ── Pet ────────────────────────────────────────────────────
+    setText('Animal Name',       pet.name  || '');
+    setText('Microchip #',       pet.microchip_number || '', 9);
+    setText('Predominent Breed', pet.breed || '', 9);
 
-    const speciesMap = { dog: '/0', cat: '/1', ferret: '/2' };
-    setRadio('Species', speciesMap[pet.species?.toLowerCase()] ?? '/3');
+    // Colors — force small font because field box is 54pt tall
+    setText('Predominemt Colors/Markings', r.colors_markings || '', 9);
 
+    // Age
     const ageNum = parseFloat(pet.age);
     if (!isNaN(ageNum)) {
       if (ageNum < 1) {
         setText('Age', String(Math.round(ageNum * 12)));
-        setRadio('Months/Years', '/0');
+        setRadio('Months/Years', '0'); // Months = option 0
       } else {
         setText('Age', String(ageNum));
-        setRadio('Months/Years', '/1');
+        setRadio('Months/Years', '1'); // Years = option 1
       }
     }
 
+    // Weight → size radio (0=Under 20, 1=20-50, 2=Over 50)
     const w = parseFloat(pet.weight);
-    if (!isNaN(w)) setRadio('Size', w < 20 ? '/0' : w <= 50 ? '/1' : '/2');
+    if (!isNaN(w)) {
+      setRadio('Size', w < 20 ? '0' : w <= 50 ? '1' : '2');
+    }
 
-    setText('Predominent Breed', pet.breed || '');
+    // Species radio (0=Dog, 1=Cat, 2=Ferret, 3=Other)
+    const speciesMap = { dog: '0', cat: '1', ferret: '2' };
+    const speciesVal = speciesMap[(pet.species || '').toLowerCase()];
+    if (speciesVal != null) setRadio('Species', speciesVal);
 
-    if (pet.sex === 'male')   setRadio('Sex', '/0');
-    if (pet.sex === 'female') setRadio('Sex', '/1');
+    // Sex radio (0=Male, 1=Female)
+    if (pet.sex === 'male')   setRadio('Sex', '0');
+    if (pet.sex === 'female') setRadio('Sex', '1');
+
+    // Neutered checkbox
     setCheck('Neutered', pet.altered === 'yes');
 
-    // Rabies-specific
-    setText('Rabies Tag #',                r.rabies_tag_number || '');
-    setText('Predominemt Colors/Markings', r.colors_markings   || '');
-    setText('Product Name',                r.product_name      || '');
-    setText('Vaccine Serial Number',       r.lot_number        || '');
+    // ── Rabies-specific ────────────────────────────────────────
+    setText('Rabies Tag #',       r.rabies_tag_number || '', 9);
+    setText('Product Name',       r.product_name      || '', 9);
+    setText('Vaccine Serial Number', r.lot_number     || '', 9);
+    setText('License Number',     r.ac_license_number || '', 9);
 
-    const man = (r.manufacturer || '').padEnd(3, ' ');
+    // Manufacturer — 3 separate 1-char fields
+    const man = (r.manufacturer || '').toUpperCase().padEnd(3, ' ');
     setText('Manufacturer', man[0]);
     setText('Man2',         man[1]);
     setText('Man3',         man[2]);
 
-    const usdaMap = { '1yr': '/0', '3yr': '/1', '4yr': '/2' };
-    setRadio('USDA Licensed Vaccine', usdaMap[r.usda_duration] ?? null);
+    // USDA duration radio (0=1yr, 1=3yr, 2=4yr)
+    const usdaMap = { '1yr': '0', '3yr': '1', '4yr': '2' };
+    if (r.usda_duration && usdaMap[r.usda_duration] != null) {
+      setRadio('USDA Licensed Vaccine', usdaMap[r.usda_duration]);
+    }
 
-    if (r.dose_type === 'initial')  setRadio('Dose', '/0');
-    if (r.dose_type === 'booster')  setRadio('Dose', '/1');
+    // Dose radio (0=Initial, 1=Booster)
+    if (r.dose_type === 'initial')  setRadio('Dose', '0');
+    if (r.dose_type === 'booster')  setRadio('Dose', '1');
 
-    setText('License Number', r.ac_license_number || '');
+    // AC license checkboxes
     if (r.ac_license_type === '1yr')   setCheck('AC 1 year', true);
     if (r.ac_license_type === '3yr')   setCheck('AC 3 year', true);
     if (r.ac_license_type === 'other') setCheck('AC other',  true);
 
-    const fmtDate = iso => iso
-      ? new Date(iso).toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' })
-      : '';
-    setText('Date Vaccinated',       fmtDate(r.date_given));
-    setText('Next Vaccination Date', fmtDate(r.next_due));
+    // ── Dates ──────────────────────────────────────────────────
+    const fmtDate = iso => {
+      if (!iso) return '';
+      const d = new Date(iso + 'T12:00:00'); // noon to avoid timezone shift
+      return d.toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
+    };
+    setText('Date Vaccinated',       fmtDate(r.date_given), 9);
+    setText('Next Vaccination Date', fmtDate(r.next_due),   9);
 
-    setText('Veterinarian\'s Name',    r.administered_by || 'Dr. Ana Valbuena');
-    setText('Veterinarian\'s address', 'People Helping Pets — Chicago, IL');
+    // ── Vet info ───────────────────────────────────────────────
+    setText("Veterinarian's Name", r.administered_by || 'Dr. Ana García', 9);
+    // Force small font on the tall address field
+    setText("Veterinarian's address", 'People Helping Pets\nChicago, IL', 9);
 
-    // Ana's signature
+    // ── Ana's signature ────────────────────────────────────────
     try {
       const sigBytes = await fetch(
         'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/ana_signature.png'
       ).then(res => res.arrayBuffer());
       const sigImg = await pdfDoc.embedPng(sigBytes);
-      const page   = pdfDoc.getPages()[0];
+      // Signature field rect from inspection: x≈368, bottom≈388, top≈442
+      // pdf-lib y=0 is bottom of page (792pt tall)
       page.drawImage(sigImg, { x: 370, y: 792 - 442, width: 185, height: 48 });
     } catch (_) { /* signature optional */ }
 
