@@ -317,9 +317,24 @@
       </div>
 
       <div class="field">
-        <label>Address / <span class="es">Dirección</span></label>
-        <input type="text" name="address" placeholder="1234 W Cermak Rd, Chicago, IL 60608" />
-      </div>
+  <label>Street Address / <span class="es">Dirección</span></label>
+  <input type="text" name="street" placeholder="1234 W Cermak Rd" />
+</div>
+
+<div class="field-row">
+  <div class="field">
+    <label>City / <span class="es">Ciudad</span></label>
+    <input type="text" name="city" placeholder="Chicago" />
+  </div>
+  <div class="field">
+    <label>State / <span class="es">Estado</span></label>
+    <input type="text" name="state" placeholder="IL" maxlength="2" style="text-transform:uppercase" />
+  </div>
+  <div class="field">
+    <label>ZIP Code / <span class="es">Código Postal</span></label>
+    <input type="text" name="zip" placeholder="60608" maxlength="10" />
+  </div>
+</div>
     </div>
 
     <div class="section-card">
