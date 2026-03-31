@@ -9,8 +9,11 @@ a completed PDF to ./certificates/cert_<vaccination_id>.pdf
 
 import sys
 import os
+import io
 import json
 import requests
+from reportlab.pdfgen import canvas as rl_canvas
+from reportlab.lib.utils import ImageReader
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from pypdf import PdfReader, PdfWriter
@@ -140,10 +143,10 @@ def build_field_values(data):
         {"field_id": "First Name",                   "page": 1, "value": first_name},
         {"field_id": "Telephone #",                  "page": 1, "value": client.get("phone") or ""},
         {"field_id": "Owner's Address",  "page": 1, "value": ""},
-        {"field_id": "Street",                       "page": 1, "value": client.get("street") or ""},
-        {"field_id": "City",                         "page": 1, "value": client.get("city") or ""},
-        {"field_id": "State",                        "page": 1, "value": client.get("state") or ""},
-        {"field_id": "Zip Code",                     "page": 1, "value": client.get("zip") or ""},
+        {"field_id": "Street",       "page": 1, "value": client.get("street") or client.get("address") or ""}, 
+        {"field_id": "City",         "page": 1, "value": client.get("city") or ""},
+        {"field_id": "State",        "page": 1, "value": client.get("state") or ""},
+        {"field_id": "Zip Code",     "page": 1, "value": client.get("zip") or ""},
 
         # Animal info
         {"field_id": "Animal Name",                  "page": 1, "value": pet.get("name") or ""},
@@ -154,7 +157,7 @@ def build_field_values(data):
         {"field_id": "Sex",  "page": 1, "value": sex_val,  "type": "radio_group"} if sex_val and not is_neutered else {"field_id": "Sex", "page": 1, "value": "/Off", "type": "radio_group"},
         {"field_id": "Neutered",                     "page": 1, "value": neutered_val},
         {"field_id": "Predominent Breed",            "page": 1, "value": pet.get("breed") or ""},
-        {"field_id": "Predominemt Colors/Markings",  "page": 1, "value": pet.get("color") or ""},
+        {"field_id": "Predominemt Colors/Markings",  "page": 1, "value": vacc.get("colors_markings") or ""},
         {"field_id": "Microchip #",                  "page": 1, "value": microchip_val},
 
         # Animal control license — PHP uses 1 yr
@@ -181,6 +184,18 @@ def build_field_values(data):
     return fields
 
 # ─── PDF FILLING ──────────────────────────────────────────────────────────────
+SIGNATURE_IMG = "ana_signature.png"   # path to signature image
+
+def build_signature_overlay(pdf_width=612, pdf_height=792):
+    """Creates a single-page PDF overlay with the signature image."""
+    buf = io.BytesIO()
+    c = rl_canvas.Canvas(buf, pagesize=(pdf_width, pdf_height))
+    sig = ImageReader(SIGNATURE_IMG)
+    # Placed just above the 'Veterinarian's Signature' label
+    c.drawImage(sig, 313, 445, width=294, height=35, mask='auto')
+    c.save()
+    buf.seek(0)
+    return buf
 
 def fill_certificate(fields, vaccination_id):
     reader = PdfReader(TEMPLATE_PDF)
@@ -222,7 +237,11 @@ def fill_certificate(fields, vaccination_id):
                 parent.get_object().update({NameObject("/V"): NameObject(target_value)})
             else:
                 annot_obj.update({NameObject("/AS"): NameObject("/Off")})
-
+# Overlay signature image
+    if os.path.exists(SIGNATURE_IMG):
+        from pypdf import PdfReader as _PR
+        overlay = _PR(build_signature_overlay())
+        writer.pages[0].merge_page(overlay.pages[0])
     writer.set_need_appearances_writer(True)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -243,6 +262,7 @@ def main():
     print(f"Fetching data for vaccination id={vaccination_id}...")
 
     data   = fetch_vaccination_data(vaccination_id)
+    print("DEBUG vacc:", data["vacc"])
     fields = build_field_values(data)
     out    = fill_certificate(fields, vaccination_id)
 
