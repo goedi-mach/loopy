@@ -2131,7 +2131,7 @@ function setRadio(fieldName, index) {
                   <td>${fmt(r.date_given)}</td>
                   <td>${fmt(r.next_due)}</td>
                   <td>${r.administered_by || '—'}</td>
-                    <td style="white-space:nowrap">
+                  <td style="white-space:nowrap">
   <button onclick="openEditVax(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--text-muted);cursor:pointer;font-family:inherit;">✏️</button>
   <button onclick="deleteVax('${r.id}','${r.vaccine_name}')" style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--coral-dark);cursor:pointer;font-family:inherit;">✕</button>
   ${r.vaccine_name === 'Rabies' ? `<button onclick="downloadCertFromHistory(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;border:1.5px solid var(--navy);background:none;color:var(--navy);cursor:pointer;font-family:inherit;">⬇ cert</button>` : ''}
