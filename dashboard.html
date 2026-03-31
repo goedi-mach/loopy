@@ -1624,7 +1624,8 @@ async function logVaccine() {
       ['rabiesTagNum','rabiesColors','rabiesProduct','rabiesMan','rabiesACNum'].forEach(id => document.getElementById(id).value = '');
       ['rabiesUSDA','rabiesDose','rabiesACType'].forEach(id => document.getElementById(id).value = '');
 
-      await loadVaxHistory(selectedPetId, selectedPetObj.name);
+      console.log('reloading history for:', selectedPetId, selectedPetObj?.name);
+await loadVaxHistory(selectedPetId, selectedPetObj.name);
     } catch (err) {
       showMsg(msg, 'error', err.message);
     }
