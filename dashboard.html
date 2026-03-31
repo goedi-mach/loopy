@@ -2097,7 +2097,6 @@ function setRadio(fieldName, index) {
 
     try {
       const records = await sbGet(`vaccinations?pet_id=eq.${petId}&order=date_given.desc`);
-      console.log('vax records:', JSON.stringify(records));
 
       if (!records.length) {
         content.innerHTML = `<div class="empty-state">No vaccines on record for ${petName}.</div>`;
