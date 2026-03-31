@@ -2085,13 +2085,9 @@ function setRadio(fieldName, index) {
         method:  'DELETE',
         headers: authHeaders()
       });
-      console.log('delete status:', res.status, res.statusText);
-if (!res.ok) {
-  const body = await res.text();
-  console.log('delete error body:', body);
-  throw new Error(body);
-}
-      await loadVaxHistory(selectedPetId, selectedPetObj.name);
+      console.log('delete status:', res.status, res.ok);
+await loadVaxHistory(selectedPetId, selectedPetObj.name);
+console.log('history reloaded');
     } catch (err) {
       alert('Delete failed: ' + err.message);
     }
