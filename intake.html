@@ -556,7 +556,10 @@ try {
         name:       fd.get('name').trim(),
         email:      fd.get('email')?.trim()   || null,
         phone:      fd.get('phone')?.trim()   || null,
-        address:    fd.get('address')?.trim() || null,
+        street:     fd.get('street')?.trim()  || null,
+        city:       fd.get('city')?.trim()    || null,
+        state:      fd.get('state')?.trim()   || null,
+        zip:        fd.get('zip')?.trim()     || null,
         event_date: new Date().toISOString().split('T')[0]
       });
 
