@@ -518,9 +518,10 @@
 
   <nav class="topnav">
     <div class="topnav-brand">🐾 PHP Staff Dashboard</div>
-<div style="font-size:0.8rem; opacity:0.8;" id="loggedInUser"></div>
-    <a href="roster.html" style="color:rgba(255,255,255,0.8); text-decoration:none; font-size:0.85rem; font-weight:700; font-family:'Nunito',sans-serif; padding:0.3rem 0.75rem; border-radius:999px;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='none'">📋 Roster</a>
-    <button class="btn-logout" onclick="logout()">Sign Out</button>
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <a href="roster.html" style="color:rgba(255,255,255,0.8); text-decoration:none; font-size:0.85rem; font-weight:700; font-family:'Nunito',sans-serif; padding:0.3rem 0.75rem; border-radius:999px;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='none'">📋 Roster</a>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
   </nav>
 <div id="clinicBanner" style="display:none; background:var(--navy); color:white; padding:0.75rem 1.5rem; font-size:0.88rem; display:flex; align-items:center; gap:0.75rem;">
     <span style="font-size:1.1rem;">📅</span>
