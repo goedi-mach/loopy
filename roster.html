@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roster — People Helping Pets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:        #1a3a8f;
+      --navy-dark:   #122a6e;
+      --navy-light:  #dce6f9;
+      --navy-mid:    #4a6cc0;
+      --coral:       #f28b82;
+      --coral-light: #fde8e6;
+      --coral-dark:  #d96b62;
+      --green:       #2d8a5e;
+      --green-light: #d4f0e4;
+      --amber:       #d97706;
+      --amber-light: #fef3c7;
+      --text:        #1a1a2e;
+      --text-muted:  #5a6380;
+      --border:      #c8d3ec;
+      --bg:          #f4f7fe;
+      --white:       #ffffff;
+      --radius:      12px;
+      --shadow:      0 2px 16px rgba(26,58,143,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    .topnav {
+      background: var(--navy);
+      color: white;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(26,58,143,0.2);
+    }
+    .topnav-brand {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .topnav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .nav-link {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      transition: background 0.15s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
+    .btn-logout {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.35rem 0.9rem;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── MAIN ── */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.75rem 1.25rem 4rem;
+    }
+
+    .page-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--navy);
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .controls label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .controls input[type="date"] {
+      padding: 0.45rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--white);
+    }
+    .controls input[type="date"]:focus {
+      outline: none;
+      border-color: var(--navy);
+    }
+    .btn {
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1.5px solid transparent;
+    }
+    .btn-primary {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
+    }
+    .btn-primary:hover { background: var(--navy-dark); }
+    .btn-outline {
+      background: none;
+      color: var(--navy);
+      border-color: var(--navy);
+    }
+    .btn-outline:hover { background: var(--navy-light); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0;
+    }
+    .tab {
+      padding: 0.5rem 1.1rem;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+    .tab.active {
+      color: var(--navy);
+      border-bottom-color: var(--navy);
+    }
+    .tab:hover:not(.active) { color: var(--navy-mid); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1.5px solid rgba(26,58,143,0.07);
+      overflow: hidden;
+    }
+    .card-header {
+      background: var(--navy-light);
+      padding: 0.75rem 1.25rem;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--navy);
+      border-bottom: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .record-count {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    thead th {
+      background: var(--bg);
+      padding: 0.6rem 1rem;
+      text-align: left;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      border-bottom: 1.5px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { color: var(--navy); }
+    thead th .sort-icon { margin-left: 0.25rem; opacity: 0.4; }
+    thead th.sorted .sort-icon { opacity: 1; color: var(--navy); }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--navy-light); cursor: pointer; }
+    tbody td { padding: 0.65rem 1rem; vertical-align: middle; }
+    .cell-name { font-weight: 700; color: var(--navy); }
+    .cell-muted { color: var(--text-muted); font-size: 0.82rem; }
+    .pill {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .pill-dog  { background: #dbeafe; color: #1d4ed8; }
+    .pill-cat  { background: #fce7f3; color: #9d174d; }
+    .pill-other { background: #f3f4f6; color: #374151; }
+
+    /* ── EMPTY / LOADING ── */
+    .state-msg {
+      padding: 2.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* ── LOGIN OVERLAY ── */
+    #loginOverlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-mid) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    #loginOverlay.hidden { display: none; }
+    .login-card {
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(26,58,143,0.15);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 380px;
+      margin: 1rem;
+    }
+    .login-card h1 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--navy);
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+    .login-card .subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.75rem;
+    }
+    .login-field { margin-bottom: 1rem; }
+    .login-field label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+    .login-field input {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.95rem;
+    }
+    .login-field input:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(26,58,143,0.15);
+    }
+    .btn-login {
+      width: 100%;
+      background: var(--navy);
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      box-shadow: 0 4px 16px rgba(26,58,143,0.3);
+    }
+    .btn-login:hover { background: var(--navy-dark); }
+    .login-error {
+      color: var(--coral-dark);
+      font-size: 0.83rem;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN OVERLAY ── -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <h1>🐾 People Helping Pets</h1>
+    <p class="subtitle">Staff Roster — Sign in to continue</p>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="staff@example.com" />
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" />
+    </div>
+    <button class="btn-login" id="loginBtn" onclick="login()">Sign In</button>
+    <p class="login-error" id="loginError"></p>
+  </div>
+</div>
+
+<!-- ── NAV ── -->
+<nav class="topnav">
+  <div class="topnav-brand">🐾 People Helping Pets</div>
+  <div class="topnav-links">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="roster.html" class="nav-link active">Roster</a>
+    <button class="btn-logout" onclick="logout()">Sign Out</button>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="page-title">📋 Clinic Roster</div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <label>Clinic Date:</label>
+    <input type="date" id="dateFilter" />
+    <button class="btn btn-primary" onclick="loadAll()">Load</button>
+    <button class="btn btn-outline" onclick="clearDate()">All dates</button>
+    <button class="btn btn-outline" id="exportClientsBtn" onclick="exportCSV('clients')" disabled>⬇ Export Clients CSV</button>
+    <button class="btn btn-outline" id="exportPetsBtn" onclick="exportCSV('pets')" disabled>⬇ Export Pets & Vaccines CSV</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('clients', this)">👤 Clients</button>
+    <button class="tab" onclick="switchTab('pets', this)">🐾 Pets & Vaccines</button>
+  </div>
+
+  <!-- Clients tab -->
+  <div class="tab-panel active" id="tab-clients">
+    <div class="card">
+      <div class="card-header">
+        <span>Clients</span>
+        <span class="record-count" id="clientCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="clientsTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('clientsTable', 0)">Name <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('clientsTable', 1)">Phone <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('clientsTable', 2)">Email <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('clientsTable', 3)">Address <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('clientsTable', 4)">Clinic Date <span class="sort-icon">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="clientsBody">
+            <tr><td colspan="5" class="state-msg">Select a date and click Load, or click "All dates".</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pets & Vaccines tab -->
+  <div class="tab-panel" id="tab-pets">
+    <div class="card">
+      <div class="card-header">
+        <span>Pets & Vaccines</span>
+        <span class="record-count" id="petCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="petsTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('petsTable', 0)">Pet Name <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('petsTable', 1)">Species <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('petsTable', 2)">Breed <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('petsTable', 3)">Owner <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('petsTable', 4)">Vaccine <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('petsTable', 5)">Date Given <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('petsTable', 6)">Tag # <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('petsTable', 7)">Lot # <span class="sort-icon">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="petsBody">
+            <tr><td colspan="8" class="state-msg">Select a date and click Load, or click "All dates".</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL     = 'https://lzfhdzklfmmxbfmyscfl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6ZmhkemtsZm1teGJmbXlzY2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzA4MTAsImV4cCI6MjA4OTUwNjgxMH0.3nDc8afk-_ufnSQ4ozKCdaYheMZkm6qjNf9ibyo03uk';
+
+  let accessToken = localStorage.getItem('php_token') || null;
+
+  // ── AUTH ──────────────────────────────────────────────────────────
+  function authHeaders() {
+    return {
+      'Content-Type':  'application/json',
+      'apikey':        SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`
+    };
+  }
+
+  async function login() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('loginBtn');
+    const errEl    = document.getElementById('loginError');
+    btn.textContent = 'Signing in…';
+    btn.disabled = true;
+    errEl.textContent = '';
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+      accessToken = data.access_token;
+      localStorage.setItem('php_token', accessToken);
+      document.getElementById('loginOverlay').classList.add('hidden');
+    } catch (err) {
+      errEl.textContent = err.message;
+    } finally {
+      btn.textContent = 'Sign In';
+      btn.disabled = false;
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('php_token');
+    localStorage.removeItem('php_email');
+    accessToken = null;
+    document.getElementById('loginOverlay').classList.remove('hidden');
+  }
+
+  async function sbGet(path) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      headers: { ...authHeaders(), 'Accept': 'application/json' }
+    });
+    if (res.status === 401) {
+      logout();
+      throw new Error('Session expired — please sign in again.');
+    }
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    return res.json();
+  }
+
+  // ── DATA ──────────────────────────────────────────────────────────
+  let clientsData = [];
+  let petsData    = [];
+
+  async function loadAll() {
+    const date = document.getElementById('dateFilter').value;
+    await Promise.all([loadClients(date), loadPets(date)]);
+    document.getElementById('exportClientsBtn').disabled = false;
+    document.getElementById('exportPetsBtn').disabled    = false;
+  }
+
+  async function clearDate() {
+    document.getElementById('dateFilter').value = '';
+    await loadAll();
+  }
+
+  async function loadClients(date) {
+    const body = document.getElementById('clientsBody');
+    body.innerHTML = `<tr><td colspan="5" class="state-msg">Loading…</td></tr>`;
+    try {
+      let path = 'clients?order=name.asc&limit=500';
+      if (date) path += `&event_date=eq.${date}`;
+      clientsData = await sbGet(path);
+      document.getElementById('clientCount').textContent = `${clientsData.length} record${clientsData.length !== 1 ? 's' : ''}`;
+      renderClients(clientsData);
+    } catch (err) {
+      body.innerHTML = `<tr><td colspan="5" class="state-msg" style="color:var(--coral-dark)">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  async function loadPets(date) {
+    const body = document.getElementById('petsBody');
+    body.innerHTML = `<tr><td colspan="8" class="state-msg">Loading…</td></tr>`;
+    try {
+      // Fetch pets joined with their clients
+      let clientPath = 'clients?select=id,name,event_date&limit=500';
+      if (date) clientPath += `&event_date=eq.${date}`;
+      const clients = await sbGet(clientPath);
+      const clientMap = Object.fromEntries(clients.map(c => [c.id, c.name]));
+      const clientIds = clients.map(c => c.id);
+
+      if (!clientIds.length) {
+        petsData = [];
+        body.innerHTML = `<tr><td colspan="8" class="state-msg">No records found.</td></tr>`;
+        document.getElementById('petCount').textContent = '0 records';
+        return;
+      }
+
+      // Fetch pets for those clients
+      const pets = await sbGet(`pets?client_id=in.(${clientIds.join(',')})&order=name.asc&limit=1000`);
+
+      // Fetch vaccinations for those pets
+      const petIds = pets.map(p => p.id);
+      let vaccinations = [];
+      if (petIds.length) {
+        vaccinations = await sbGet(`vaccinations?pet_id=in.(${petIds.join(',')})&order=date_given.desc&limit=1000`);
+      }
+
+      // Build flat rows: one per vaccination, or one per pet if no vaccines
+      const vaxByPet = {};
+      for (const v of vaccinations) {
+        if (!vaxByPet[v.pet_id]) vaxByPet[v.pet_id] = [];
+        vaxByPet[v.pet_id].push(v);
+      }
+
+      petsData = [];
+      for (const pet of pets) {
+        const ownerName = clientMap[pet.client_id] || '—';
+        const vaxList   = vaxByPet[pet.id] || [null];
+        for (const vax of vaxList) {
+          petsData.push({ pet, vax, ownerName });
+        }
+      }
+
+      document.getElementById('petCount').textContent = `${petsData.length} record${petsData.length !== 1 ? 's' : ''}`;
+      renderPets(petsData);
+    } catch (err) {
+      body.innerHTML = `<tr><td colspan="8" class="state-msg" style="color:var(--coral-dark)">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  function renderClients(data) {
+    const body = document.getElementById('clientsBody');
+    if (!data.length) {
+      body.innerHTML = `<tr><td colspan="5" class="state-msg">No clients found.</td></tr>`;
+      return;
+    }
+    const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+    const addr = c => [c.street, c.city, c.state, c.zip].filter(Boolean).join(', ') || c.address || '—';
+    body.innerHTML = data.map(c => `
+      <tr onclick="openInDashboard('${c.id}')">
+        <td class="cell-name">${c.name || '—'}</td>
+        <td>${c.phone || '—'}</td>
+        <td class="cell-muted">${c.email || '—'}</td>
+        <td class="cell-muted">${addr(c)}</td>
+        <td class="cell-muted">${fmt(c.event_date)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderPets(data) {
+    const body = document.getElementById('petsBody');
+    if (!data.length) {
+      body.innerHTML = `<tr><td colspan="8" class="state-msg">No pets found.</td></tr>`;
+      return;
+    }
+    const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+    const speciesPill = s => {
+      const sl = (s || '').toLowerCase();
+      const cls = sl === 'dog' ? 'pill-dog' : sl === 'cat' ? 'pill-cat' : 'pill-other';
+      return `<span class="pill ${cls}">${s || '—'}</span>`;
+    };
+    body.innerHTML = data.map(({ pet, vax, ownerName }) => `
+      <tr onclick="openInDashboard('${pet.client_id}')">
+        <td class="cell-name">${pet.name || '—'}</td>
+        <td>${speciesPill(pet.species)}</td>
+        <td class="cell-muted">${pet.breed || '—'}</td>
+        <td>${ownerName}</td>
+        <td>${vax ? vax.vaccine_name : '—'}</td>
+        <td class="cell-muted">${vax ? fmt(vax.date_given) : '—'}</td>
+        <td class="cell-muted">${vax?.rabies_tag_number || '—'}</td>
+        <td class="cell-muted">${vax?.lot_number || '—'}</td>
+      </tr>
+    `).join('');
+  }
+
+  // ── OPEN IN DASHBOARD ─────────────────────────────────────────────
+  function openInDashboard(clientId) {
+    window.location.href = `dashboard.html?client=${clientId}`;
+  }
+
+  // ── SORTING ───────────────────────────────────────────────────────
+  const sortState = {};
+  function sortTable(tableId, colIndex) {
+    const key = `${tableId}-${colIndex}`;
+    sortState[key] = !sortState[key]; // toggle asc/desc
+    const asc = sortState[key];
+
+    const tbody = document.getElementById(
+      tableId === 'clientsTable' ? 'clientsBody' : 'petsBody'
+    );
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      const aText = a.cells[colIndex]?.textContent.trim() || '';
+      const bText = b.cells[colIndex]?.textContent.trim() || '';
+      return asc
+        ? aText.localeCompare(bText, undefined, { numeric: true })
+        : bText.localeCompare(aText, undefined, { numeric: true });
+    });
+    rows.forEach(r => tbody.appendChild(r));
+
+    // Update sort icon styles
+    const table = document.getElementById(tableId);
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.classList.toggle('sorted', i === colIndex);
+      const icon = th.querySelector('.sort-icon');
+      if (icon) icon.textContent = i === colIndex ? (asc ? '↑' : '↓') : '↕';
+    });
+  }
+
+  // ── CSV EXPORT ────────────────────────────────────────────────────
+  function exportCSV(type) {
+    let rows, filename;
+    const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' }) : '';
+    const addr = c => [c.street, c.city, c.state, c.zip].filter(Boolean).join(', ') || c.address || '';
+    const esc  = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+    if (type === 'clients') {
+      filename = 'php_clients.csv';
+      const header = ['Name', 'Phone', 'Email', 'Address', 'Clinic Date'];
+      rows = [header, ...clientsData.map(c => [
+        esc(c.name), esc(c.phone), esc(c.email), esc(addr(c)), esc(fmt(c.event_date))
+      ])];
+    } else {
+      filename = 'php_pets_vaccines.csv';
+      const header = ['Pet Name', 'Species', 'Breed', 'Owner', 'Vaccine', 'Date Given', 'Tag #', 'Lot #'];
+      rows = [header, ...petsData.map(({ pet, vax, ownerName }) => [
+        esc(pet.name), esc(pet.species), esc(pet.breed), esc(ownerName),
+        esc(vax?.vaccine_name), esc(fmt(vax?.date_given)),
+        esc(vax?.rabies_tag_number), esc(vax?.lot_number)
+      ])];
+    }
+
+    const csv  = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── TABS ──────────────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`tab-${name}`).classList.add('active');
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────────
+  if (accessToken) {
+    document.getElementById('loginOverlay').classList.add('hidden');
+  }
+
+  // Set today's date as default
+  document.getElementById('dateFilter').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
