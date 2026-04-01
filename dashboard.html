@@ -2085,10 +2085,7 @@ function setRadio(fieldName, index) {
         method:  'DELETE',
         headers: authHeaders()
       });
-      console.log('delete status:', res.status, res.ok);
-console.log('selectedPetId:', selectedPetId);
-await loadVaxHistory(selectedPetId, selectedPetObj.name);
-console.log('history reloaded');
+      await loadVaxHistory(selectedPetId, selectedPetObj.name);
     } catch (err) {
       alert('Delete failed: ' + err.message);
     }
@@ -2100,7 +2097,6 @@ console.log('history reloaded');
 
     try {
       const records = await sbGet(`vaccinations?pet_id=eq.${petId}&order=date_given.desc`);
-console.log('records after delete:', records.length, records.map(r => r.id));
       if (!records.length) {
         content.innerHTML = `<div class="empty-state">No vaccines on record for ${petName}.</div>`;
         return;
