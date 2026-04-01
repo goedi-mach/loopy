@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Profile — People Helping Pets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:        #1a3a8f;
+      --navy-dark:   #122a6e;
+      --navy-light:  #dce6f9;
+      --navy-mid:    #4a6cc0;
+      --coral:       #f28b82;
+      --coral-light: #fde8e6;
+      --coral-dark:  #d96b62;
+      --green:       #2d8a5e;
+      --green-light: #d4f0e4;
+      --amber:       #d97706;
+      --amber-light: #fef3c7;
+      --text:        #1a1a2e;
+      --text-muted:  #5a6380;
+      --border:      #c8d3ec;
+      --bg:          #f4f7fe;
+      --white:       #ffffff;
+      --radius:      12px;
+      --shadow:      0 2px 16px rgba(26,58,143,0.10);
+      --shadow-lg:   0 8px 32px rgba(26,58,143,0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    .topnav {
+      background: var(--navy);
+      color: white;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(26,58,143,0.2);
+    }
+    .topnav-brand {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+    .topnav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .nav-link {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      transition: background 0.15s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .btn-logout {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.35rem 0.9rem;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── MAIN ── */
+    .main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 1.75rem 1.25rem 4rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--navy);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      opacity: 0.7;
+      transition: opacity 0.15s;
+    }
+    .back-link:hover { opacity: 1; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1.5px solid rgba(26,58,143,0.07);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .card-header {
+      background: var(--navy-light);
+      padding: 0.85rem 1.25rem;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--navy);
+      border-bottom: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-body { padding: 1.25rem; }
+
+    /* ── FIELDS ── */
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .field-grid.three { grid-template-columns: 2fr 1fr 1fr; }
+    .field-grid.four  { grid-template-columns: 2fr 1fr 1fr 1fr; }
+    @media (max-width: 600px) {
+      .field-grid, .field-grid.three, .field-grid.four { grid-template-columns: 1fr; }
+    }
+    .field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .field label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .field-value {
+      font-size: 0.95rem;
+      color: var(--text);
+      font-weight: 600;
+      min-height: 1.4rem;
+    }
+    .field-value.muted { color: var(--text-muted); font-weight: 400; }
+    input[type="text"], input[type="email"], input[type="tel"],
+    input[type="number"], select {
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: #f8faff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(26,58,143,0.12);
+      background: var(--white);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 0.45rem 1.1rem;
+      border-radius: 999px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1.5px solid transparent;
+    }
+    .btn-primary   { background: var(--navy); color: white; border-color: var(--navy); }
+    .btn-primary:hover { background: var(--navy-dark); }
+    .btn-outline   { background: none; color: var(--navy); border-color: var(--navy); }
+    .btn-outline:hover { background: var(--navy-light); }
+    .btn-danger    { background: none; color: var(--coral-dark); border-color: var(--coral-dark); }
+    .btn-danger:hover { background: var(--coral-light); }
+    .btn-sm { font-size: 0.78rem; padding: 0.3rem 0.75rem; }
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+
+    /* ── MSG ── */
+    .msg {
+      font-size: 0.83rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .msg.success { background: var(--green-light); color: var(--green); display: block; }
+    .msg.error   { background: var(--coral-light); color: var(--coral-dark); display: block; }
+
+    /* ── PET CARDS ── */
+    .pet-card {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .pet-card:last-child { margin-bottom: 0; }
+    .pet-card-header {
+      background: var(--bg);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pet-card-header:hover { background: var(--navy-light); }
+    .pet-name {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .pill {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .pill-dog   { background: #dbeafe; color: #1d4ed8; }
+    .pill-cat   { background: #fce7f3; color: #9d174d; }
+    .pill-other { background: #f3f4f6; color: #374151; }
+    .pet-card-body { display: none; padding: 1rem; border-top: 1.5px solid var(--border); }
+    .pet-card-body.open { display: block; }
+
+    /* ── VAX TABLE ── */
+    .vax-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin-top: 1rem; }
+    .vax-table th {
+      background: var(--bg);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      border-bottom: 1.5px solid var(--border);
+    }
+    .vax-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); }
+    .vax-table tr:last-child td { border-bottom: none; }
+
+    /* ── LOGIN OVERLAY ── */
+    #loginOverlay {
+      position: fixed; inset: 0;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-mid) 100%);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    #loginOverlay.hidden { display: none; }
+    .login-card {
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      padding: 2.5rem 2rem;
+      width: 100%; max-width: 380px; margin: 1rem;
+    }
+    .login-card h1 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.4rem; font-weight: 800;
+      color: var(--navy); text-align: center; margin-bottom: 0.25rem;
+    }
+    .login-card .subtitle {
+      text-align: center; font-size: 0.85rem;
+      color: var(--text-muted); margin-bottom: 1.75rem;
+    }
+    .login-field { margin-bottom: 1rem; }
+    .login-field label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .login-field input {
+      width: 100%; padding: 0.65rem 0.9rem;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: 'Nunito Sans', sans-serif; font-size: 0.95rem;
+    }
+    .btn-login {
+      width: 100%; background: var(--navy); color: white;
+      font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800;
+      padding: 0.8rem; border: none; border-radius: 999px; cursor: pointer;
+      margin-top: 0.5rem; box-shadow: 0 4px 16px rgba(26,58,143,0.3);
+    }
+    .btn-login:hover { background: var(--navy-dark); }
+    .login-error { color: var(--coral-dark); font-size: 0.83rem; margin-top: 0.5rem; text-align: center; }
+
+    .section-label {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 1rem 0 0.5rem;
+    }
+    .divider { border: none; border-top: 1.5px solid var(--border); margin: 1rem 0; }
+    .empty-state { color: var(--text-muted); font-size: 0.88rem; padding: 1rem 0; text-align: center; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN OVERLAY ── -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <h1>🐾 People Helping Pets</h1>
+    <p class="subtitle">Sign in to continue</p>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="staff@example.com" />
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" />
+    </div>
+    <button class="btn-login" onclick="login()">Sign In</button>
+    <p class="login-error" id="loginError"></p>
+  </div>
+</div>
+
+<!-- ── NAV ── -->
+<nav class="topnav">
+  <div class="topnav-brand">🐾 People Helping Pets</div>
+  <div class="topnav-links">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="roster.html" class="nav-link">Roster</a>
+    <button class="btn-logout" onclick="logout()">Sign Out</button>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <a class="back-link" id="backLink" href="roster.html">← Back to Roster</a>
+
+  <!-- ── CLIENT INFO ── -->
+  <div class="card" id="clientCard">
+    <div class="card-header">
+      <span id="clientCardTitle">Client Profile</span>
+      <div style="display:flex;gap:0.5rem;">
+        <button class="btn btn-sm btn-outline" id="editClientBtn" onclick="toggleEditClient()">✏️ Edit</button>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <!-- View mode -->
+      <div id="clientView">
+        <div class="field-grid">
+          <div class="field"><label>Name</label><div class="field-value" id="viewName">—</div></div>
+          <div class="field"><label>Phone</label><div class="field-value muted" id="viewPhone">—</div></div>
+          <div class="field"><label>Email</label><div class="field-value muted" id="viewEmail">—</div></div>
+          <div class="field"><label>Clinic Date</label><div class="field-value muted" id="viewDate">—</div></div>
+        </div>
+        <div class="field-grid four" style="margin-top:1rem;">
+          <div class="field"><label>Street</label><div class="field-value muted" id="viewStreet">—</div></div>
+          <div class="field"><label>City</label><div class="field-value muted" id="viewCity">—</div></div>
+          <div class="field"><label>State</label><div class="field-value muted" id="viewState">—</div></div>
+          <div class="field"><label>ZIP</label><div class="field-value muted" id="viewZip">—</div></div>
+        </div>
+      </div>
+
+      <!-- Edit mode -->
+      <div id="clientEdit" style="display:none;">
+        <div class="field-grid">
+          <div class="field"><label>Name *</label><input type="text" id="editName" /></div>
+          <div class="field"><label>Phone</label><input type="tel" id="editPhone" /></div>
+          <div class="field"><label>Email</label><input type="email" id="editEmail" /></div>
+          <div class="field"><label>Clinic Date</label><input type="text" id="editDate" placeholder="YYYY-MM-DD" /></div>
+        </div>
+        <div class="field-grid four" style="margin-top:1rem;">
+          <div class="field"><label>Street</label><input type="text" id="editStreet" /></div>
+          <div class="field"><label>City</label><input type="text" id="editCity" /></div>
+          <div class="field"><label>State</label><input type="text" id="editState" maxlength="2" /></div>
+          <div class="field"><label>ZIP</label><input type="text" id="editZip" maxlength="10" /></div>
+        </div>
+        <div class="msg" id="clientMsg"></div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="saveClient()">Save Changes</button>
+          <button class="btn btn-outline" onclick="toggleEditClient()">Cancel</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── PETS ── -->
+  <div class="card">
+    <div class="card-header">
+      <span>🐾 Pets</span>
+      <button class="btn btn-sm btn-outline" onclick="toggleAddPet()">+ Add Pet</button>
+    </div>
+    <div class="card-body">
+
+      <!-- Add pet form -->
+      <div id="addPetForm" style="display:none; margin-bottom:1.25rem;">
+        <p class="section-label">New Pet</p>
+        <div class="field-grid">
+          <div class="field"><label>Name *</label><input type="text" id="newName" /></div>
+          <div class="field"><label>Species *</label>
+            <select id="newSpecies">
+              <option value="">Select…</option>
+              <option value="dog">Dog</option>
+              <option value="cat">Cat</option>
+              <option value="ferret">Ferret</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Breed</label><input type="text" id="newBreed" /></div>
+          <div class="field"><label>Age (years)</label><input type="number" id="newAge" min="0" step="0.5" /></div>
+          <div class="field"><label>Weight (lbs)</label><input type="number" id="newWeight" min="0" /></div>
+          <div class="field"><label>Sex</label>
+            <select id="newSex">
+              <option value="unknown">Unknown</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="field"><label>Altered</label>
+            <select id="newAltered">
+              <option value="unknown">Unknown</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="field"><label>Microchipped</label>
+            <select id="newMicrochipped">
+              <option value="unknown">Unknown</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" style="margin-top:0.75rem;max-width:300px;">
+          <label>Microchip Number</label><input type="text" id="newMicrochipNum" />
+        </div>
+        <div class="msg" id="addPetMsg"></div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="addPet()">Add Pet</button>
+          <button class="btn btn-outline" onclick="toggleAddPet()">Cancel</button>
+        </div>
+        <hr class="divider" />
+      </div>
+
+      <!-- Pet list -->
+      <div id="petList"><div class="empty-state">Loading pets…</div></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://lzfhdzklfmmxbfmyscfl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6ZmhkemtsZm1teGJmbXlzY2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzA4MTAsImV4cCI6MjA4OTUwNjgxMH0.3nDc8afk-_ufnSQ4ozKCdaYheMZkm6qjNf9ibyo03uk';
+
+  let accessToken = localStorage.getItem('php_token') || null;
+  let clientData  = null;
+  let clientId    = new URLSearchParams(location.search).get('id');
+
+  // ── AUTH ──────────────────────────────────────────────────────────
+  function authHeaders() {
+    return {
+      'Content-Type':  'application/json',
+      'apikey':        SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`
+    };
+  }
+
+  async function login() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errEl    = document.getElementById('loginError');
+    errEl.textContent = '';
+    try {
+      const res  = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || 'Login failed');
+      accessToken = data.access_token;
+      localStorage.setItem('php_token', accessToken);
+      document.getElementById('loginOverlay').classList.add('hidden');
+      init();
+    } catch (err) { errEl.textContent = err.message; }
+  }
+
+  function logout() {
+    localStorage.removeItem('php_token');
+    localStorage.removeItem('php_email');
+    accessToken = null;
+    document.getElementById('loginOverlay').classList.remove('hidden');
+  }
+
+  async function sbGet(path) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      headers: { ...authHeaders(), 'Accept': 'application/json' }
+    });
+    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    return res.json();
+  }
+
+  async function sbPatch(table, filter, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`, {
+      method: 'PATCH',
+      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    return res.json();
+  }
+
+  async function sbPost(table, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    return res.json();
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────────
+  async function init() {
+    if (!clientId) {
+      document.getElementById('clientCardTitle').textContent = 'No client ID provided';
+      return;
+    }
+    await loadClient();
+    await loadPets();
+  }
+
+  // ── CLIENT ────────────────────────────────────────────────────────
+  async function loadClient() {
+    try {
+      const rows = await sbGet(`clients?id=eq.${clientId}&select=*`);
+      if (!rows.length) throw new Error('Client not found');
+      clientData = rows[0];
+      renderClient();
+    } catch (err) {
+      document.getElementById('clientCardTitle').textContent = 'Error: ' + err.message;
+    }
+  }
+
+  function renderClient() {
+    const c   = clientData;
+    const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+    document.title = `${c.name} — People Helping Pets`;
+    document.getElementById('clientCardTitle').textContent = c.name;
+    document.getElementById('viewName').textContent   = c.name   || '—';
+    document.getElementById('viewPhone').textContent  = c.phone  || '—';
+    document.getElementById('viewEmail').textContent  = c.email  || '—';
+    document.getElementById('viewDate').textContent   = fmt(c.event_date);
+    document.getElementById('viewStreet').textContent = c.street || c.address || '—';
+    document.getElementById('viewCity').textContent   = c.city   || '—';
+    document.getElementById('viewState').textContent  = c.state  || '—';
+    document.getElementById('viewZip').textContent    = c.zip    || '—';
+  }
+
+  function toggleEditClient() {
+    const editing = document.getElementById('clientEdit').style.display === 'none';
+    if (editing) {
+      const c = clientData;
+      document.getElementById('editName').value   = c.name        || '';
+      document.getElementById('editPhone').value  = c.phone       || '';
+      document.getElementById('editEmail').value  = c.email       || '';
+      document.getElementById('editDate').value   = c.event_date  || '';
+      document.getElementById('editStreet').value = c.street || c.address || '';
+      document.getElementById('editCity').value   = c.city        || '';
+      document.getElementById('editState').value  = c.state       || '';
+      document.getElementById('editZip').value    = c.zip         || '';
+    }
+    document.getElementById('clientView').style.display = editing ? 'none' : 'block';
+    document.getElementById('clientEdit').style.display = editing ? 'block' : 'none';
+    document.getElementById('editClientBtn').textContent = editing ? '✕ Cancel' : '✏️ Edit';
+  }
+
+  async function saveClient() {
+    const name = document.getElementById('editName').value.trim();
+    const msg  = document.getElementById('clientMsg');
+    msg.className = 'msg';
+    if (!name) { msg.className = 'msg error'; msg.textContent = 'Name is required.'; return; }
+    try {
+      const [updated] = await sbPatch('clients', `id=eq.${clientId}`, {
+        name,
+        phone:      document.getElementById('editPhone').value.trim()  || null,
+        email:      document.getElementById('editEmail').value.trim()  || null,
+        event_date: document.getElementById('editDate').value          || null,
+        street:     document.getElementById('editStreet').value.trim() || null,
+        city:       document.getElementById('editCity').value.trim()   || null,
+        state:      document.getElementById('editState').value.trim()  || null,
+        zip:        document.getElementById('editZip').value.trim()    || null,
+      });
+      clientData = { ...clientData, ...updated };
+      renderClient();
+      toggleEditClient();
+    } catch (err) {
+      msg.className = 'msg error';
+      msg.textContent = err.message;
+    }
+  }
+
+  // ── PETS ──────────────────────────────────────────────────────────
+  async function loadPets() {
+    const list = document.getElementById('petList');
+    list.innerHTML = '<div class="empty-state">Loading…</div>';
+    try {
+      const pets = await sbGet(`pets?client_id=eq.${clientId}&order=name.asc`);
+      if (!pets.length) {
+        list.innerHTML = '<div class="empty-state">No pets on record.</div>';
+        return;
+      }
+      list.innerHTML = pets.map(p => buildPetCard(p)).join('');
+      // Load vax for each pet
+      for (const pet of pets) {
+        loadVaxHistory(pet.id);
+      }
+    } catch (err) {
+      list.innerHTML = `<div class="empty-state" style="color:var(--coral-dark)">Error: ${err.message}</div>`;
+    }
+  }
+
+  function speciesPill(s) {
+    const sl  = (s || '').toLowerCase();
+    const cls = sl === 'dog' ? 'pill-dog' : sl === 'cat' ? 'pill-cat' : 'pill-other';
+    return `<span class="pill ${cls}">${s || 'Unknown'}</span>`;
+  }
+
+  function buildPetCard(p) {
+    const id = p.id.replace(/-/g, '_');
+    return `
+      <div class="pet-card" id="petCard_${id}">
+        <div class="pet-card-header" onclick="togglePetCard('${id}')">
+          <div class="pet-name">
+            ${p.name} ${speciesPill(p.species)}
+            ${p.archived ? '<span class="pill" style="background:#f3f4f6;color:#9ca3af">Archived</span>' : ''}
+          </div>
+          <span style="color:var(--text-muted);font-size:0.8rem;" id="petChevron_${id}">▼</span>
+        </div>
+        <div class="pet-card-body" id="petBody_${id}">
+
+          <!-- Pet detail view -->
+          <div id="petView_${id}">
+            <div class="field-grid">
+              <div class="field"><label>Breed</label><div class="field-value muted">${p.breed || '—'}</div></div>
+              <div class="field"><label>Age</label><div class="field-value muted">${p.age != null ? p.age + ' yr' : '—'}</div></div>
+              <div class="field"><label>Weight</label><div class="field-value muted">${p.weight != null ? p.weight + ' lbs' : '—'}</div></div>
+              <div class="field"><label>Sex</label><div class="field-value muted">${p.sex || '—'}</div></div>
+              <div class="field"><label>Altered</label><div class="field-value muted">${p.altered || '—'}</div></div>
+              <div class="field"><label>Microchipped</label><div class="field-value muted">${p.microchipped || '—'}</div></div>
+              <div class="field"><label>Microchip #</label><div class="field-value muted">${p.microchip_number || '—'}</div></div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline" onclick="openEditPet('${p.id}', '${id}')">✏️ Edit Pet</button>
+              <button class="btn btn-sm btn-danger" onclick="toggleArchive('${p.id}', ${!!p.archived})">${p.archived ? 'Unarchive' : 'Archive'}</button>
+            </div>
+          </div>
+
+          <!-- Pet edit form (hidden) -->
+          <div id="petEdit_${id}" style="display:none;">
+            <div class="field-grid">
+              <div class="field"><label>Name *</label><input type="text" id="eName_${id}" value="${p.name || ''}" /></div>
+              <div class="field"><label>Species *</label>
+                <select id="eSpecies_${id}">
+                  <option value="dog" ${p.species==='dog'?'selected':''}>Dog</option>
+                  <option value="cat" ${p.species==='cat'?'selected':''}>Cat</option>
+                  <option value="ferret" ${p.species==='ferret'?'selected':''}>Ferret</option>
+                  <option value="other" ${p.species==='other'?'selected':''}>Other</option>
+                </select>
+              </div>
+              <div class="field"><label>Breed</label><input type="text" id="eBreed_${id}" value="${p.breed || ''}" /></div>
+              <div class="field"><label>Age (years)</label><input type="number" id="eAge_${id}" value="${p.age || ''}" min="0" step="0.5" /></div>
+              <div class="field"><label>Weight (lbs)</label><input type="number" id="eWeight_${id}" value="${p.weight || ''}" min="0" /></div>
+              <div class="field"><label>Sex</label>
+                <select id="eSex_${id}">
+                  <option value="unknown" ${p.sex==='unknown'?'selected':''}>Unknown</option>
+                  <option value="male" ${p.sex==='male'?'selected':''}>Male</option>
+                  <option value="female" ${p.sex==='female'?'selected':''}>Female</option>
+                </select>
+              </div>
+              <div class="field"><label>Altered</label>
+                <select id="eAltered_${id}">
+                  <option value="unknown" ${p.altered==='unknown'?'selected':''}>Unknown</option>
+                  <option value="yes" ${p.altered==='yes'?'selected':''}>Yes</option>
+                  <option value="no" ${p.altered==='no'?'selected':''}>No</option>
+                </select>
+              </div>
+              <div class="field"><label>Microchipped</label>
+                <select id="eMicrochipped_${id}">
+                  <option value="unknown" ${p.microchipped==='unknown'?'selected':''}>Unknown</option>
+                  <option value="yes" ${p.microchipped==='yes'?'selected':''}>Yes</option>
+                  <option value="no" ${p.microchipped==='no'?'selected':''}>No</option>
+                </select>
+              </div>
+              <div class="field"><label>Microchip #</label><input type="text" id="eMicrochipNum_${id}" value="${p.microchip_number || ''}" /></div>
+            </div>
+            <div class="msg" id="petMsg_${id}"></div>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-primary" onclick="savePet('${p.id}', '${id}')">Save</button>
+              <button class="btn btn-sm btn-outline" onclick="closeEditPet('${id}')">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Vax history -->
+          <hr class="divider" />
+          <p class="section-label">Vaccination History</p>
+          <div id="vaxHistory_${id}"><div class="empty-state">Loading…</div></div>
+
+        </div>
+      </div>
+    `;
+  }
+
+  function togglePetCard(id) {
+    const body    = document.getElementById(`petBody_${id}`);
+    const chevron = document.getElementById(`petChevron_${id}`);
+    const open    = body.classList.toggle('open');
+    chevron.textContent = open ? '▲' : '▼';
+  }
+
+  function openEditPet(petId, id) {
+    document.getElementById(`petView_${id}`).style.display = 'none';
+    document.getElementById(`petEdit_${id}`).style.display = 'block';
+  }
+
+  function closeEditPet(id) {
+    document.getElementById(`petEdit_${id}`).style.display = 'none';
+    document.getElementById(`petView_${id}`).style.display = 'block';
+  }
+
+  async function savePet(petId, id) {
+    const name = document.getElementById(`eName_${id}`).value.trim();
+    const msg  = document.getElementById(`petMsg_${id}`);
+    msg.className = 'msg';
+    if (!name) { msg.className = 'msg error'; msg.textContent = 'Name is required.'; return; }
+    try {
+      await sbPatch('pets', `id=eq.${petId}`, {
+        name,
+        species:          document.getElementById(`eSpecies_${id}`).value,
+        breed:            document.getElementById(`eBreed_${id}`).value.trim()     || null,
+        age:              document.getElementById(`eAge_${id}`).value              ? +document.getElementById(`eAge_${id}`).value : null,
+        weight:           document.getElementById(`eWeight_${id}`).value           ? +document.getElementById(`eWeight_${id}`).value : null,
+        sex:              document.getElementById(`eSex_${id}`).value              || 'unknown',
+        altered:          document.getElementById(`eAltered_${id}`).value          || 'unknown',
+        microchipped:     document.getElementById(`eMicrochipped_${id}`).value     || 'unknown',
+        microchip_number: document.getElementById(`eMicrochipNum_${id}`).value.trim() || null,
+      });
+      await loadPets();
+    } catch (err) {
+      msg.className = 'msg error';
+      msg.textContent = err.message;
+    }
+  }
+
+  async function toggleArchive(petId, isArchived) {
+    try {
+      await sbPatch('pets', `id=eq.${petId}`, { archived: !isArchived });
+      await loadPets();
+    } catch (err) { alert(err.message); }
+  }
+
+  // ── ADD PET ───────────────────────────────────────────────────────
+  function toggleAddPet() {
+    const form = document.getElementById('addPetForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async function addPet() {
+    const name = document.getElementById('newName').value.trim();
+    const spec = document.getElementById('newSpecies').value;
+    const msg  = document.getElementById('addPetMsg');
+    msg.className = 'msg';
+    if (!name) { msg.className = 'msg error'; msg.textContent = 'Name is required.'; return; }
+    if (!spec) { msg.className = 'msg error'; msg.textContent = 'Species is required.'; return; }
+    try {
+      await sbPost('pets', {
+        client_id:        clientId,
+        name,
+        species:          spec,
+        breed:            document.getElementById('newBreed').value.trim()      || null,
+        age:              document.getElementById('newAge').value               ? +document.getElementById('newAge').value : null,
+        weight:           document.getElementById('newWeight').value            ? +document.getElementById('newWeight').value : null,
+        sex:              document.getElementById('newSex').value               || 'unknown',
+        altered:          document.getElementById('newAltered').value           || 'unknown',
+        microchipped:     document.getElementById('newMicrochipped').value      || 'unknown',
+        microchip_number: document.getElementById('newMicrochipNum').value.trim() || null,
+      });
+      toggleAddPet();
+      ['newName','newBreed','newAge','newWeight','newMicrochipNum'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('newSpecies').value     = '';
+      document.getElementById('newSex').value         = 'unknown';
+      document.getElementById('newAltered').value     = 'unknown';
+      document.getElementById('newMicrochipped').value = 'unknown';
+      await loadPets();
+    } catch (err) {
+      msg.className = 'msg error';
+      msg.textContent = err.message;
+    }
+  }
+
+  // ── VAX HISTORY ───────────────────────────────────────────────────
+  async function loadVaxHistory(petId) {
+    const id  = petId.replace(/-/g, '_');
+    const el  = document.getElementById(`vaxHistory_${id}`);
+    if (!el) return;
+    try {
+      const records = await sbGet(`vaccinations?pet_id=eq.${petId}&order=date_given.desc`);
+      if (!records.length) {
+        el.innerHTML = '<div class="empty-state">No vaccinations on record.</div>';
+        return;
+      }
+      const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+      el.innerHTML = `
+        <div style="overflow-x:auto">
+          <table class="vax-table">
+            <thead>
+              <tr>
+                <th>Vaccine</th><th>Date Given</th><th>Next Due</th>
+                <th>Lot #</th><th>Tag #</th><th>Administered By</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${records.map(r => `
+                <tr>
+                  <td><strong>${r.vaccine_name}</strong></td>
+                  <td>${fmt(r.date_given)}</td>
+                  <td>${fmt(r.next_due)}</td>
+                  <td style="color:var(--text-muted)">${r.lot_number || '—'}</td>
+                  <td style="color:var(--text-muted)">${r.rabies_tag_number || '—'}</td>
+                  <td style="color:var(--text-muted)">${r.administered_by || '—'}</td>
+                  <td>
+                    ${r.vaccine_name === 'Rabies'
+                      ? `<button class="btn btn-sm btn-outline" onclick="downloadCert(${JSON.stringify(r).replace(/"/g,'&quot;')}, '${petId}')">⬇ cert</button>`
+                      : ''}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (err) {
+      el.innerHTML = `<div class="empty-state" style="color:var(--coral-dark)">Error: ${err.message}</div>`;
+    }
+  }
+
+  // ── CERT DOWNLOAD ─────────────────────────────────────────────────
+  async function downloadCert(record, petId) {
+    try {
+      const pets    = await sbGet(`pets?id=eq.${petId}&select=*`);
+      const pet     = pets[0];
+      const r       = { ...record, pet, client: clientData };
+      const blob    = await generateRabiesCertPDF(r);
+      const url     = URL.createObjectURL(blob);
+      const a       = document.createElement('a');
+      a.href        = url;
+      a.download    = `RabiesCert_${pet.name}_${record.date_given}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('PDF generation failed: ' + err.message);
+    }
+  }
+
+  async function generateRabiesCertPDF(r) {
+    if (!window.PDFLib) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    const { PDFDocument, PDFName, PDFString } = window.PDFLib;
+    const templateBytes = await fetch(
+      'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/RabiesVacCert.pdf'
+    ).then(res => res.arrayBuffer());
+    const pdfDoc = await PDFDocument.load(templateBytes);
+    const form   = pdfDoc.getForm();
+    const page   = pdfDoc.getPages()[0];
+
+    function setText(fieldName, value, fontSize) {
+      try {
+        if (!value) return;
+        const field = form.getTextField(fieldName);
+        const v  = PDFString.of(String(value));
+        const da = `0 0 0 rg /Helv ${fontSize || 10} Tf`;
+        field.acroField.dict.set(PDFName.of('V'),  v);
+        field.acroField.dict.set(PDFName.of('DA'), PDFString.of(da));
+        for (const w of field.acroField.getWidgets()) w.dict.set(PDFName.of('V'), v);
+      } catch(e) { console.warn(`setText "${fieldName}":`, e.message); }
+    }
+
+    function setRadio(fieldName, index) {
+      try {
+        if (index == null) return;
+        const field   = form.getRadioGroup(fieldName);
+        const widgets = field.acroField.getWidgets();
+        const onKey   = PDFName.of(String(index));
+        for (let i = 0; i < widgets.length; i++) {
+          widgets[i].dict.set(PDFName.of('AS'), i === index ? onKey : PDFName.of('Off'));
+        }
+        field.acroField.dict.set(PDFName.of('V'), onKey);
+      } catch(e) { console.warn(`setRadio "${fieldName}":`, e.message); }
+    }
+
+    function setCheck(fieldName, checked) {
+      try {
+        checked ? form.getCheckBox(fieldName).check() : form.getCheckBox(fieldName).uncheck();
+      } catch(_) {}
+    }
+
+    const pet    = r.pet    || {};
+    const client = r.client || {};
+
+    // Owner
+    const nameParts = (client.name || '').trim().split(' ');
+    setText('First Name',  nameParts[0] || '');
+    setText('Last Name',   nameParts.slice(1).join(' ') || '');
+    setText('Telephone #', client.phone || '', 9);
+    setText('Street',      client.street || client.address || '');
+    setText('City',        client.city   || '');
+    setText('State',       client.state  || '');
+    setText('Zip Code',    client.zip    || '');
+
+    // Pet
+    setText('Animal Name',               pet.name             || '');
+    setText('Microchip #',               pet.microchip_number || '', 8);
+    setText('Predominent Breed',         pet.breed            || '', 9);
+    setText('Predominemt Colors/Markings', r.colors_markings  || '', 8);
+
+    const ageNum = parseFloat(pet.age);
+    if (!isNaN(ageNum)) {
+      setText('Age', ageNum < 1 ? String(Math.round(ageNum * 12)) : String(ageNum), 9);
+      setRadio('Months/Years', ageNum < 1 ? 0 : 1);
+    }
+    const w = parseFloat(pet.weight);
+    if (!isNaN(w)) setRadio('Size', w < 20 ? 0 : w <= 50 ? 1 : 2);
+
+    const speciesMap = { dog: 0, cat: 1, ferret: 2 };
+    const speciesIdx = speciesMap[(pet.species || '').toLowerCase()];
+    if (speciesIdx != null) setRadio('Species', speciesIdx);
+
+    if (pet.sex === 'male')   setRadio('Sex', 0);
+    if (pet.sex === 'female') setRadio('Sex', 1);
+    setCheck('Neutered', pet.altered === 'yes');
+
+    // Vaccine
+    setText('Rabies Tag #',          r.rabies_tag_number || '', 9);
+    setText('Product Name',          r.product_name      || '', 9);
+    setText('Vaccine Serial Number', r.serial_number     || '', 9);
+    setText('License Number',        r.ac_license_number || '', 9);
+
+    const man = (r.manufacturer || '').toUpperCase().padEnd(3, ' ');
+    setText('Manufacturer', man[0]); setText('Man2', man[1]); setText('Man3', man[2]);
+
+    const usdaMap = { '1yr': 0, '3yr': 1, '4yr': 2 };
+    if (r.usda_duration) setRadio('USDA Licensed Vaccine', usdaMap[r.usda_duration]);
+    if (r.dose_type === 'initial') setRadio('Dose', 0);
+    if (r.dose_type === 'booster') setRadio('Dose', 1);
+    if (r.ac_license_type === '1yr')   setCheck('AC 1 year', true);
+    if (r.ac_license_type === '3yr')   setCheck('AC 3 year', true);
+    if (r.ac_license_type === 'other') setCheck('AC other',  true);
+
+    const fmtDate = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' }) : '';
+    setText('Date Vaccinated',       fmtDate(r.date_given), 9);
+    setText('Next Vaccination Date', fmtDate(r.next_due),   9);
+
+    setText("Veterinarian's Name",    r.administered_by || 'Dr. Ana Valbuena', 9);
+    setText("Veterinarian's address", 'People Helping Pets, Chicago IL', 8);
+
+    try {
+      const sigBytes = await fetch(
+        'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/ana_signature.png'
+      ).then(res => res.arrayBuffer());
+      const sigImg = await pdfDoc.embedPng(sigBytes);
+      page.drawImage(sigImg, { x: 370, y: 452, width: 175, height: 28 });
+    } catch (_) {}
+
+    form.flatten();
+    return new Blob([await pdfDoc.save()], { type: 'application/pdf' });
+  }
+
+  // ── START ─────────────────────────────────────────────────────────
+  if (accessToken) {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    init();
+  }
+</script>
+</body>
+</html>
