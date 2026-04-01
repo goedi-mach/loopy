@@ -2086,6 +2086,7 @@ function setRadio(fieldName, index) {
         headers: authHeaders()
       });
       console.log('delete status:', res.status, res.ok);
+console.log('selectedPetId:', selectedPetId);
 await loadVaxHistory(selectedPetId, selectedPetObj.name);
 console.log('history reloaded');
     } catch (err) {
