@@ -998,11 +998,11 @@
   <div class="form-row">
     <div class="form-field">
       <label>Vaccine Product Name</label>
-      <input type="text" id="rabiesProduct" placeholder="e.g. IMRAB 3" />
+      <input type="text" id="rabiesProduct" value="IMRAB 3" />
     </div>
     <div class="form-field">
       <label>Manufacturer (first 3 letters)</label>
-      <input type="text" id="rabiesMan" maxlength="3" placeholder="e.g. MER" style="text-transform:uppercase;" />
+      <input type="text" id="rabiesMan" maxlength="3" value="MER" style="text-transform:uppercase;" />
     </div>
   </div>
   <div class="form-row">
@@ -1580,13 +1580,29 @@ function onVaxNameChange() {
     document.getElementById('downloadCertBtn').style.display = 'none';
     document.getElementById('emailCertBtn').style.display    = 'none';
 
-    if (isRabies) {
+if (isRabies) {
       const petColors = selectedPetObj?.colors_markings || '';
       const colorsField = document.getElementById('rabiesColors');
       colorsField.value = petColors;
       colorsField.readOnly = !!petColors;
       colorsField.style.background = petColors ? '#f0f4ff' : '';
       colorsField.title = petColors ? 'Pre-filled from intake form. Clear to override.' : '';
+
+      const warnOnChange = (id, defaultVal) => {
+        const el = document.getElementById(id);
+        el.value = defaultVal;
+        el.addEventListener('change', function handler() {
+          if (this.value.trim().toUpperCase() !== defaultVal.toUpperCase()) {
+            const confirmed = confirm(
+              `"${this.value.trim()}" differs from the default (${defaultVal}).\n\nPlease check with admin before using a different value.\n\nClick OK to keep your change, or Cancel to revert.`
+            );
+            if (!confirmed) this.value = defaultVal;
+          }
+        });
+      };
+
+warnOnChange('rabiesProduct', 'IMRAB 3');
+      warnOnChange('rabiesMan', 'MER');
     }
   }
 

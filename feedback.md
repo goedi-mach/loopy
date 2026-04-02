@@ -1,12 +1,4 @@
-INTAKE PORTION: PETS SIGNALMENT
-Age, sex, breed, etc
-Needs to have COLOR/MARKING
-COLOR/MARKING then automates to RABIES CERT “color/marking”
-
 example: orange cat, brindle, etc.
-
-microchips must jave 15 digit code- 15 digit limit
-microchips cannot have letters
 
 max age is “20” years. We need a MONTH option
 
