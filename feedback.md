@@ -1,23 +1,14 @@
-example: orange cat, brindle, etc.
+AGE- no months
+Microchip- warning if no pet selected
+Once microchip is logged. Microchip field should disappear
 
-max age is “20” years. We need a MONTH option
+BOOSTERS- should automate “4 weeks”
+1 year - automate in 12 months/1 yr
 
-vx product name & manufacturer should be auto populated. do not ask the question/remove.
+vaccines should be input at DISCHARGE. Vet checks what vaccines are needed. same w/ microchip
 
-animal control license - optional so don’t even include???
+vaccine template should auto populate TODAY’s date
 
-Vaccine options:
+GRAY OUT on rabies cert manufacturer and product name
 
-CANINE —>
-RV 1 YR - Rabies 1 year
-RV 3YR - Rabies 3 year
-DAPP Booster - return in 4 weeks
-DAPP Final - return in 12 months
-Leptospirosis Booster - return in 4 weeks
-Lepto Final - return in 12 months
-
-FELINE —>
-RV 1 YR
-RAV 3 YR
-FVRCP BOOSTER- returin in 4 wks
-FVRCP FINAL - return in 12 mo
+walk in sheet should match intake/walk-in/registration
