@@ -462,8 +462,14 @@ async function supabaseSelect(table, query) {
           <input type="text" name="pet_breed_${i}" placeholder="Mixed / Mestizo" />
         </div>
         <div class="field">
-          <label>Age (yrs) / <span class="es">Edad (años)</span></label>
-          <input type="number" name="pet_age_${i}" min="0" max="30" step="0.5" placeholder="2" />
+          <label>Age / <span class="es">Edad</span></label>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="number" name="pet_age_${i}" min="0" max="30" step="1" placeholder="2" style="flex:1;" />
+            <select name="pet_age_unit_${i}" style="flex:1;">
+              <option value="years">Years / Años</option>
+              <option value="months">Months / Meses</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="field">
@@ -578,6 +584,7 @@ try {
           species:          fd.get(`pet_species_${i}`)      || null,
           breed:            fd.get(`pet_breed_${i}`)?.trim() || null,
           age:              fd.get(`pet_age_${i}`)    ? +fd.get(`pet_age_${i}`)    : null,
+          age_unit:         fd.get(`pet_age_unit_${i}`) || 'years',
           weight:           fd.get(`pet_weight_${i}`) ? +fd.get(`pet_weight_${i}`) : null,
           sex:              fd.get(`pet_sex_${i}`)          || 'unknown',
           altered:          fd.get(`pet_altered_${i}`)      || 'unknown',
