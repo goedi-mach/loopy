@@ -1976,8 +1976,9 @@ function setRadio(fieldName, index) {
 
     const ageNum = parseFloat(pet.age);
     if (!isNaN(ageNum)) {
-      setText('Age', ageNum < 1 ? String(Math.round(ageNum * 12)) : String(ageNum), 9);
-      setRadio('Months/Years', ageNum < 1 ? 0 : 1);
+      const isMonths = (pet.age_unit || 'years') === 'months';
+      setText('Age', String(ageNum), 9);
+      setRadio('Months/Years', isMonths ? 0 : 1);
     }
 
     const w = parseFloat(pet.weight);
