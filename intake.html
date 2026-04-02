@@ -496,6 +496,10 @@ async function supabaseSelect(table, query) {
   </select>
 </div>
       </div>
+      <div class="field">
+        <label>Colors / Markings · <span class="es">Colores / Marcas</span></label>
+        <input type="text" name="pet_colors_${i}" placeholder="e.g. Black & white, tabby / Negro y blanco, atigrado" />
+      </div>
     `;
   }
 
@@ -578,6 +582,7 @@ try {
           sex:              fd.get(`pet_sex_${i}`)          || 'unknown',
           altered:          fd.get(`pet_altered_${i}`)      || 'unknown',
           microchipped:     fd.get(`pet_microchipped_${i}`) || 'unknown',
+          colors_markings:  fd.get(`pet_colors_${i}`)?.trim() || null,
           microchip_number: null,
         });
       }
