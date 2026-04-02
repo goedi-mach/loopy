@@ -1574,11 +1574,20 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
     }
   }
 // ─── VAX NAME CHANGE ───────────────────────────────────────────
-  function onVaxNameChange() {
+function onVaxNameChange() {
     const isRabies = document.getElementById('vaxName').value === 'Rabies';
     document.getElementById('rabiesFields').style.display = isRabies ? 'block' : 'none';
     document.getElementById('downloadCertBtn').style.display = 'none';
     document.getElementById('emailCertBtn').style.display    = 'none';
+
+    if (isRabies) {
+      const petColors = selectedPetObj?.colors_markings || '';
+      const colorsField = document.getElementById('rabiesColors');
+      colorsField.value = petColors;
+      colorsField.readOnly = !!petColors;
+      colorsField.style.background = petColors ? '#f0f4ff' : '';
+      colorsField.title = petColors ? 'Pre-filled from intake form. Clear to override.' : '';
+    }
   }
 
   let lastRabiesRecord = null;
@@ -1603,7 +1612,7 @@ async function logVaccine() {
 
     if (vaccineName === 'Rabies') {
       payload.rabies_tag_number = document.getElementById('rabiesTagNum').value.trim()  || null;
-      payload.colors_markings   = document.getElementById('rabiesColors').value.trim()  || null;
+      payload.colors_markings   = document.getElementById('rabiesColors').value.trim()  || selectedPetObj?.colors_markings || null;
       payload.product_name      = document.getElementById('rabiesProduct').value.trim() || null;
       payload.manufacturer      = document.getElementById('rabiesMan').value.trim().toUpperCase() || null;
       payload.usda_duration     = document.getElementById('rabiesUSDA').value           || null;
