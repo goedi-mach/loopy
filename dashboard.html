@@ -994,13 +994,16 @@
   <div class="form-row">
     <div class="form-field">
       <label>Vaccine Product Name</label>
-      <input type="text" id="rabiesProduct" value="IMRAB 3" />
+      <input type="text" id="rabiesProduct" value="IMRAB 3" readonly style="background:#e9ecef; color:var(--text-muted); cursor:not-allowed;" />
     </div>
     <div class="form-field">
       <label>Manufacturer (first 3 letters)</label>
-      <input type="text" id="rabiesMan" maxlength="3" value="MER" style="text-transform:uppercase;" />
+      <input type="text" id="rabiesMan" maxlength="3" value="MER" readonly style="background:#e9ecef; color:var(--text-muted); cursor:not-allowed; text-transform:uppercase;" />
     </div>
-  </div>
+   </div>
+  <p style="font-size:0.78rem; color:var(--text-muted); margin-top:-0.25rem; margin-bottom:0.75rem;">
+    If either value is incorrect, please notify admin.
+  </p>
   <div class="form-row">
     <div class="form-field">
       <label>USDA License Duration</label>
@@ -1649,22 +1652,6 @@ const VACCINE_OPTIONS = {
       colorsField.readOnly = !!petColors;
       colorsField.style.background = petColors ? '#f0f4ff' : '';
       colorsField.title = petColors ? 'Pre-filled from intake form. Clear to override.' : '';
-
-      // Warn on product/manufacturer change
-      const warnOnChange = (id, defaultVal) => {
-        const el = document.getElementById(id);
-        el.value = defaultVal;
-        el.addEventListener('change', function handler() {
-          if (this.value.trim().toUpperCase() !== defaultVal.toUpperCase()) {
-            const confirmed = confirm(
-              `"${this.value.trim()}" differs from the default (${defaultVal}).\n\nPlease check with admin before using a different value.\n\nClick OK to keep your change, or Cancel to revert.`
-            );
-            if (!confirmed) this.value = defaultVal;
-          }
-        });
-      };
-      warnOnChange('rabiesProduct', 'IMRAB 3');
-      warnOnChange('rabiesMan', 'MER');
     }
   }
 
@@ -1705,7 +1692,7 @@ const vaxIdx   = document.getElementById('vaxName').value;
     try {
       await sbPost('vaccinations', payload);
 
-      showMsg(msg, 'success', `${vaccineName} logged for ${selectedPetObj.name}!`);
+      showMsg(msg, 'success', `${vaxObj.label} logged for ${selectedPetObj.name}!`);
 
       if (vaxObj.isRabies) {
         lastRabiesRecord = { ...payload, pet: selectedPetObj, client: currentClient };
