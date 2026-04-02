@@ -947,14 +947,8 @@
           <div class="form-row">
             <div class="form-field">
               <label>Vaccine Name *</label>
-              <select id="vaxName" onchange="onVaxNameChange()">
+              <select id="vaxName" onchange="onVaxNameChange()" onfocus="if(!selectedPetObj) { this.blur(); showMsg(document.getElementById('logVaxMsg'), 'error', 'Please select a pet first.'); }">
                 <option value="">— Select —</option>
-                <option value="Rabies">Rabies</option>
-                <option value="DHPP">DHPP (Dog)</option>
-                <option value="Bordetella">Bordetella (Dog)</option>
-                <option value="FVRCP">FVRCP (Cat)</option>
-                <option value="FeLV">FeLV (Cat)</option>
-                <option value="Other">Other</option>
               </select>
             </div>
             <div class="form-field">
@@ -969,7 +963,7 @@
           <div class="form-row">
             <div class="form-field">
               <label>Date Given *</label>
-              <input type="date" id="vaxDate" />
+              <input type="date" id="vaxDate" onchange="onVaxNameChange()" />
             </div>
             <div class="form-field">
               <label>Next Due</label>
@@ -1478,6 +1472,8 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
     document.getElementById(`pet-${pet.id}`).classList.add('selected');
 
     // Update vaccine section
+    buildVaxDropdown();
+    document.getElementById('vaxName').value = '';
     document.getElementById('selectedPetBadge').style.display = 'block';
     document.getElementById('selectedPetName').textContent    = pet.name;
     document.getElementById('logVaxBtn').disabled             = false;
@@ -1575,20 +1571,86 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
     }
   }
 // ─── VAX NAME CHANGE ───────────────────────────────────────────
-function onVaxNameChange() {
-    const isRabies = document.getElementById('vaxName').value === 'Rabies';
-    document.getElementById('rabiesFields').style.display = isRabies ? 'block' : 'none';
+const VACCINE_OPTIONS = {
+    dog: [
+      { label: 'RV 1 Year',      value: 'Rabies',         nextDue: { unit: 'years',  amount: 1  }, isRabies: true,  usdaDuration: '1yr' },
+      { label: 'RV 3 Year',      value: 'Rabies',         nextDue: { unit: 'years',  amount: 3  }, isRabies: true,  usdaDuration: '3yr' },
+      { label: 'DAPP Initial',   value: 'DAPP Initial',   nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false },
+      { label: 'DAPP Booster',   value: 'DAPP Booster',   nextDue: { unit: 'months', amount: 12 }, isRabies: false },
+      { label: 'Lepto Initial',  value: 'Lepto Initial',  nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false },
+      { label: 'Lepto Booster',  value: 'Lepto Booster',  nextDue: { unit: 'months', amount: 12 }, isRabies: false },
+    ],
+    cat: [
+      { label: 'RV 1 Year',      value: 'Rabies',         nextDue: { unit: 'years',  amount: 1  }, isRabies: true,  usdaDuration: '1yr' },
+      { label: 'RV 3 Year',      value: 'Rabies',         nextDue: { unit: 'years',  amount: 3  }, isRabies: true,  usdaDuration: '3yr' },
+      { label: 'FVRCP Initial',  value: 'FVRCP Initial',  nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false },
+      { label: 'FVRCP Booster',  value: 'FVRCP Booster',  nextDue: { unit: 'months', amount: 12 }, isRabies: false },
+    ],
+  };
+
+  function calcNextDue(dateGiven, rule) {
+    const d = new Date(dateGiven + 'T12:00:00');
+    if (rule.unit === 'years')  d.setFullYear(d.getFullYear() + rule.amount);
+    if (rule.unit === 'months') d.setMonth(d.getMonth() + rule.amount);
+    if (rule.unit === 'weeks')  d.setDate(d.getDate() + rule.amount * 7);
+    return d.toISOString().split('T')[0];
+  }
+
+  function buildVaxDropdown() {
+    const select  = document.getElementById('vaxName');
+    const species = selectedPetObj?.species;
+
+    select.innerHTML = '<option value="">— Select —</option>';
+
+    if (!species || !VACCINE_OPTIONS[species]) return;
+
+    VACCINE_OPTIONS[species].forEach((vax, idx) => {
+      const opt = document.createElement('option');
+      opt.value       = idx;          // store index so we can look up the full object
+      opt.textContent = vax.label;
+      select.appendChild(opt);
+    });
+  }
+
+  function onVaxNameChange() {
+    const select  = document.getElementById('vaxName');
+    const idx     = select.value;
+    const species = selectedPetObj?.species;
+
+    // Reset dependent fields
+    document.getElementById('rabiesFields').style.display    = 'none';
     document.getElementById('downloadCertBtn').style.display = 'none';
     document.getElementById('emailCertBtn').style.display    = 'none';
+    document.getElementById('vaxNextDue').value              = '';
 
-if (isRabies) {
-      const petColors = selectedPetObj?.colors_markings || '';
+    if (idx === '' || !species) return;
+
+    const vax      = VACCINE_OPTIONS[species][idx];
+    const dateGiven = document.getElementById('vaxDate').value;
+
+    // Auto-fill next due date
+    if (dateGiven) {
+      document.getElementById('vaxNextDue').value = calcNextDue(dateGiven, vax.nextDue);
+    }
+
+    // Show rabies fields if applicable
+    if (vax.isRabies) {
+      document.getElementById('rabiesFields').style.display = 'block';
+
+      // Auto-set USDA duration
+      if (vax.usdaDuration) {
+        document.getElementById('rabiesUSDA').value = vax.usdaDuration;
+      }
+
+      // Pre-fill colors from pet record
+      const petColors  = selectedPetObj?.colors_markings || '';
       const colorsField = document.getElementById('rabiesColors');
-      colorsField.value = petColors;
+      colorsField.value    = petColors;
       colorsField.readOnly = !!petColors;
       colorsField.style.background = petColors ? '#f0f4ff' : '';
       colorsField.title = petColors ? 'Pre-filled from intake form. Clear to override.' : '';
 
+      // Warn on product/manufacturer change
       const warnOnChange = (id, defaultVal) => {
         const el = document.getElementById(id);
         el.value = defaultVal;
@@ -1601,8 +1663,7 @@ if (isRabies) {
           }
         });
       };
-
-warnOnChange('rabiesProduct', 'IMRAB 3');
+      warnOnChange('rabiesProduct', 'IMRAB 3');
       warnOnChange('rabiesMan', 'MER');
     }
   }
@@ -1618,16 +1679,19 @@ async function logVaccine() {
     if (!vaccineName)   { showMsg(msg, 'error', 'Please select or enter a vaccine name.'); return; }
     if (!dateGiven)     { showMsg(msg, 'error', 'Please enter the date given.'); return; }
 
+const vaxIdx   = document.getElementById('vaxName').value;
+    const vaxObj   = VACCINE_OPTIONS[selectedPetObj.species][vaxIdx];
+
     const payload = {
       pet_id:          selectedPetId,
-      vaccine_name:    vaccineName,
+      vaccine_name:    vaxObj.value,
       lot_number:      document.getElementById('vaxLot').value.trim() || null,
       date_given:      dateGiven,
       next_due:        document.getElementById('vaxNextDue').value || null,
-      administered_by: document.getElementById('vaxAdmin').value.trim() || null,
+      administered_by: document.getElementById('vaxAdmin').value || null,
     };
 
-    if (vaccineName === 'Rabies') {
+    if (vaxObj.isRabies) {
       payload.rabies_tag_number = document.getElementById('rabiesTagNum').value.trim()  || null;
       payload.colors_markings   = document.getElementById('rabiesColors').value.trim()  || selectedPetObj?.colors_markings || null;
       payload.product_name      = document.getElementById('rabiesProduct').value.trim() || null;
@@ -1643,7 +1707,7 @@ async function logVaccine() {
 
       showMsg(msg, 'success', `${vaccineName} logged for ${selectedPetObj.name}!`);
 
-      if (vaccineName === 'Rabies') {
+      if (vaxObj.isRabies) {
         lastRabiesRecord = { ...payload, pet: selectedPetObj, client: currentClient };
         document.getElementById('downloadCertBtn').style.display = 'inline-block';
         document.getElementById('emailCertBtn').style.display    = 'inline-block';
