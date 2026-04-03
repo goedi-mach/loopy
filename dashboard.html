@@ -931,13 +931,19 @@
     <!-- Input state -->
     <div id="microchipInput">
       <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:0.85rem">
-        Select a pet above, then enter the microchip number being implanted today.
+        Select a pet above, then indicate whether a microchip was implanted today.
       </p>
-      <div class="form-field">
-        <label>Microchip Number *</label>
-        <input type="text" id="microchipNumber" placeholder="985112345678901" inputmode="numeric" pattern="[0-9]*" maxlength="15" onfocus="if(!selectedPetObj) { this.blur(); showMsg(document.getElementById('logMicrochipMsg'), 'error', 'Please select a pet first.'); }" />
+      <div style="display:flex; gap:0.75rem; margin-bottom:0.85rem;">
+        <button id="microchipYesBtn" class="btn-primary" style="font-size:0.85rem;" onclick="if(!selectedPetObj) { showMsg(document.getElementById('logMicrochipMsg'), 'error', 'Please select a pet first.'); return; } showMicrochipInput()">Yes</button>
+        <button id="microchipNoBtn" style="font-size:0.85rem; padding:0.6rem 1.4rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;" onclick="if(!selectedPetObj) { showMsg(document.getElementById('logMicrochipMsg'), 'error', 'Please select a pet first.'); return; }">No</button>
       </div>
-      <button class="btn-primary" onclick="logMicrochip()" id="logMicrochipBtn" disabled>Save Microchip</button>
+      <div id="microchipNumberField" style="display:none;">
+        <div class="form-field">
+          <label>Microchip Number *</label>
+          <input type="text" id="microchipNumber" placeholder="985112345678901" inputmode="numeric" pattern="[0-9]*" maxlength="15" />
+        </div>
+        <button class="btn-primary" onclick="logMicrochip()" id="logMicrochipBtn" disabled>Save Microchip</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1762,9 +1768,15 @@ function lockMicrochip(number) {
   document.getElementById('microchipLockedNumber').textContent      = number;
 }
 
+function showMicrochipInput() {
+  document.getElementById('microchipNumberField').style.display = 'block';
+  document.getElementById('logMicrochipBtn').disabled = !selectedPetId;
+}
+
 function unlockMicrochip() {
-  document.getElementById('microchipLocked').style.display  = 'none';
-  document.getElementById('microchipInput').style.display   = 'block';
+  document.getElementById('microchipLocked').style.display       = 'none';
+  document.getElementById('microchipInput').style.display        = 'block';
+  document.getElementById('microchipNumberField').style.display  = 'none';
 }
 // ─── EDIT CLIENT ───────────────────────────────────────────────
 function openEditClient() {
