@@ -1499,7 +1499,8 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
     // Update vaccine section
     unlockMicrochip();
     buildVaxDropdown();
-    document.getElementById('vaxName').value = '';
+    document.getElementById('vaxName').value  = '';
+    document.getElementById('vaxDate').value  = new Date().toISOString().split('T')[0];
     document.getElementById('selectedPetBadge').style.display = 'block';
     document.getElementById('selectedPetName').textContent    = pet.name;
     document.getElementById('logVaxBtn').disabled             = false;
