@@ -625,6 +625,24 @@
       <label>Email</label>
       <input type="email" id="walkinEmail" placeholder="correo@ejemplo.com" />
     </div>
+    <div class="form-field">
+      <label>Street</label>
+      <input type="text" id="walkinStreet" placeholder="123 Main St" />
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label>City</label>
+        <input type="text" id="walkinCity" placeholder="Chicago" />
+      </div>
+      <div class="form-field">
+        <label>State</label>
+        <input type="text" id="walkinState" placeholder="IL" maxlength="2" style="text-transform:uppercase;" />
+      </div>
+    </div>
+    <div class="form-field">
+      <label>ZIP</label>
+      <input type="text" id="walkinZip" placeholder="60601" maxlength="10" />
+    </div>
     <hr style="margin:0.75rem 0; border-color:var(--border);" />
     <div class="form-row">
       <div class="form-field">
@@ -646,11 +664,21 @@
         <input type="text" id="walkinPetBreed" placeholder="Mixed" />
       </div>
       <div class="form-field">
-        <label>Age (yrs)</label>
-        <input type="number" id="walkinPetAge" min="0" max="30" step="0.5" placeholder="2" />
+        <label>Age</label>
+        <div style="display:flex; gap:0.5rem;">
+          <input type="number" id="walkinPetAge" min="0" max="30" step="1" placeholder="2" style="flex:1;" />
+          <select id="walkinPetAgeUnit" style="flex:1;">
+            <option value="years">Years</option>
+            <option value="months">Months</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="form-row">
+      <div class="form-field">
+        <label>Weight (lbs)</label>
+        <input type="number" id="walkinPetWeight" min="0" step="0.1" placeholder="25" />
+      </div>
       <div class="form-field">
         <label>Sex</label>
         <select id="walkinPetSex">
@@ -659,6 +687,8 @@
           <option value="female">Female</option>
         </select>
       </div>
+    </div>
+    <div class="form-row">
       <div class="form-field">
         <label>Spayed / Neutered</label>
         <select id="walkinPetAltered">
@@ -667,6 +697,18 @@
           <option value="no">No</option>
         </select>
       </div>
+      <div class="form-field">
+        <label>Microchipped?</label>
+        <select id="walkinPetMicrochipped">
+          <option value="unknown">Not sure</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Colors / Markings</label>
+      <input type="text" id="walkinPetColors" placeholder="e.g. Black & white, tabby" />
     </div>
     <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
       <button class="btn-primary" onclick="submitWalkin()">Save & Check In</button>
@@ -1249,10 +1291,12 @@ function openWalkin() {
 function closeWalkin() {
   document.getElementById('walkinCard').style.display = 'none';
   document.getElementById('detailEmpty').style.display = 'block';
-  ['walkinName','walkinPhone','walkinEmail','walkinPetName','walkinPetBreed','walkinPetAge'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('walkinPetSpecies').value = '';
-  document.getElementById('walkinPetSex').value = 'unknown';
-  document.getElementById('walkinPetAltered').value = 'unknown';
+  ['walkinName','walkinPhone','walkinEmail','walkinStreet','walkinCity','walkinState','walkinZip','walkinPetName','walkinPetBreed','walkinPetAge','walkinPetWeight','walkinPetColors'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('walkinPetSpecies').value     = '';
+  document.getElementById('walkinPetAgeUnit').value     = 'years';
+  document.getElementById('walkinPetSex').value         = 'unknown';
+  document.getElementById('walkinPetAltered').value     = 'unknown';
+  document.getElementById('walkinPetMicrochipped').value = 'unknown';
 }
 
 async function submitWalkin() {
@@ -1270,18 +1314,26 @@ async function submitWalkin() {
       name,
       phone:        document.getElementById('walkinPhone').value.trim() || null,
       email:        document.getElementById('walkinEmail').value.trim() || null,
+      street:       document.getElementById('walkinStreet').value.trim() || null,
+      city:         document.getElementById('walkinCity').value.trim() || null,
+      state:        document.getElementById('walkinState').value.trim().toUpperCase() || null,
+      zip:          document.getElementById('walkinZip').value.trim() || null,
       status:       'checked_in',
       checked_in_at: new Date().toISOString()
     });
 
     await sbPost('pets', {
-      client_id: client.id,
-      name:      petName,
-      species:   petSpec,
-      breed:     document.getElementById('walkinPetBreed').value.trim() || null,
-      age:       document.getElementById('walkinPetAge').value ? +document.getElementById('walkinPetAge').value : null,
-      sex:       document.getElementById('walkinPetSex').value || 'unknown',
-      altered:   document.getElementById('walkinPetAltered').value || 'unknown'
+      client_id:      client.id,
+      name:           petName,
+      species:        petSpec,
+      breed:          document.getElementById('walkinPetBreed').value.trim() || null,
+      age:            document.getElementById('walkinPetAge').value ? +document.getElementById('walkinPetAge').value : null,
+      age_unit:       document.getElementById('walkinPetAgeUnit').value || 'years',
+      weight:         document.getElementById('walkinPetWeight').value ? +document.getElementById('walkinPetWeight').value : null,
+      sex:            document.getElementById('walkinPetSex').value || 'unknown',
+      altered:        document.getElementById('walkinPetAltered').value || 'unknown',
+      microchipped:   document.getElementById('walkinPetMicrochipped').value || 'unknown',
+      colors_markings: document.getElementById('walkinPetColors').value.trim() || null,
     });
 
     closeWalkin();
