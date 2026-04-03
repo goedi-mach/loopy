@@ -1063,7 +1063,8 @@ let currentFilter  = 'all';
 localStorage.setItem('php_token', data.access_token);
 localStorage.setItem('php_email', email);
 document.getElementById('loggedInUser').textContent = `👋 ${email}`;
-showScreen('dashScreen');
+document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+document.getElementById('dashScreen').classList.add('active');
 loadRecentClients();
 loadEvents();
     } catch (err) {
@@ -1085,7 +1086,8 @@ document.getElementById('loggedInUser').textContent = '';
     document.getElementById('clientList').innerHTML = '<li class="empty-state">Search to find a client.</li>';
     document.getElementById('searchInput').value = '';
     resetDetailPanel();
-    showScreen('loginScreen');
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+document.getElementById('loginScreen').classList.add('active');
   }
 
   // Allow Enter key on password field
@@ -1093,11 +1095,6 @@ document.getElementById('loggedInUser').textContent = '';
     if (e.key === 'Enter') login();
   });
 
-  // ─── SCREEN MANAGEMENT ─────────────────────────────────────────
-  function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-  }
 // ─── FILTER ────────────────────────────────────────────────────
 function setFilter(filter) {
   currentFilter = filter;
@@ -2162,7 +2159,8 @@ if (savedToken) {
   accessToken = savedToken;
   const savedEmail = localStorage.getItem('php_email');
   if (savedEmail) document.getElementById('loggedInUser').textContent = `👋 ${savedEmail}`;
-  showScreen('dashScreen');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+document.getElementById('dashScreen').classList.add('active');
   loadRecentClients();
   loadEvents();
   loadTodayCount();
