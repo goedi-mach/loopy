@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Staff Dashboard — People Helping Pets</title>
+  <title>Discharge — People Helping Pets</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
   <style>
@@ -518,10 +518,11 @@
 <div id="dashScreen" class="screen">
 
   <nav class="topnav">
-    <div class="topnav-brand">🐾 PHP Staff Dashboard</div>
+    <div class="topnav-brand">💉 Discharge — People Helping Pets</div>
     <div style="display:flex; align-items:center; gap:0.75rem;">
       <div style="font-size:0.8rem; opacity:0.8;" id="loggedInUser"></div>
       <a href="roster.html" style="color:rgba(255,255,255,0.8); text-decoration:none; font-size:0.85rem; font-weight:700; font-family:'Nunito',sans-serif; padding:0.3rem 0.75rem; border-radius:999px;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='none'">📋 Roster</a>
+      <a href="intake-staff.html" style="color:rgba(255,255,255,0.8); text-decoration:none; font-size:0.85rem; font-weight:700; font-family:'Nunito',sans-serif; padding:0.3rem 0.75rem; border-radius:999px;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='none'">🏥 Intake</a>
       <button class="btn-logout" onclick="logout()">Sign Out</button>
     </div>
   </nav>
@@ -537,7 +538,7 @@
       <div class="card">
         <div class="card-header" style="justify-content:space-between;">
   <span>🔍 Search Clients</span>
-  <button class="btn-primary" style="font-size:0.78rem; padding:0.3rem 0.75rem; white-space:nowrap;" onclick="openWalkin()">+ Walk-in</button>
+  <div class="card-header">🔍 Search Clients</div>
 </div>
         <div class="card-body">
           <div style="display:flex; gap:0.4rem; margin-bottom:0.85rem; flex-wrap:wrap;">
@@ -607,145 +608,9 @@
     <!-- RIGHT: Client detail -->
     <div id="detailPanel">
       <!-- Walk-in form-->
-       <div class="card" id="walkinCard" style="display:none">
-  <div class="card-header">🚶 Walk-in Registration</div>
-  <div class="card-body">
-    <div id="walkinMsg" class="msg"></div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>Client Name *</label>
-        <input type="text" id="walkinName" placeholder="Jane Smith" />
-      </div>
-      <div class="form-field">
-        <label>Phone</label>
-        <input type="tel" id="walkinPhone" placeholder="(773) 555-0100" />
-      </div>
-    </div>
-    <div class="form-field">
-      <label>Email</label>
-      <input type="email" id="walkinEmail" placeholder="correo@ejemplo.com" />
-    </div>
-    <div class="form-field">
-      <label>Street</label>
-      <input type="text" id="walkinStreet" placeholder="123 Main St" />
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>City</label>
-        <input type="text" id="walkinCity" placeholder="Chicago" />
-      </div>
-      <div class="form-field">
-        <label>State</label>
-        <input type="text" id="walkinState" placeholder="IL" maxlength="2" style="text-transform:uppercase;" />
-      </div>
-    </div>
-    <div class="form-field">
-      <label>ZIP</label>
-      <input type="text" id="walkinZip" placeholder="60601" maxlength="10" />
-    </div>
-    <hr style="margin:0.75rem 0; border-color:var(--border);" />
-    <div class="form-row">
-      <div class="form-field">
-        <label>Pet Name *</label>
-        <input type="text" id="walkinPetName" placeholder="Fido" />
-      </div>
-      <div class="form-field">
-        <label>Species *</label>
-        <select id="walkinPetSpecies">
-          <option value="">— Select —</option>
-          <option value="dog">Dog</option>
-          <option value="cat">Cat</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>Breed</label>
-        <input type="text" id="walkinPetBreed" placeholder="Mixed" />
-      </div>
-      <div class="form-field">
-        <label>Age</label>
-        <div style="display:flex; gap:0.5rem;">
-          <input type="number" id="walkinPetAge" min="0" max="30" step="1" placeholder="2" style="flex:1;" />
-          <select id="walkinPetAgeUnit" style="flex:1;">
-            <option value="years">Years</option>
-            <option value="months">Months</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>Weight (lbs)</label>
-        <input type="number" id="walkinPetWeight" min="0" step="0.1" placeholder="25" />
-      </div>
-      <div class="form-field">
-        <label>Sex</label>
-        <select id="walkinPetSex">
-          <option value="unknown">Not sure</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>Spayed / Neutered</label>
-        <select id="walkinPetAltered">
-          <option value="unknown">Not sure</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label>Microchipped?</label>
-        <select id="walkinPetMicrochipped">
-          <option value="unknown">Not sure</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-field">
-      <label>Colors / Markings</label>
-      <input type="text" id="walkinPetColors" placeholder="e.g. Black & white, tabby" />
-    </div>
-    <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
-      <button class="btn-primary" onclick="submitWalkin()">Save & Check In</button>
-      <button onclick="closeWalkin()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; font-size:0.88rem;">Cancel</button>
-    </div>
-  </div>
-</div>
-      <div class="card">
+       
         <div class="card-body">
           <div id="detailEmpty" style="display:block">
-  <div style="background:var(--navy-light); border-radius:var(--radius); padding:1.25rem; margin-bottom:0;">
-    <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1rem; color:var(--navy); margin-bottom:1rem;">
-      👋 Quick Reference
-    </div>
-    <div style="display:flex; flex-direction:column; gap:0.75rem; font-size:0.87rem; color:var(--text);">
-      <div style="display:flex; gap:0.75rem; align-items:flex-start;">
-        <span style="font-size:1rem;">🔍</span>
-        <div><strong>Find a client</strong> using the search bar, roster tab, or click <strong>+ Walk-in</strong> to register someone new. Walk-ins are automatically checked in.</div>
-      </div>
-      <div style="display:flex; gap:0.75rem; align-items:flex-start;">
-        <span style="font-size:1rem;">✓</span>
-        <div><strong>Check In</strong> a pre-registered client when they arrive at the clinic.</div>
-      </div>
-      <div style="display:flex; gap:0.75rem; align-items:flex-start;">
-        <span style="font-size:1rem;">🐾</span>
-        <div><strong>Select a pet</strong> from their record to log vaccines or a microchip.</div>
-      </div>
-      <div style="display:flex; gap:0.75rem; align-items:flex-start;">
-        <span style="font-size:1rem;">💉</span>
-        <div><strong>Log each vaccine</strong> with the lot number, date given, and next due date.</div>
-      </div>
-      <div style="display:flex; gap:0.75rem; align-items:flex-start;">
-        <span style="font-size:1rem;">✅</span>
-        <div><strong>Mark as Seen</strong> when the visit is complete.</div>
-      </div>
-    </div>
-  </div>
 </div>
 <!-- Client edit form -->
           <div id="clientEditForm" style="display:none; margin-bottom:1rem;">
@@ -784,7 +649,6 @@
              <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
   <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
   <div id="clientStatusBadge"></div>
-<button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
   <button id="seenBtn" class="btn-coral" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="markSeen()">✓ Mark as Seen</button>
   <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
   <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
@@ -1282,66 +1146,6 @@ function renderClientList(clients) {
   `).join('');
 }
 
-// ─── WALK-IN ───────────────────────────────────────────────────
-function openWalkin() {
-  document.getElementById('walkinCard').style.display = 'block';
-  document.getElementById('detailEmpty').style.display = 'none';
-}
-
-function closeWalkin() {
-  document.getElementById('walkinCard').style.display = 'none';
-  document.getElementById('detailEmpty').style.display = 'block';
-  ['walkinName','walkinPhone','walkinEmail','walkinStreet','walkinCity','walkinState','walkinZip','walkinPetName','walkinPetBreed','walkinPetAge','walkinPetWeight','walkinPetColors'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('walkinPetSpecies').value     = '';
-  document.getElementById('walkinPetAgeUnit').value     = 'years';
-  document.getElementById('walkinPetSex').value         = 'unknown';
-  document.getElementById('walkinPetAltered').value     = 'unknown';
-  document.getElementById('walkinPetMicrochipped').value = 'unknown';
-}
-
-async function submitWalkin() {
-  const msg     = document.getElementById('walkinMsg');
-  const name    = document.getElementById('walkinName').value.trim();
-  const petName = document.getElementById('walkinPetName').value.trim();
-  const petSpec = document.getElementById('walkinPetSpecies').value;
-
-  if (!name)    { showMsg(msg, 'error', 'Client name is required.'); return; }
-  if (!petName) { showMsg(msg, 'error', 'Pet name is required.'); return; }
-  if (!petSpec) { showMsg(msg, 'error', 'Please select a species.'); return; }
-
-  try {
-    const [client] = await sbPost('clients', {
-      name,
-      phone:        document.getElementById('walkinPhone').value.trim() || null,
-      email:        document.getElementById('walkinEmail').value.trim() || null,
-      street:       document.getElementById('walkinStreet').value.trim() || null,
-      city:         document.getElementById('walkinCity').value.trim() || null,
-      state:        document.getElementById('walkinState').value.trim().toUpperCase() || null,
-      zip:          document.getElementById('walkinZip').value.trim() || null,
-      status:       'checked_in',
-      checked_in_at: new Date().toISOString()
-    });
-
-    await sbPost('pets', {
-      client_id:      client.id,
-      name:           petName,
-      species:        petSpec,
-      breed:          document.getElementById('walkinPetBreed').value.trim() || null,
-      age:            document.getElementById('walkinPetAge').value ? +document.getElementById('walkinPetAge').value : null,
-      age_unit:       document.getElementById('walkinPetAgeUnit').value || 'years',
-      weight:         document.getElementById('walkinPetWeight').value ? +document.getElementById('walkinPetWeight').value : null,
-      sex:            document.getElementById('walkinPetSex').value || 'unknown',
-      altered:        document.getElementById('walkinPetAltered').value || 'unknown',
-      microchipped:   document.getElementById('walkinPetMicrochipped').value || 'unknown',
-      colors_markings: document.getElementById('walkinPetColors').value.trim() || null,
-    });
-
-    closeWalkin();
-await loadRecentClients();
-  } catch (err) {
-    showMsg(msg, 'error', err.message);
-  }
-}
 // ─── EVENTS ────────────────────────────────────────────────────
 async function loadEvents() {
   const list = document.getElementById('eventsList');
@@ -1473,7 +1277,6 @@ const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
-document.getElementById('checkinBtn').style.display    = (!client.archived && status === 'registered') ? 'block' : 'none';
 document.getElementById('seenBtn').style.display       = (!client.archived && status === 'checked_in') ? 'block' : 'none';
 document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
@@ -1575,23 +1378,6 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
   }
 
   // ─── STATUS UPDATES ────────────────────────────────────────────
-  async function checkInClient() {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
-        method:  'PATCH',
-        headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-        body:    JSON.stringify({ status: 'checked_in', checked_in_at: new Date().toISOString() })
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
-      currentClient.status = 'checked_in';
-      document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-checked_in">Checked In</span>';
-      document.getElementById('checkinBtn').style.display = 'none';
-      document.getElementById('seenBtn').style.display    = 'block';
-      await loadRecentClients();
-    } catch (err) {
-      alert(err.message);
-    }
-  }
 
   async function markSeen() {
     try {
@@ -1603,8 +1389,7 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
       currentClient.status = 'seen';
       document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-seen">Seen</span>';
-      document.getElementById('checkinBtn').style.display = 'none';
-      document.getElementById('seenBtn').style.display    = 'none';
+      document.getElementById('seenBtn').style.display = 'none';
       await loadRecentClients();
     } catch (err) {
       alert(err.message);
@@ -1786,7 +1571,7 @@ const vaxIdx   = document.getElementById('vaxName').value;
       ['rabiesUSDA','rabiesDose','rabiesACType'].forEach(id => document.getElementById(id).value = '');
 
       console.log('reloading history for:', selectedPetId, selectedPetObj?.name);
-await loadVaxHistory(selectedPetId, selectedPetObj.name);
+            await loadVaxHistory(selectedPetId, selectedPetObj.name);
     } catch (err) {
       showMsg(msg, 'error', err.message);
     }
@@ -1888,7 +1673,6 @@ async function toggleArchiveClient() {
     currentClient.archived = archiving;
     document.getElementById('archiveClientBtn').textContent   = archiving ? 'Unarchive' : 'Archive';
     document.getElementById('editClientBtn').style.display    = archiving ? 'none' : 'block';
-    document.getElementById('checkinBtn').style.display       = 'none';
     document.getElementById('seenBtn').style.display          = 'none';
     await loadRecentClients();
   } catch (err) {
