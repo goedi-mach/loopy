@@ -584,12 +584,12 @@
     <h2>🐾 What's your station today?</h2>
     <p class="subtitle">Select your role for this clinic session</p>
     <div class="mode-buttons">
-      <button class="btn-mode btn-mode-intake" onclick="selectMode('intake')">
-        🏠 Check-In / Intake
-      </button>
-      <button class="btn-mode btn-mode-discharge" onclick="selectMode('discharge')">
-        💉 Discharge / Vaccines
-      </button>
+      <a href="intake-staff.html" class="btn-mode btn-mode-intake">
+  🏠 Check-In / Intake
+</a>
+      <a href="discharge-staff.html" class="btn-mode btn-mode-discharge">
+  💉 Discharge / Vaccines
+</a>
     </div>
   </div>
 </div>
@@ -723,7 +723,8 @@ function selectMode(mode) {
     stationMode = mode;
     loadRecentClients();
     loadEvents();
-    showScreen('dashScreen');
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('dashScreen').classList.add('active');
   }
 // ─── FILTER ────────────────────────────────────────────────────
 function setFilter(filter) {
