@@ -688,7 +688,8 @@ let currentFilter  = 'all';
 localStorage.setItem('php_token', data.access_token);
 localStorage.setItem('php_email', email);
 document.getElementById('loggedInUser').textContent = `👋 ${email}`;
-showScreen('modeScreen');
+document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+document.getElementById('modeScreen').classList.add('active');
     } catch (err) {
       showMsg(msg, 'error', err.message);
       btn.disabled    = false;
@@ -708,7 +709,8 @@ document.getElementById('loggedInUser').textContent = '';
     document.getElementById('clientList').innerHTML = '<li class="empty-state">Search to find a client.</li>';
     document.getElementById('searchInput').value = '';
     resetDetailPanel();
-    showScreen('loginScreen');
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+document.getElementById('loginScreen').classList.add('active');
   }
 
   // Allow Enter key on password field
@@ -1867,7 +1869,8 @@ if (savedToken) {
   accessToken = savedToken;
   const savedEmail = localStorage.getItem('php_email');
   if (savedEmail) document.getElementById('loggedInUser').textContent = `👋 ${savedEmail}`;
-  showScreen('modeScreen');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('modeScreen').classList.add('active');
 }
 </script>
 </body>
