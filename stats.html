@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports & Stats — People Helping Pets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:        #1a3a8f;
+      --navy-dark:   #122a6e;
+      --navy-light:  #dce6f9;
+      --navy-mid:    #4a6cc0;
+      --coral:       #f28b82;
+      --coral-light: #fde8e6;
+      --coral-dark:  #d96b62;
+      --green:       #2d8a5e;
+      --green-light: #d4f0e4;
+      --amber:       #d97706;
+      --amber-light: #fef3c7;
+      --purple:      #7c3aed;
+      --purple-light:#ede9fe;
+      --text:        #1a1a2e;
+      --text-muted:  #5a6380;
+      --border:      #c8d3ec;
+      --bg:          #f4f7fe;
+      --white:       #ffffff;
+      --radius:      12px;
+      --shadow:      0 2px 16px rgba(26,58,143,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN OVERLAY ── */
+    #loginOverlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-mid) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #loginOverlay.hidden { display: none; }
+
+    .login-card {
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(26,58,143,0.2);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 400px;
+      margin: 1rem;
+    }
+    .login-card h1 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--navy);
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+    .login-card .subtitle {
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+    .login-field { margin-bottom: 1.1rem; }
+    .login-field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .login-field input {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    .login-field input:focus { outline: none; border-color: var(--navy); }
+    .btn-login {
+      width: 100%;
+      background: var(--navy);
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .btn-login:hover { background: var(--navy-dark); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+    #loginError {
+      color: var(--coral-dark);
+      font-size: 0.85rem;
+      margin-top: 0.6rem;
+      text-align: center;
+      min-height: 1.2em;
+    }
+
+    /* ── NAV ── */
+    .topnav {
+      background: var(--navy);
+      color: white;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(26,58,143,0.2);
+    }
+    .topnav-brand {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .topnav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .nav-link {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      transition: background 0.15s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
+    .btn-logout {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.35rem 0.9rem;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── MAIN ── */
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.75rem 1.25rem 4rem;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--navy);
+    }
+
+    /* ── FILTERS ── */
+    .filters {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      border: 1.5px solid rgba(26,58,143,0.07);
+    }
+    .filters label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .filters input[type="date"], .filters select {
+      padding: 0.4rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--white);
+    }
+    .filters input[type="date"]:focus,
+    .filters select:focus { outline: none; border-color: var(--navy); }
+    .btn-run {
+      background: var(--navy);
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 800;
+      padding: 0.4rem 1.1rem;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-run:hover { background: var(--navy-dark); }
+    .btn-run:disabled { opacity: 0.5; cursor: not-allowed; }
+    .filter-divider {
+      width: 1px;
+      height: 1.5rem;
+      background: var(--border);
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem 1.5rem;
+      border: 1.5px solid rgba(26,58,143,0.07);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .stat-card.navy::before  { background: var(--navy); }
+    .stat-card.coral::before { background: var(--coral); }
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.amber::before { background: var(--amber); }
+    .stat-card.purple::before { background: var(--purple); }
+
+    .stat-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+    }
+    .stat-value {
+      font-family: 'Nunito', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .stat-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+
+    /* ── SECTION CARDS ── */
+    .section-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      border: 1.5px solid rgba(26,58,143,0.07);
+    }
+    .section-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 2.5px solid var(--navy-light);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── BAR CHART ── */
+    .bar-list { display: flex; flex-direction: column; gap: 0.65rem; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 48px;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .bar-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bar-track {
+      height: 18px;
+      background: var(--navy-light);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.5s ease;
+    }
+    .bar-count {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    /* ── TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .data-table th {
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.4rem 0.6rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .data-table td {
+      padding: 0.55rem 0.6rem;
+      border-bottom: 1px solid #eef0f7;
+      color: var(--text);
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f8faff; }
+    .data-table td.num {
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      text-align: right;
+    }
+
+    /* ── EMPTY / LOADING ── */
+    .empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 2rem 0;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2.5px solid var(--navy-light);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── DONUT ── */
+    .donut-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    canvas.donut { flex-shrink: 0; }
+    .donut-legend { display: flex; flex-direction: column; gap: 0.55rem; }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-pct {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-left: 0.25rem;
+    }
+
+    /* ── EXPORT BTN ── */
+    .btn-export {
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--text-muted);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-export:hover { border-color: var(--navy); color: var(--navy); }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 2.5px solid var(--navy-light);
+    }
+    .section-header .section-title { margin: 0; padding: 0; border: none; }
+  </style>
+  <script src="config.js"></script>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <h1>Staff Sign In</h1>
+    <p class="subtitle">People Helping Pets — Reports</p>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="staff@peoplehelpingpets.org" />
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" />
+    </div>
+    <button class="btn-login" id="loginBtn" onclick="login()">Sign In</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="topnav-brand">🐾 People Helping Pets — Staff</div>
+  <div class="topnav-links">
+    <a href="index.html" class="nav-link">Dashboard</a>
+    <a href="roster.html" class="nav-link">Roster</a>
+    <a href="stats.html" class="nav-link active">Reports</a>
+    <button class="btn-logout" onclick="logout()">Sign Out</button>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="page-header">
+    <div class="page-title">📊 Reports & Statistics</div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <label>From</label>
+    <input type="date" id="dateFrom" />
+    <label>To</label>
+    <input type="date" id="dateTo" />
+    <div class="filter-divider"></div>
+    <label>Event</label>
+    <select id="eventFilter">
+      <option value="">All events</option>
+    </select>
+    <div class="filter-divider"></div>
+    <button class="btn-run" id="runBtn" onclick="runReport()">Run Report</button>
+  </div>
+
+  <!-- SUMMARY STATS -->
+  <div class="stat-grid" id="statGrid">
+    <div class="stat-card navy">
+      <div class="stat-label">Total Vaccines Given</div>
+      <div class="stat-value" id="statVaccines">—</div>
+      <div class="stat-sub">in selected range</div>
+    </div>
+    <div class="stat-card coral">
+      <div class="stat-label">Unique Clients Served</div>
+      <div class="stat-value" id="statClients">—</div>
+      <div class="stat-sub">distinct owners</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Unique Pets Vaccinated</div>
+      <div class="stat-value" id="statPets">—</div>
+      <div class="stat-sub">distinct animals</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-label">Microchips Placed</div>
+      <div class="stat-value" id="statChips">—</div>
+      <div class="stat-sub">this period</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Clinic Events</div>
+      <div class="stat-value" id="statEvents">—</div>
+      <div class="stat-sub">in selected range</div>
+    </div>
+  </div>
+
+  <!-- VACCINE BREAKDOWN + SPECIES -->
+  <div class="two-col">
+
+    <!-- VACCINES BY TYPE -->
+    <div class="section-card">
+      <div class="section-title">💉 Vaccines by Type</div>
+      <div id="vaxBars" class="bar-list">
+        <div class="empty">Run a report to see results.</div>
+      </div>
+    </div>
+
+    <!-- SPECIES BREAKDOWN -->
+    <div class="section-card">
+      <div class="section-title">🐾 Species Breakdown</div>
+      <div class="donut-wrap" id="speciesWrap">
+        <canvas class="donut" id="speciesCanvas" width="120" height="120"></canvas>
+        <div class="donut-legend" id="speciesLegend">
+          <div class="empty" style="padding:0;">Run a report to see results.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PER-EVENT TABLE -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-title">📅 Vaccines per Clinic Event</div>
+      <button class="btn-export" onclick="exportEventCSV()">⬇ Export CSV</button>
+    </div>
+    <div id="eventTableWrap">
+      <div class="empty">Run a report to see results.</div>
+    </div>
+  </div>
+
+  <!-- RETURNING CLIENTS -->
+  <div class="section-card">
+    <div class="section-title">🔄 New vs. Returning Clients</div>
+    <div id="returningWrap">
+      <div class="empty">Run a report to see results.</div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+  const SUPABASE_URL      = CONFIG.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+
+  let accessToken = localStorage.getItem('php_token') || null;
+
+  // ── AUTH ───────────────────────────────────────────────────────
+  function authHeaders() {
+    return {
+      'Content-Type':  'application/json',
+      'apikey':        SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`
+    };
+  }
+
+  async function login() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('loginBtn');
+    const errEl    = document.getElementById('loginError');
+    btn.textContent = 'Signing in…';
+    btn.disabled = true;
+    errEl.textContent = '';
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+      accessToken = data.access_token;
+      localStorage.setItem('php_token', accessToken);
+      document.getElementById('loginOverlay').classList.add('hidden');
+      await initPage();
+    } catch (err) {
+      errEl.textContent = err.message;
+    } finally {
+      btn.textContent = 'Sign In';
+      btn.disabled = false;
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('php_token');
+    localStorage.removeItem('php_email');
+    accessToken = null;
+    document.getElementById('loginOverlay').classList.remove('hidden');
+  }
+
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  async function sbGet(path) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      headers: { ...authHeaders(), 'Accept': 'application/json' }
+    });
+    if (res.status === 401) { logout(); throw new Error('Session expired.'); }
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    return res.json();
+  }
+
+  // ── DATE DEFAULTS ──────────────────────────────────────────────
+  function setDefaultDates() {
+    const today = new Date();
+    const firstOfYear = new Date(today.getFullYear(), 0, 1);
+    document.getElementById('dateTo').value   = today.toISOString().split('T')[0];
+    document.getElementById('dateFrom').value = firstOfYear.toISOString().split('T')[0];
+  }
+
+  // ── LOAD EVENTS INTO DROPDOWN ──────────────────────────────────
+  async function loadEventDropdown() {
+    try {
+      const events = await sbGet('events?order=event_date.desc&limit=100');
+      const sel = document.getElementById('eventFilter');
+      events.forEach(ev => {
+        const opt = document.createElement('option');
+        opt.value = ev.id;
+        opt.textContent = `${ev.event_date} — ${ev.location || 'No location'}`;
+        sel.appendChild(opt);
+      });
+    } catch (e) {
+      console.warn('Could not load events:', e.message);
+    }
+  }
+
+  // ── MAIN REPORT ────────────────────────────────────────────────
+  let lastEventRows = []; // for CSV export
+
+  async function runReport() {
+    const btn      = document.getElementById('runBtn');
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo   = document.getElementById('dateTo').value;
+    const eventId  = document.getElementById('eventFilter').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>Running…';
+
+    try {
+      // Build vaccination query
+      let vaxPath = `vaccinations?order=date_given.asc`;
+      if (dateFrom) vaxPath += `&date_given=gte.${dateFrom}`;
+      if (dateTo)   vaxPath += `&date_given=lte.${dateTo}`;
+      // No direct event_id on vaccinations, so we filter by pet/client below if needed
+
+      // Pull all vaccinations in range (select fields we need)
+      const vaxAll = await sbGet(
+        `vaccinations?select=id,vaccine_name,date_given,pet_id,administered_by${dateFrom ? `&date_given=gte.${dateFrom}` : ''}${dateTo ? `&date_given=lte.${dateTo}` : ''}&order=date_given.asc&limit=5000`
+      );
+
+      // Pull pets (for species + client linkage)
+      const petsAll = await sbGet('pets?select=id,client_id,species&limit=10000');
+      const petMap  = {};
+      petsAll.forEach(p => { petMap[p.id] = p; });
+
+      // Pull clients in range (by event_date)
+      let clientPath = `clients?select=id,event_date${dateFrom ? `&event_date=gte.${dateFrom}` : ''}${dateTo ? `&event_date=lte.${dateTo}` : ''}&limit=10000`;
+      const clientsInRange = await sbGet(clientPath);
+      const clientIdSet = new Set(clientsInRange.map(c => c.id));
+
+      // Filter vaccinations to only those whose pet's client is in range
+      // (vaccinations.date_given already filtered above; this also filters by event if needed)
+      let vax = vaxAll.filter(v => {
+        const pet = petMap[v.pet_id];
+        if (!pet) return true; // include if we can't resolve
+        if (eventId) {
+          // filter by event: clients.event_date must match the event's date
+          // We'll resolve this via events table if eventId is set
+          // For now, include all — refined below
+        }
+        return true;
+      });
+
+      // If a specific event is selected, narrow by that event's date
+      if (eventId) {
+        const evSel = document.getElementById('eventFilter');
+        const evDateStr = evSel.options[evSel.selectedIndex].text.split(' — ')[0];
+        vax = vax.filter(v => v.date_given === evDateStr);
+      }
+
+      // ── SUMMARY NUMBERS ──
+      const totalVax     = vax.length;
+      const petIds       = [...new Set(vax.map(v => v.pet_id).filter(Boolean))];
+      const clientIds    = [...new Set(petIds.map(id => petMap[id]?.client_id).filter(Boolean))];
+      const totalClients = clientIds.length;
+      const totalPets    = petIds.length;
+
+      // Microchips in range
+      const chipsAll = await sbGet(
+        `pets?select=id,microchip_number,client_id${dateFrom || dateTo ? '&' : '?'}` +
+        // We use clients.event_date as a proxy for when the chip was placed
+        // Pull pets whose client visited in range and has a chip number
+        `microchip_number=not.is.null&limit=10000`
+      );
+      // Filter by client in range
+      const chips = chipsAll.filter(p => clientIdSet.has(p.client_id));
+      const totalChips = chips.length;
+
+      // Events in range
+      let eventsPath = `events?select=id,event_date,location${dateFrom ? `&event_date=gte.${dateFrom}` : ''}${dateTo ? `&event_date=lte.${dateTo}` : ''}&order=event_date.asc&limit=500`;
+      const eventsInRange = await sbGet(eventsPath);
+      const totalEvents = eventsInRange.length;
+
+      // Update summary cards
+      document.getElementById('statVaccines').textContent = totalVax.toLocaleString();
+      document.getElementById('statClients').textContent  = totalClients.toLocaleString();
+      document.getElementById('statPets').textContent     = totalPets.toLocaleString();
+      document.getElementById('statChips').textContent    = totalChips.toLocaleString();
+      document.getElementById('statEvents').textContent   = totalEvents.toLocaleString();
+
+      // ── VACCINE BY TYPE ──
+      const vaxCounts = {};
+      vax.forEach(v => {
+        const name = v.vaccine_name || 'Unknown';
+        vaxCounts[name] = (vaxCounts[name] || 0) + 1;
+      });
+      const vaxSorted = Object.entries(vaxCounts).sort((a,b) => b[1]-a[1]);
+      const maxVax    = vaxSorted[0]?.[1] || 1;
+      const barColors = ['#1a3a8f','#f28b82','#2d8a5e','#d97706','#7c3aed','#4a6cc0','#d96b62'];
+      const vaxBars   = document.getElementById('vaxBars');
+
+      if (vaxSorted.length === 0) {
+        vaxBars.innerHTML = '<div class="empty">No vaccinations in this range.</div>';
+      } else {
+        vaxBars.innerHTML = vaxSorted.map(([name, count], i) => `
+          <div class="bar-row">
+            <div class="bar-label" title="${name}">${name}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${(count/maxVax*100).toFixed(1)}%; background:${barColors[i % barColors.length]};"></div>
+            </div>
+            <div class="bar-count">${count}</div>
+          </div>
+        `).join('');
+      }
+
+      // ── SPECIES DONUT ──
+      const speciesCounts = { dog: 0, cat: 0, other: 0 };
+      petIds.forEach(pid => {
+        const sp = (petMap[pid]?.species || 'other').toLowerCase();
+        if (sp === 'dog') speciesCounts.dog++;
+        else if (sp === 'cat') speciesCounts.cat++;
+        else speciesCounts.other++;
+      });
+      drawDonut('speciesCanvas', [
+        { label: 'Dogs',  count: speciesCounts.dog,   color: '#1a3a8f' },
+        { label: 'Cats',  count: speciesCounts.cat,   color: '#f28b82' },
+        { label: 'Other', count: speciesCounts.other, color: '#d97706' },
+      ]);
+
+      // ── PER-EVENT TABLE ──
+      // Group vaccinations by date, match to events
+      const byDate = {};
+      vax.forEach(v => {
+        const d = v.date_given;
+        if (!byDate[d]) byDate[d] = { vax: 0, petSet: new Set(), clientSet: new Set() };
+        byDate[d].vax++;
+        if (v.pet_id) {
+          byDate[d].petSet.add(v.pet_id);
+          const cid = petMap[v.pet_id]?.client_id;
+          if (cid) byDate[d].clientSet.add(cid);
+        }
+      });
+
+      // Build event lookup by date
+      const eventByDate = {};
+      eventsInRange.forEach(ev => { eventByDate[ev.event_date] = ev; });
+
+      lastEventRows = Object.entries(byDate).sort((a,b) => a[0].localeCompare(b[0])).map(([date, d]) => {
+        const ev = eventByDate[date] || {};
+        return {
+          date,
+          location: ev.location || '—',
+          vaccines: d.vax,
+          pets: d.petSet.size,
+          clients: d.clientSet.size,
+        };
+      });
+
+      const eventWrap = document.getElementById('eventTableWrap');
+      if (lastEventRows.length === 0) {
+        eventWrap.innerHTML = '<div class="empty">No data in this range.</div>';
+      } else {
+        eventWrap.innerHTML = `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Location</th>
+                <th style="text-align:right">Vaccines</th>
+                <th style="text-align:right">Pets</th>
+                <th style="text-align:right">Clients</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${lastEventRows.map(r => `
+                <tr>
+                  <td>${r.date}</td>
+                  <td>${r.location}</td>
+                  <td class="num">${r.vaccines}</td>
+                  <td class="num">${r.pets}</td>
+                  <td class="num">${r.clients}</td>
+                </tr>
+              `).join('')}
+              <tr style="background:#f8faff;">
+                <td colspan="2" style="font-weight:700; color:var(--navy); font-family:'Nunito',sans-serif;">Totals</td>
+                <td class="num" style="color:var(--navy);">${lastEventRows.reduce((s,r)=>s+r.vaccines,0)}</td>
+                <td class="num" style="color:var(--navy);">${lastEventRows.reduce((s,r)=>s+r.pets,0)}</td>
+                <td class="num" style="color:var(--navy);">${lastEventRows.reduce((s,r)=>s+r.clients,0)}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+      }
+
+      // ── NEW vs RETURNING ──
+      // "New" = client's event_date is in the selected range AND they don't appear in any earlier clinic visit
+      // Proxy: count clients where event_date equals earliest visit (first seen), vs those who appeared before dateFrom
+      const allClients = await sbGet('clients?select=id,event_date&order=event_date.asc&limit=50000');
+      // earliest visit per client
+      const firstVisit = {};
+      allClients.forEach(c => {
+        if (!firstVisit[c.id] || c.event_date < firstVisit[c.id]) firstVisit[c.id] = c.event_date;
+      });
+
+      let newCount = 0, returningCount = 0;
+      clientIds.forEach(cid => {
+        const first = firstVisit[cid];
+        if (!first || (dateFrom && first >= dateFrom)) newCount++;
+        else returningCount++;
+      });
+
+      const returningWrap = document.getElementById('returningWrap');
+      if (totalClients === 0) {
+        returningWrap.innerHTML = '<div class="empty">No clients in this range.</div>';
+      } else {
+        const newPct = totalClients ? Math.round(newCount / totalClients * 100) : 0;
+        const retPct = 100 - newPct;
+        returningWrap.innerHTML = `
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+            <div style="flex:1; min-width:140px; background:var(--navy-light); border-radius:10px; padding:1rem 1.25rem;">
+              <div class="stat-label" style="color:var(--navy);">🆕 New Clients</div>
+              <div style="font-family:'Nunito',sans-serif; font-size:1.8rem; font-weight:800; color:var(--navy);">${newCount}</div>
+              <div class="stat-sub">${newPct}% of total</div>
+            </div>
+            <div style="flex:1; min-width:140px; background:var(--green-light); border-radius:10px; padding:1rem 1.25rem;">
+              <div class="stat-label" style="color:var(--green);">🔄 Returning Clients</div>
+              <div style="font-family:'Nunito',sans-serif; font-size:1.8rem; font-weight:800; color:var(--green);">${returningCount}</div>
+              <div class="stat-sub">${retPct}% of total</div>
+            </div>
+          </div>
+          <div style="height:16px; border-radius:999px; overflow:hidden; background:var(--navy-light);">
+            <div style="height:100%; width:${newPct}%; background:var(--navy); border-radius:999px 0 0 999px; transition:width 0.5s ease;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">
+            <span>New ${newPct}%</span>
+            <span>Returning ${retPct}%</span>
+          </div>
+        `;
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert('Error running report: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Run Report';
+    }
+  }
+
+  // ── DONUT CHART ────────────────────────────────────────────────
+  function drawDonut(canvasId, segments) {
+    const canvas  = document.getElementById(canvasId);
+    const ctx     = canvas.getContext('2d');
+    const total   = segments.reduce((s, seg) => s + seg.count, 0);
+    const cx = canvas.width / 2, cy = canvas.height / 2, r = 48, inner = 28;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (total === 0) {
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = (r - inner);
+      ctx.beginPath();
+      ctx.arc(cx, cy, (r + inner) / 2, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      let start = -Math.PI / 2;
+      segments.forEach(seg => {
+        if (seg.count === 0) return;
+        const slice = (seg.count / total) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, start + slice);
+        ctx.closePath();
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+        start += slice;
+      });
+      // cut inner circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, inner, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      // center text
+      ctx.fillStyle = '#1a1a2e';
+      ctx.font = 'bold 14px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(total, cx, cy);
+    }
+
+    // Legend
+    const legend = document.getElementById('speciesLegend');
+    legend.innerHTML = segments.map(seg => `
+      <div class="legend-row">
+        <div class="legend-dot" style="background:${seg.color};"></div>
+        <span>${seg.label}</span>
+        <span style="font-weight:600; margin-left:auto;">${seg.count}</span>
+        <span class="legend-pct">${total ? Math.round(seg.count/total*100) : 0}%</span>
+      </div>
+    `).join('');
+  }
+
+  // ── CSV EXPORT ─────────────────────────────────────────────────
+  function exportEventCSV() {
+    if (!lastEventRows.length) { alert('Run a report first.'); return; }
+    const header = 'Date,Location,Vaccines,Pets,Clients';
+    const rows   = lastEventRows.map(r =>
+      `${r.date},"${r.location}",${r.vaccines},${r.pets},${r.clients}`
+    );
+    const csv  = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `php-report-${document.getElementById('dateFrom').value}-to-${document.getElementById('dateTo').value}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── INIT ───────────────────────────────────────────────────────
+  async function initPage() {
+    setDefaultDates();
+    await loadEventDropdown();
+    await runReport();
+  }
+
+  if (accessToken) {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    initPage();
+  }
+</script>
+</body>
+</html>
