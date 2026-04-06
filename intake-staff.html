@@ -1025,19 +1025,11 @@ loadEvents();
     }
   }
 
-  function logout() {
-    accessToken   = null;
+function logout() {
+    accessToken = null;
     localStorage.removeItem('php_token');
-    accessToken   = null;
-localStorage.removeItem('php_token');
-localStorage.removeItem('php_email');
-document.getElementById('loggedInUser').textContent = '';
-    currentClient = null;
-    selectedPetId = null;
-    document.getElementById('clientList').innerHTML = '<li class="empty-state">Search to find a client.</li>';
-    document.getElementById('searchInput').value = '';
-    resetDetailPanel();
-    showScreen('loginScreen');
+    localStorage.removeItem('php_email');
+    window.location.href = 'dashboard.html';
   }
 
   // Allow Enter key on password field
