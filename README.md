@@ -11,7 +11,7 @@ Internal web tools for running free vaccine clinics. Built for [People Helping P
 | `index.html`     | Landing / home page                                                               |
 | `intake.html`    | Bilingual client & pet registration form (English/Spanish)                        |
 | `dashboard.html` | Staff dashboard — clinic day workflow, vaccine logging, certificate download      |
-| `roster.html`    | Sortable, filterable table of all clients and pets; CSV export                    |
+| `records.html`   | Sortable, filterable table of all clients and pets; CSV export                    |
 | `client.html`    | Dedicated client profile page — edit client/pet records, view vaccination history |
 
 ---
