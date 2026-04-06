@@ -1,4 +1,4 @@
-# People Helping Pets — Clinic Tools
+# People Helping Pets — Pawkit
 
 Internal web tools for running free vaccine clinics. Built for [People Helping Pets](https://peoplehelpingpets.org), a Chicago-based nonprofit providing bilingual vaccine clinics for cats and dogs in underserved neighborhoods.
 
@@ -6,13 +6,15 @@ Internal web tools for running free vaccine clinics. Built for [People Helping P
 
 ## Pages
 
-| File             | Purpose                                                                           |
-| ---------------- | --------------------------------------------------------------------------------- |
-| `index.html`     | Landing / home page                                                               |
-| `intake.html`    | Bilingual client & pet registration form (English/Spanish)                        |
-| `dashboard.html` | Staff dashboard — clinic day workflow, vaccine logging, certificate download      |
-| `records.html`   | Sortable, filterable table of all clients and pets; CSV export                    |
-| `client.html`    | Dedicated client profile page — edit client/pet records, view vaccination history |
+| File                   | Purpose                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| `index.html`           | Landing / home page                                                                              |
+| `intake.html`          | Bilingual client & pet registration form (English/Spanish) with waiver and drawn signature       |
+| `dashboard.html`       | Role-selector landing page — routes staff to the appropriate tool                                |
+| `intake-staff.html`    | Staff intake tool — client search, walk-in registration, check-in, pet records                   |
+| `discharge-staff.html` | Staff discharge tool — vaccine logging, microchip, certificate download, mark as seen            |
+| `roster.html`          | Sortable, filterable table of all clients and pets; CSV export                                   |
+| `client.html`          | Client profile page — edit client/pet records, vaccination history, cert download, signed waiver |
 
 ---
 
@@ -32,6 +34,19 @@ Output is saved to `certificates/cert_<vaccination_id>.pdf`.
 
 ---
 
+## Waiver & Signature
+
+The public intake form (`intake.html`) includes a bilingual liability waiver (English/Spanish) that clients must sign before submitting. The signature is drawn on a canvas using [Signature Pad](https://github.com/szimek/signature_pad) and saved as a base64 PNG string.
+
+On submission, two fields are written to the `clients` table:
+
+- `waiver_signature` — base64 PNG of the drawn signature
+- `waiver_signed_at` — UTC timestamp of submission
+
+The signed waiver is viewable by staff on the client's profile page (`client.html`), which displays the signature image and the date/time it was signed.
+
+---
+
 ## Setup
 
 ### 1. Supabase
@@ -40,23 +55,25 @@ This project uses [Supabase](https://supabase.com) as its backend (Postgres via 
 
 **`clients` table**
 
-| Column          | Type          | Notes                                                                               |
-| --------------- | ------------- | ----------------------------------------------------------------------------------- |
-| `id`            | `uuid`        | Primary key, default `gen_random_uuid()`                                            |
-| `name`          | `text`        | Required                                                                            |
-| `email`         | `text`        | Optional                                                                            |
-| `phone`         | `text`        | Optional                                                                            |
-| `street`        | `text`        | Optional — replaces old single `address` field                                      |
-| `city`          | `text`        | Optional                                                                            |
-| `state`         | `text`        | Optional                                                                            |
-| `zip`           | `text`        | Optional                                                                            |
-| `address`       | `text`        | Legacy — kept for backward compatibility; use `street/city/state/zip` going forward |
-| `event_date`    | `date`        | Set automatically on submission                                                     |
-| `status`        | `text`        | `registered`, `checked_in`, or `seen`                                               |
-| `checked_in_at` | `timestamptz` | Optional                                                                            |
-| `seen_at`       | `timestamptz` | Optional                                                                            |
-| `archived`      | `bool`        | Default `false`                                                                     |
-| `created_at`    | `timestamptz` | Default `now()`                                                                     |
+| Column             | Type          | Notes                                                                               |
+| ------------------ | ------------- | ----------------------------------------------------------------------------------- |
+| `id`               | `uuid`        | Primary key, default `gen_random_uuid()`                                            |
+| `name`             | `text`        | Required                                                                            |
+| `email`            | `text`        | Optional                                                                            |
+| `phone`            | `text`        | Optional                                                                            |
+| `street`           | `text`        | Optional — replaces old single `address` field                                      |
+| `city`             | `text`        | Optional                                                                            |
+| `state`            | `text`        | Optional                                                                            |
+| `zip`              | `text`        | Optional                                                                            |
+| `address`          | `text`        | Legacy — kept for backward compatibility; use `street/city/state/zip` going forward |
+| `event_date`       | `date`        | Set automatically on submission                                                     |
+| `status`           | `text`        | `registered`, `checked_in`, or `seen`                                               |
+| `checked_in_at`    | `timestamptz` | Optional                                                                            |
+| `seen_at`          | `timestamptz` | Optional                                                                            |
+| `archived`         | `bool`        | Default `false`                                                                     |
+| `waiver_signature` | `text`        | Base64 PNG of drawn signature; set on intake form submission                        |
+| `waiver_signed_at` | `timestamptz` | UTC timestamp of waiver signature; set on intake form submission                    |
+| `created_at`       | `timestamptz` | Default `now()`                                                                     |
 
 **`pets` table**
 
@@ -68,11 +85,13 @@ This project uses [Supabase](https://supabase.com) as its backend (Postgres via 
 | `species`          | `text`        | `dog`, `cat`, `ferret`, or `other`       |
 | `breed`            | `text`        | Optional                                 |
 | `age`              | `float8`      | Optional, in years                       |
+| `age_unit`         | `text`        | `years` or `months`                      |
 | `weight`           | `float8`      | Optional, in lbs                         |
 | `sex`              | `text`        | `male`, `female`, or `unknown`           |
 | `altered`          | `text`        | `yes`, `no`, or `unknown`                |
 | `microchipped`     | `text`        | `yes`, `no`, or `unknown`                |
 | `microchip_number` | `text`        | Optional                                 |
+| `colors_markings`  | `text`        | Optional                                 |
 | `archived`         | `bool`        | Default `false`                          |
 | `created_at`       | `timestamptz` | Default `now()`                          |
 
@@ -126,11 +145,15 @@ Create a storage bucket named `templates` and set it to **public**. Upload:
 
 ### 4. Configure credentials
 
-At the top of each HTML file, set your Supabase project URL and anon key:
+Credentials are managed via `config.js`, which is gitignored and generated at build time by `scripts/build-config.js` using Vercel environment variables.
+
+For local development, create `config.js` manually in the project root:
 
 ```js
-const SUPABASE_URL = "https://your-project-id.supabase.co";
-const SUPABASE_ANON_KEY = "your-anon-key-here";
+const CONFIG = {
+  SUPABASE_URL: "https://your-project-id.supabase.co",
+  SUPABASE_ANON_KEY: "your-anon-key-here",
+};
 ```
 
 Both values are found in your Supabase project under **Settings → API**.
@@ -142,13 +165,13 @@ SUPABASE_URL = "https://your-project-id.supabase.co"
 SUPABASE_KEY = "your-anon-or-service-key"
 ```
 
-> ⚠️ Credentials are currently hardcoded in each file. This is acceptable for a private internal tool, but avoid committing real credentials to a public repository.
+> ⚠️ Never commit `config.js` or real credentials to the repository.
 
 ---
 
 ## Running locally
 
-No build step required. Open any `.html` file directly in a browser, or use VS Code's **Live Preview** extension for a local dev server with auto-reload.
+No build step required. Create `config.js` as described above, then open any `.html` file in a browser or use VS Code's **Live Preview** extension for a local dev server with auto-reload.
 
 For `fill_cert.py`, install dependencies first:
 
@@ -163,6 +186,7 @@ pip install pypdf requests python-dateutil reportlab
 - Plain HTML, CSS, and JavaScript — no frameworks, no npm
 - [Supabase](https://supabase.com) — Postgres database, REST API, Auth, and Storage
 - [pdf-lib](https://pdf-lib.js.org/) — in-browser PDF form filling for certificates
+- [Signature Pad](https://github.com/szimek/signature_pad) — drawn signature capture on the intake form
 - [pypdf](https://pypdf.readthedocs.io/) + [reportlab](https://www.reportlab.com/) — Python-based certificate generation (CLI)
 - [Google Fonts](https://fonts.google.com) — Nunito + Nunito Sans
 - [Vercel](https://vercel.com) — hosting (free tier)
@@ -171,8 +195,8 @@ pip install pypdf requests python-dateutil reportlab
 
 ## Known limitations
 
-- Maximum of 3 pets per registration on the intake form
+- Maximum of 3 pets per registration on the public intake form
 - Client upsert matches by email or phone — names alone are not deduplicated
 - No server-side validation; all validation is client-side
-- Supabase credentials are hardcoded in each HTML file (see note above)
-- The `fill_cert.py` script is CLI-only and not yet wired into the dashboard UI
+- The `fill_cert.py` script is CLI-only and not wired into the app UI
+- Waiver signature is only captured via the public intake form — walk-in registrations through `intake-staff.html` do not currently collect a signature
