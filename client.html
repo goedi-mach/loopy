@@ -459,7 +459,24 @@
     </div>
   </div>
 </div>
-
+<!-- ── WAIVER ── -->
+  <div class="card" id="waiverCard" style="display:none;">
+    <div class="card-header">📋 Signed Waiver</div>
+    <div class="card-body">
+      <div class="field-grid" style="margin-bottom:1.25rem;">
+        <div class="field">
+          <label>Signed On</label>
+          <div class="field-value muted" id="viewWaiverDate">—</div>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.03em;display:block;margin-bottom:0.5rem;">Signature</label>
+        <div style="border:1.5px solid var(--border);border-radius:8px;background:white;display:inline-block;padding:0.5rem;">
+          <img id="viewWaiverSig" src="" alt="Client signature" style="display:block;max-width:100%;height:100px;" />
+        </div>
+      </div>
+    </div>
+  </div>
 <script>
   const SUPABASE_URL      = CONFIG.SUPABASE_URL;
 const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
@@ -568,6 +585,13 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
     document.getElementById('viewCity').textContent   = c.city   || '—';
     document.getElementById('viewState').textContent  = c.state  || '—';
     document.getElementById('viewZip').textContent    = c.zip    || '—';
+    // Waiver
+    if (c.waiver_signed_at && c.waiver_signature) {
+      const waiverDate = new Date(c.waiver_signed_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+      document.getElementById('viewWaiverDate').textContent = waiverDate;
+      document.getElementById('viewWaiverSig').src = c.waiver_signature;
+      document.getElementById('waiverCard').style.display = 'block';
+    }
   }
 
   function toggleEditClient() {
