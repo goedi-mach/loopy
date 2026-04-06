@@ -6,6 +6,7 @@
   <title>Vaccine Clinic Registration / Registro de Clínica de Vacunas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <style>
     :root {
       --navy:        #1a3a8f;
@@ -249,7 +250,113 @@
       font-style: italic;
       line-height: 1.6;
     }
+/* ── WAIVER ── */
+    .waiver-text {
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: var(--text);
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      background: #f8faff;
+      margin-bottom: 1.25rem;
+    }
 
+    .waiver-text p { margin-bottom: 0.75rem; }
+    .waiver-text p:last-child { margin-bottom: 0; }
+
+    .waiver-lang-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .waiver-lang-btn {
+      padding: 0.25rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 2px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.15s;
+    }
+
+    .waiver-lang-btn.active {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: white;
+    }
+
+    .sig-area {
+      margin-top: 1rem;
+    }
+
+    .sig-label {
+      font-size: 0.87rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      display: block;
+    }
+
+    .sig-label .es {
+      font-weight: 500;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .sig-canvas-wrap {
+      position: relative;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      touch-action: none;
+    }
+
+    .sig-canvas-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 140px;
+      border-radius: 6px;
+      cursor: crosshair;
+    }
+
+    .sig-canvas-wrap.signed {
+      border-color: var(--navy);
+    }
+
+    .sig-canvas-wrap.error {
+      border-color: var(--coral-dark);
+    }
+
+    .sig-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      font-style: italic;
+    }
+
+    .sig-clear-btn {
+      margin-top: 0.5rem;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.85rem;
+      font-size: 0.8rem;
+      font-family: 'Nunito Sans', sans-serif;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .sig-clear-btn:hover {
+      border-color: var(--coral-dark);
+      color: var(--coral-dark);
+    }
     /* ── STATUS ── */
     .status {
       display: none;
@@ -351,7 +458,41 @@
       <div class="pet-panel" id="petPanel1"></div>
       <div class="pet-panel" id="petPanel2"></div>
     </div>
+<div class="section-card">
+      <div class="section-title">📋 Waiver / Exención de Responsabilidad</div>
 
+      <div class="waiver-lang-toggle">
+        <button type="button" class="waiver-lang-btn active" onclick="showWaiverLang('en', this)">English</button>
+        <button type="button" class="waiver-lang-btn" onclick="showWaiverLang('es', this)">Español</button>
+      </div>
+
+      <div class="waiver-text" id="waiverEn">
+        <p>I, the undersigned, am using the medical services provided by People Helping Pets ("Clinic"). I understand that the Clinic is community-based and may include volunteer veterinarians, veterinary technicians, assistants, students, managers, and helpers.</p>
+        <p>I confirm that I am at least 18 years old and am legally authorized to make decisions for the animal(s) I am presenting today. I authorize the Clinic and its representatives to examine, vaccinate, microchip, and provide any other services I select or that are considered necessary.</p>
+        <p>I understand that these services do not replace full veterinary care and that the Clinic is not a full-service veterinary hospital. I am responsible for seeking and paying for any additional care recommended for my pet. I will inform Clinic staff, to the best of my knowledge, of any preexisting medical conditions, and I understand that some conditions may prevent my pet from receiving services.</p>
+        <p>I understand that vaccines and other services carry some risk. Mild side effects can include soreness, lethargy, or fever, while serious reactions are rare but possible and may require immediate veterinary attention.</p>
+        <p>I release and hold harmless People Helping Pets, including its directors, officers, volunteers, veterinarians, staff, and representatives, from liability for any injury, harm, or damage to me, my pet, or my personal property related to services provided at the Clinic.</p>
+        <p>I understand that photos or videos may be taken at Clinic events, and I give permission for People Helping Pets to use images of me, my pet, or others accompanying me for educational or promotional purposes. Anyone who does not wish to be photographed should let staff know at check-in.</p>
+      </div>
+
+      <div class="waiver-text" id="waiverEs" style="display:none">
+        <p>Yo, la persona abajo firmante, estoy utilizando los servicios médicos proporcionados por People Helping Pets ("la Clínica"). Entiendo que la Clínica es comunitaria y puede incluir veterinarios voluntarios, técnicos veterinarios, asistentes, estudiantes, administradores y ayudantes.</p>
+        <p>Confirmo que tengo al menos 18 años de edad y que estoy legalmente autorizado(a) para tomar decisiones por el/los animal(es) que presento hoy. Autorizo a la Clínica y a sus representantes a examinar, vacunar, colocar microchip y proporcionar cualquier otro servicio que seleccione o que se considere necesario.</p>
+        <p>Entiendo que estos servicios no reemplazan la atención veterinaria completa y que la Clínica no es un hospital veterinario de servicio completo. Soy responsable de buscar y pagar cualquier atención adicional recomendada para mi mascota. Informaré al personal de la Clínica, según mi conocimiento, sobre cualquier condición médica preexistente, y entiendo que algunas condiciones pueden impedir que mi mascota reciba ciertos servicios.</p>
+        <p>Entiendo que las vacunas y otros servicios conllevan algunos riesgos. Los efectos secundarios leves pueden incluir dolor en el sitio de aplicación, letargo o fiebre, mientras que las reacciones graves son poco comunes pero posibles y pueden requerir atención veterinaria inmediata.</p>
+        <p>Libero y eximo de responsabilidad a People Helping Pets, incluyendo a sus directores, oficiales, voluntarios, veterinarios, personal y representantes, por cualquier lesión, daño o perjuicio a mí, a mi mascota o a mi propiedad personal relacionado con los servicios proporcionados en la Clínica.</p>
+        <p>Entiendo que se pueden tomar fotos o videos durante los eventos de la Clínica, y doy permiso a People Helping Pets para utilizar imágenes mías, de mi mascota o de cualquier persona que me acompañe con fines educativos o promocionales. Las personas que no deseen ser fotografiadas deben informar al personal al momento del registro.</p>
+      </div>
+
+      <div class="sig-area">
+        <label class="sig-label">Signature / <span class="es">Firma</span> <span class="required">*</span></label>
+        <div class="sig-canvas-wrap" id="sigCanvasWrap">
+          <canvas id="sigCanvas"></canvas>
+        </div>
+        <p class="sig-hint">Sign above with your finger or mouse. / Firme arriba con su dedo o ratón.</p>
+        <button type="button" class="sig-clear-btn" onclick="clearSignature()">✕ Clear / Borrar</button>
+      </div>
+    </div>
     <div class="submit-area">
       <button type="submit" class="btn-submit" id="submitBtn">
         Submit Registration / Enviar Registro
@@ -558,6 +699,8 @@ async function supabaseSelect(table, query) {
       return showStatus('error', "Please enter at least one pet's name.\nIngrese el nombre de al menos una mascota.");
     if (!fd.get('pet_species_0'))
       return showStatus('error', 'Please select a species for Pet 1.\nSeleccione la especie de la Mascota 1.');
+    if (signaturePad.isEmpty())
+      return showStatus('error', 'Please sign the waiver before submitting.\nPor favor firme la exención antes de enviar.');
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting… / Enviando…';
@@ -572,7 +715,9 @@ try {
         city:       fd.get('city')?.trim()    || null,
         state:      fd.get('state')?.trim()   || null,
         zip:        fd.get('zip')?.trim()     || null,
-        event_date: new Date().toISOString().split('T')[0]
+        event_date:        new Date().toISOString().split('T')[0],
+        waiver_signed_at:  new Date().toISOString(),
+        waiver_signature:  signaturePad.toDataURL('image/png')
       });
 
       for (let i = 0; i < 3; i++) {
@@ -609,6 +754,44 @@ try {
       submitBtn.textContent = 'Submit Registration / Enviar Registro';
     }
   });
+  // ── WAIVER & SIGNATURE PAD ──────────────────────────────────
+  function showWaiverLang(lang, btn) {
+    document.getElementById('waiverEn').style.display = lang === 'en' ? 'block' : 'none';
+    document.getElementById('waiverEs').style.display = lang === 'es' ? 'block' : 'none';
+    document.querySelectorAll('.waiver-lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  const sigCanvas = document.getElementById('sigCanvas');
+  const sigWrap   = document.getElementById('sigCanvasWrap');
+  const signaturePad = new SignaturePad(sigCanvas, {
+    penColor: '#1a1a2e',
+    minWidth: 1,
+    maxWidth: 2.5,
+  });
+
+  function resizeCanvas() {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const data  = signaturePad.toData();
+    sigCanvas.width  = sigCanvas.offsetWidth  * ratio;
+    sigCanvas.height = sigCanvas.offsetHeight * ratio;
+    sigCanvas.getContext('2d').scale(ratio, ratio);
+    signaturePad.clear();
+    signaturePad.fromData(data);
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  signaturePad.addEventListener('afterUpdateStroke', () => {
+    sigWrap.classList.add('signed');
+    sigWrap.classList.remove('error');
+  });
+
+  function clearSignature() {
+    signaturePad.clear();
+    sigWrap.classList.remove('signed', 'error');
+  }
 </script>
 </body>
 </html>
