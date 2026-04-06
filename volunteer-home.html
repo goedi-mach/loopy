@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pawkit — Volunteer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:        #1a3a8f;
+      --navy-dark:   #122a6e;
+      --navy-mid:    #4a6cc0;
+      --coral:       #f28b82;
+      --coral-dark:  #d96b62;
+      --text-muted:  #5a6380;
+      --white:       #ffffff;
+      --shadow-lg:   0 8px 32px rgba(26,58,143,0.15);
+      --shadow:      0 2px 16px rgba(26,58,143,0.10);
+      --radius:      12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-mid) 100%);
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 420px;
+      margin: 1rem;
+    }
+
+    .card h2 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--navy);
+      text-align: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    .btn-mode {
+      display: block;
+      width: 100%;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 1.25rem 1rem;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      box-shadow: var(--shadow);
+      transition: filter 0.15s, transform 0.1s;
+      margin-bottom: 1rem;
+    }
+
+    .btn-mode:active { transform: scale(0.98); }
+    .btn-mode:hover { filter: brightness(0.92); }
+
+    .btn-mode-sub {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      opacity: 0.8;
+      margin-top: 0.3rem;
+    }
+
+    .btn-intake    { background: var(--navy); color: white; }
+    .btn-discharge { background: var(--coral); color: white; }
+
+    .sign-out {
+      display: block;
+      text-align: center;
+      margin-top: 1.25rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      text-decoration: underline;
+    }
+
+    .sign-out:hover { color: var(--navy); }
+
+    .user-label {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🐾 Pawkit</h2>
+    <p class="subtitle">People Helping Pets — Chicago</p>
+
+    <p class="user-label" id="userLabel"></p>
+
+    <a href="intake-staff.html" class="btn-mode btn-intake">
+      🏥 Intake
+      <span class="btn-mode-sub">Register clients &amp; check in</span>
+    </a>
+
+    <a href="discharge-staff.html" class="btn-mode btn-discharge">
+      💉 Discharge
+      <span class="btn-mode-sub">Log vaccines &amp; microchips</span>
+    </a>
+
+    <button class="sign-out" onclick="signOut()">Sign out</button>
+  </div>
+
+  <script>
+    // ── Auth guard ────────────────────────────────────────────────
+    const token = localStorage.getItem('php_token');
+    if (!token) window.location.href = 'dashboard.html';
+
+    // ── Show email if available ───────────────────────────────────
+    const email = localStorage.getItem('php_email');
+    if (email) document.getElementById('userLabel').textContent = `👋 Signed in as ${email}`;
+
+    // ── Sign out ──────────────────────────────────────────────────
+    function signOut() {
+      localStorage.removeItem('php_token');
+      localStorage.removeItem('php_email');
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>
