@@ -486,7 +486,7 @@
                       <span class="badge badge-${role}">${role}</span>
                     </td>
                     <td style="color:var(--text-muted)">${joined}</td>
-                    <td style="white-space:nowrap; display:flex; gap:0.4rem;">
+                    <td style="white-space:nowrap;">
                       ${!isMe ? `
                         <select class="btn btn-sm" style="border:1.5px solid var(--border);background:#f8faff;color:var(--text);border-radius:8px;padding:0.25rem 0.5rem;" onchange="changeRole('${u.id}', this.value)">
                           <option value="volunteer" ${role === 'volunteer' ? 'selected' : ''}>Volunteer</option>
