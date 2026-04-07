@@ -373,11 +373,18 @@
   <div class="page-title">📋 Clinic Records</div>
 
   <!-- Controls -->
-  <div class="controls">
+<div class="controls">
     <label>Clinic Date:</label>
     <input type="date" id="dateFilter" />
     <button class="btn btn-primary" onclick="loadAll()">Load</button>
     <button class="btn btn-outline" onclick="clearDate()">All dates</button>
+    <div style="width:1px; height:1.5rem; background:var(--border); margin:0 0.25rem;"></div>
+    <input type="text" id="searchInput" placeholder="Search name, phone, email…"
+      oninput="applySearch()"
+      style="padding:0.45rem 0.75rem; border:1.5px solid var(--border); border-radius:8px;
+             font-family:'Nunito Sans',sans-serif; font-size:0.88rem; color:var(--text);
+             background:var(--white); min-width:220px;"
+      onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'" />
     <button class="btn btn-outline" id="exportClientsBtn" onclick="exportCSV('clients')" disabled>⬇ Export Clients CSV</button>
     <button class="btn btn-outline" id="exportPetsBtn" onclick="exportCSV('pets')" disabled>⬇ Export Pets & Vaccines CSV</button>
   </div>
@@ -509,8 +516,9 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
   let clientsData = [];
   let petsData    = [];
 
-  async function loadAll() {
+async function loadAll() {
     const date = document.getElementById('dateFilter').value;
+    document.getElementById('searchInput').value = '';
     await Promise.all([loadClients(date), loadPets(date)]);
     document.getElementById('exportClientsBtn').disabled = false;
     document.getElementById('exportPetsBtn').disabled    = false;
@@ -630,7 +638,35 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
       </tr>
     `).join('');
   }
+// ── SEARCH FILTER ─────────────────────────────────────────────────
+  function applySearch() {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
 
+    if (!q) {
+      renderClients(clientsData);
+      renderPets(petsData);
+      document.getElementById('clientCount').textContent = `${clientsData.length} record${clientsData.length !== 1 ? 's' : ''}`;
+      document.getElementById('petCount').textContent    = `${petsData.length} record${petsData.length !== 1 ? 's' : ''}`;
+      return;
+    }
+
+    const filteredClients = clientsData.filter(c =>
+      (c.name  || '').toLowerCase().includes(q) ||
+      (c.phone || '').toLowerCase().includes(q) ||
+      (c.email || '').toLowerCase().includes(q)
+    );
+    renderClients(filteredClients);
+    document.getElementById('clientCount').textContent = `${filteredClients.length} of ${clientsData.length} record${clientsData.length !== 1 ? 's' : ''}`;
+
+    const filteredPets = petsData.filter(({ pet, ownerName }) =>
+      (pet.name   || '').toLowerCase().includes(q) ||
+      (ownerName  || '').toLowerCase().includes(q) ||
+      (pet.breed  || '').toLowerCase().includes(q) ||
+      (pet.species|| '').toLowerCase().includes(q)
+    );
+    renderPets(filteredPets);
+    document.getElementById('petCount').textContent = `${filteredPets.length} of ${petsData.length} record${petsData.length !== 1 ? 's' : ''}`;
+  }
   // ── OPEN IN DASHBOARD ─────────────────────────────────────────────
   function openInDashboard(clientId) {
   window.location.href = `client.html?id=${clientId}`;
