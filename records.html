@@ -745,8 +745,9 @@ async function loadAll() {
     document.getElementById('loginOverlay').classList.add('hidden');
   }
 
-  // Set today's date as default
-  document.getElementById('dateFilter').value = new Date().toISOString().split('T')[0];
+// Load all dates by default
+  document.getElementById('dateFilter').value = '';
+  loadAll();
 </script>
 </body>
 </html>
