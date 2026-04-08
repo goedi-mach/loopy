@@ -675,6 +675,7 @@
   <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
   <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
   <button id="archiveClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit; display:none;" onclick="toggleArchiveClient()">Archive</button>
+<button id="deleteClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--coral); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit; display:none;" onclick="deleteClient()">Delete</button>
 </div>
             </div>
           </div>
@@ -1289,6 +1290,7 @@ document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
 document.getElementById('seenBtn').style.display       = (!client.archived && status === 'checked_in') ? 'block' : 'none';
 document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
+document.getElementById('deleteClientBtn').style.display = client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
 profileBtn.href = `client.html?id=${client.id}`;
 profileBtn.style.display = 'inline-block';
@@ -1344,6 +1346,7 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
             <div style="display:flex; gap:0.4rem; flex-shrink:0; margin-left:0.5rem;">
               ${!p.archived ? `<button onclick="event.stopPropagation(); openEditPet(${JSON.stringify(p).replace(/"/g,'&quot;')})" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️</button>` : ''}
               <button onclick="event.stopPropagation(); toggleArchivePet('${p.id}', ${p.archived})" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">${p.archived ? 'Unarchive' : 'Archive'}</button>
+              ${p.archived ? `<button onclick="event.stopPropagation(); deletePet('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--coral); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit;">Delete</button>` : ''}
             </div>
           </div>
         </div>
@@ -1669,7 +1672,27 @@ async function saveEditClient() {
     showMsg(msg, 'error', err.message);
   }
 }
+// ─── DELETE CLIENT ─────────────────────────────────────────────
+async function deleteClient() {
+  const name = currentClient.name || 'this client';
+  const confirmed = confirm(
+    `⚠️ Permanently delete ${name}?\n\nThis will also delete all their pets and vaccination records. This cannot be undone.`
+  );
+  if (!confirmed) return;
 
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
+      method:  'DELETE',
+      headers: authHeaders()
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    currentClient = null;
+    document.getElementById('detailPanel').style.display = 'none';
+    await loadRecentClients();
+  } catch (err) {
+    alert('Delete failed: ' + err.message);
+  }
+}
 // ─── ARCHIVE CLIENT ────────────────────────────────────────────
 async function toggleArchiveClient() {
   const archiving = !currentClient.archived;
@@ -1680,10 +1703,11 @@ async function toggleArchiveClient() {
       body:    JSON.stringify({ archived: archiving })
     });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
-    currentClient.archived = archiving;
-    document.getElementById('archiveClientBtn').textContent   = archiving ? 'Unarchive' : 'Archive';
-    document.getElementById('editClientBtn').style.display    = archiving ? 'none' : 'block';
-    document.getElementById('seenBtn').style.display          = 'none';
+ currentClient.archived = archiving;
+document.getElementById('archiveClientBtn').textContent    = archiving ? 'Unarchive' : 'Archive';
+document.getElementById('editClientBtn').style.display     = archiving ? 'none' : 'block';
+document.getElementById('deleteClientBtn').style.display   = archiving ? 'block' : 'none';
+document.getElementById('seenBtn').style.display           = 'none';
     await loadRecentClients();
   } catch (err) {
     alert(err.message);
@@ -1742,7 +1766,24 @@ async function saveEditPet() {
     showMsg(msg, 'error', err.message);
   }
 }
+// ─── DELETE PET ────────────────────────────────────────────────
+async function deletePet(petId, petName) {
+  const confirmed = confirm(
+    `⚠️ Permanently delete ${petName}?\n\nThis will also delete all their vaccination records. This cannot be undone.`
+  );
+  if (!confirmed) return;
 
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/pets?id=eq.${petId}`, {
+      method:  'DELETE',
+      headers: authHeaders()
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    await loadPets(currentClient.id);
+  } catch (err) {
+    alert('Delete failed: ' + err.message);
+  }
+}
 // ─── ARCHIVE PET ───────────────────────────────────────────────
 async function toggleArchivePet(petId, currentlyArchived) {
   try {
