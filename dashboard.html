@@ -135,19 +135,6 @@
   </div>
 
   <script>
-    // ─── ROLE GUARD ────────────────────────────────────────────────
-function requireStaff() {
-  const token = localStorage.getItem('php_token');
-  if (!token) { window.location.href = 'dashboard.html'; return; }
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const role = payload?.app_metadata?.role;
-    if (role !== 'staff') window.location.href = 'volunteer-home.html';
-  } catch {
-    window.location.href = 'dashboard.html';
-  }
-}
-requireStaff();
     const SUPABASE_URL      = CONFIG.SUPABASE_URL;
     const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
 
