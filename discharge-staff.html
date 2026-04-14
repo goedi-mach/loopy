@@ -1122,7 +1122,7 @@ async function loadRecentClients() {
   const list = document.getElementById('clientList');
   list.innerHTML = '<li class="empty-state">Loading…</li>';
   try {
-    let path = `clients?order=checked_in_at.asc.nullslast,created_at.desc&limit=10`;
+    let path = `clients?order=checked_in_at.asc.nullslast,created_at.desc&limit=5`;
     if (currentFilter === 'archived') {
       path += `&archived=eq.true`;
     } else {
@@ -1252,7 +1252,7 @@ async function addEvent() {
       // Search across name, email, and phone using ilike (case-insensitive)
       const encoded = encodeURIComponent(`%${q}%`);
       const clients = await sbGet(
-        `clients?or=(name.ilike.${encoded},email.ilike.${encoded},phone.ilike.${encoded})&order=name.asc&limit=10`
+        `clients?or=(name.ilike.${encoded},email.ilike.${encoded},phone.ilike.${encoded})&order=name.asc&limit=5`
       );
 
       if (!clients.length) {
