@@ -521,6 +521,7 @@
     <div class="topnav-brand">💉 Discharge — People Helping Pets</div>
     <div style="display:flex; align-items:center; gap:0.75rem;">
       <div style="font-size:0.8rem; opacity:0.8;" id="loggedInUser"></div>
+      <a id="staffHomeLink" href="staff-home.html" style="display:none; color:rgba(255,255,255,0.8); text-decoration:none; font-size:0.85rem; font-weight:700; font-family:'Nunito',sans-serif; padding:0.3rem 0.75rem; border-radius:999px;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='none'">🏠 Staff Home</a>
       <a href="records.html" style="color:rgba(255,255,255,0.8); text-decoration:none; font-size:0.85rem; font-weight:700; font-family:'Nunito',sans-serif; padding:0.3rem 0.75rem; border-radius:999px;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='none'">📋 Records</a>
       <a href="intake-staff.html" style="color:rgba(255,255,255,0.8); text-decoration:none; font-size:0.85rem; font-weight:700; font-family:'Nunito',sans-serif; padding:0.3rem 0.75rem; border-radius:999px;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='none'">🏥 Intake</a>
       <button class="btn-logout" onclick="logout()">Sign Out</button>
@@ -1019,6 +1020,18 @@
 </div><!-- /dashScreen -->
 
 <script>
+  // ─── STAFF NAV LINK ────────────────────────────────────────────
+function showStaffHomeLink() {
+  try {
+    const token = localStorage.getItem('php_token');
+    if (!token) return;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload?.app_metadata?.role === 'staff') {
+      const el = document.getElementById('staffHomeLink');
+      if (el) el.style.display = 'inline-block';
+    }
+  } catch {}
+}
   // ─── CONFIG ────────────────────────────────────────────────────
   const SUPABASE_URL      = CONFIG.SUPABASE_URL;
 const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
@@ -1086,8 +1099,8 @@ let currentFilter  = 'all';
 localStorage.setItem('php_token', data.access_token);
 localStorage.setItem('php_email', email);
 document.getElementById('loggedInUser').textContent = `👋 ${email}`;
-document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-document.getElementById('dashScreen').classList.add('active');
+showStaffHomeLink();
+showScreen('dashScreen');
 loadRecentClients();
 loadEvents();
     } catch (err) {
@@ -2213,8 +2226,8 @@ if (savedToken) {
   accessToken = savedToken;
   const savedEmail = localStorage.getItem('php_email');
   if (savedEmail) document.getElementById('loggedInUser').textContent = `👋 ${savedEmail}`;
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-document.getElementById('dashScreen').classList.add('active');
+  showStaffHomeLink();
+  showScreen('dashScreen');
   loadRecentClients();
   loadEvents();
   loadTodayCount();
