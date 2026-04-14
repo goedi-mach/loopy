@@ -337,6 +337,7 @@
   <div class="topnav-links">
     <a href="dashboard.html" class="nav-link">Dashboard</a>
     <a href="records.html" class="nav-link">Records</a>
+    <a id="staffHomeLink" href="staff-home.html" style="display:none;" class="nav-link">🏠 Staff Home</a>
     <button class="btn-logout" onclick="logout()">Sign Out</button>
   </div>
 </nav>
@@ -478,6 +479,18 @@
     </div>
   </div>
 <script>
+  // ─── STAFF NAV LINK ────────────────────────────────────────────
+function showStaffHomeLink() {
+  try {
+    const token = localStorage.getItem('php_token');
+    if (!token) return;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload?.app_metadata?.role === 'staff') {
+      const el = document.getElementById('staffHomeLink');
+      if (el) el.style.display = 'inline-block';
+    }
+  } catch {}
+}
   const SUPABASE_URL      = CONFIG.SUPABASE_URL;
 const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
 
@@ -510,6 +523,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
       accessToken = data.access_token;
       localStorage.setItem('php_token', accessToken);
       document.getElementById('loginOverlay').classList.add('hidden');
+      showStaffHomeLink();
       init();
     } catch (err) { errEl.textContent = err.message; }
   }
@@ -1019,8 +1033,9 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
   }
 
   // ── START ─────────────────────────────────────────────────────────
-  if (accessToken) {
+if (accessToken) {
     document.getElementById('loginOverlay').classList.add('hidden');
+    showStaffHomeLink();
     init();
   }
 </script>
