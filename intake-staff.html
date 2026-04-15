@@ -613,10 +613,15 @@
   <div class="card-header">🚶 Walk-in Registration</div>
   <div class="card-body">
     <div id="walkinMsg" class="msg"></div>
+    <div id="duplicateWarning" style="display:none; background:#fef3c7; border:1.5px solid #d97706; border-radius:10px; padding:1rem; margin-bottom:1rem;">
+      <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.88rem; color:#92400e; margin-bottom:0.5rem;">⚠️ Possible duplicate — does this client already exist?</div>
+      <div id="duplicateList" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+      <button onclick="dismissDuplicates()" style="margin-top:0.75rem; font-size:0.78rem; background:none; border:none; color:#92400e; cursor:pointer; font-family:inherit; text-decoration:underline;">No, this is a new client — continue anyway</button>
+    </div>
     <div class="form-row">
       <div class="form-field">
         <label>Client Name *</label>
-        <input type="text" id="walkinName" placeholder="Jane Smith" />
+        <input type="text" id="walkinName" placeholder="Jane Smith" onblur="checkDuplicates()" />
       </div>
       <div class="form-field">
         <label>Phone</label>
@@ -1119,8 +1124,64 @@ function closeWalkin() {
   document.getElementById('walkinPetSex').value         = 'unknown';
   document.getElementById('walkinPetAltered').value     = 'unknown';
   document.getElementById('walkinPetMicrochipped').value = 'unknown';
+  document.getElementById('duplicateWarning').style.display = 'none';
+}
+// ─── DUPLICATE DETECTION ───────────────────────────────────────
+async function checkDuplicates() {
+  const name = document.getElementById('walkinName').value.trim();
+  if (name.length < 2) return;
+
+  // Build a fuzzy search: search for each word in the name
+  const tokens = name.split(/\s+/).filter(t => t.length >= 2);
+  if (!tokens.length) return;
+
+  try {
+    const encoded = encodeURIComponent(`%${tokens[0]}%`);
+    const results = await sbGet(
+      `clients?name=ilike.${encoded}&archived=eq.false&order=name.asc&limit=5`
+    );
+
+    // Filter further: at least one other token must also appear in the name
+    const matches = results.filter(c => {
+      const lower = c.name.toLowerCase();
+      return tokens.some(t => lower.includes(t.toLowerCase()));
+    });
+
+    if (!matches.length) {
+      document.getElementById('duplicateWarning').style.display = 'none';
+      return;
+    }
+
+    const list = document.getElementById('duplicateList');
+    list.innerHTML = matches.map(c => `
+      <div style="background:white; border:1.5px solid #d97706; border-radius:8px; padding:0.6rem 0.8rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+        <div>
+          <div style="font-weight:700; font-size:0.88rem;">${c.name}</div>
+          <div style="font-size:0.78rem; color:var(--text-muted);">${[c.phone, c.email].filter(Boolean).join(' · ') || 'No contact info'}</div>
+        </div>
+        <button onclick="useExistingClient(${JSON.stringify(c).replace(/"/g,'&quot;')})"
+          style="font-size:0.75rem; padding:0.3rem 0.75rem; border-radius:999px; border:1.5px solid #d97706; background:#d97706; color:white; cursor:pointer; font-family:inherit; font-weight:700; white-space:nowrap;">
+          Use this client
+        </button>
+      </div>
+    `).join('');
+
+    document.getElementById('duplicateWarning').style.display = 'block';
+  } catch (_) {
+    // Silently fail — duplicate check is advisory only
+  }
 }
 
+function dismissDuplicates() {
+  document.getElementById('duplicateWarning').style.display = 'none';
+}
+
+async function useExistingClient(client) {
+  closeWalkin();
+  await selectClient(client);
+  // Scroll to the client detail panel
+  document.getElementById('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 async function submitWalkin() {
   const msg     = document.getElementById('walkinMsg');
   const name    = document.getElementById('walkinName').value.trim();
