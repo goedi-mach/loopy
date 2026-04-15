@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Intake — Pawkit</title>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
   <style>
@@ -717,6 +718,24 @@
       <label>Colors / Markings</label>
       <input type="text" id="walkinPetColors" placeholder="e.g. Black & white, tabby" />
     </div>
+    <div class="form-field" style="margin-top:0.75rem;">
+      <label>Client Signature <span style="font-weight:400; color:var(--text-muted);">(waiver)</span></label>
+      <div style="border:1.5px solid var(--border); border-radius:8px; background:#f8faff; position:relative;">
+        <canvas id="walkinSigCanvas" style="width:100%; height:120px; display:block; border-radius:8px;"></canvas>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:0.3rem;">
+        <button type="button" onclick="clearWalkinSig()" style="font-size:0.75rem; background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; text-decoration:underline;">Clear signature</button>
+      </div>
+    </div>
+    <div class="form-field" style="margin-top:0.75rem;">
+      <label>Client Signature <span style="font-weight:400; color:var(--text-muted);">(waiver)</span></label>
+      <div style="border:1.5px solid var(--border); border-radius:8px; background:#f8faff; position:relative;">
+        <canvas id="walkinSigCanvas" style="width:100%; height:120px; display:block; border-radius:8px;"></canvas>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:0.3rem;">
+        <button type="button" onclick="clearWalkinSig()" style="font-size:0.75rem; background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; text-decoration:underline;">Clear signature</button>
+      </div>
+    </div>
     <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
       <button class="btn-primary" onclick="submitWalkin()">Save & Check In</button>
       <button onclick="closeWalkin()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; font-size:0.88rem;">Cancel</button>
@@ -1113,6 +1132,8 @@ function renderClientList(clients) {
 function openWalkin() {
   document.getElementById('walkinCard').style.display = 'block';
   document.getElementById('detailEmpty').style.display = 'none';
+  // Init after the canvas is visible so dimensions are correct
+  setTimeout(initWalkinSigPad, 50);
 }
 
 function closeWalkin() {
@@ -1125,6 +1146,28 @@ function closeWalkin() {
   document.getElementById('walkinPetAltered').value     = 'unknown';
   document.getElementById('walkinPetMicrochipped').value = 'unknown';
   document.getElementById('duplicateWarning').style.display = 'none';
+  if (walkinSigPad) { walkinSigPad.clear(); walkinSigPad = null; }
+}
+// ─── SIGNATURE PAD ─────────────────────────────────────────────
+let walkinSigPad = null;
+
+function initWalkinSigPad() {
+  const canvas = document.getElementById('walkinSigCanvas');
+  if (!canvas) return;
+  // Match canvas resolution to display size
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  canvas.width  = canvas.offsetWidth  * ratio;
+  canvas.height = canvas.offsetHeight * ratio;
+  canvas.getContext('2d').scale(ratio, ratio);
+  walkinSigPad = new SignaturePad(canvas, {
+    penColor: '#1a1a2e',
+    minWidth: 1,
+    maxWidth: 2.5
+  });
+}
+
+function clearWalkinSig() {
+  if (walkinSigPad) walkinSigPad.clear();
 }
 // ─── DUPLICATE DETECTION ───────────────────────────────────────
 async function checkDuplicates() {
@@ -1193,16 +1236,21 @@ async function submitWalkin() {
   if (!petSpec) { showMsg(msg, 'error', 'Please select a species.'); return; }
 
   try {
+    const sigData = (walkinSigPad && !walkinSigPad.isEmpty())
+      ? walkinSigPad.toDataURL('image/png')
+      : null;
+
     const [client] = await sbPost('clients', {
       name,
-      phone:        document.getElementById('walkinPhone').value.trim() || null,
-      email:        document.getElementById('walkinEmail').value.trim() || null,
-      street:       document.getElementById('walkinStreet').value.trim() || null,
-      city:         document.getElementById('walkinCity').value.trim() || null,
-      state:        document.getElementById('walkinState').value.trim().toUpperCase() || null,
-      zip:          document.getElementById('walkinZip').value.trim() || null,
-      status:       'checked_in',
-      checked_in_at: new Date().toISOString()
+      phone:             document.getElementById('walkinPhone').value.trim() || null,
+      email:             document.getElementById('walkinEmail').value.trim() || null,
+      street:            document.getElementById('walkinStreet').value.trim() || null,
+      city:              document.getElementById('walkinCity').value.trim() || null,
+      state:             document.getElementById('walkinState').value.trim().toUpperCase() || null,
+      zip:               document.getElementById('walkinZip').value.trim() || null,
+      status:            'checked_in',
+      checked_in_at:     new Date().toISOString(),
+      waiver_signature:  sigData
     });
 
     await sbPost('pets', {
