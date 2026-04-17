@@ -1161,10 +1161,16 @@ function renderClientList(clients) {
     return;
   }
   const statusLabel = { registered: 'In Queue', checked_in: 'Checked In' };
+  // Build queue number map: position among non-archived, checked-in clients sorted by checked_in_at
+  const queueClients = clients.filter(c => !c.archived && c.checked_in_at);
+  queueClients.sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
+  const queuePos = {};
+  queueClients.forEach((c, i) => queuePos[c.id] = i + 1);
+
   list.innerHTML = clients.map(c => `
-    <li class="client-item" style="${c.archived ? 'opacity:0.45;' : ''}" onclick="selectClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+    <li class="client-item" style="${c.archived ? 'opacity:0.45;' : ''}" onclick="selectClient(${JSON.stringify(c).replace(/\"/g,'&quot;')})">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="client-name">${c.name}</div>
+        <div class="client-name">${queuePos[c.id] ? `<span style="color:var(--text-muted); font-size:0.8rem; margin-right:6px">#${queuePos[c.id]}</span>` : ''}${c.name}</div>
         ${c.archived
           ? '<span class="badge" style="background:#e5e7eb;color:#6b7280">Archived</span>'
           : `<span class="badge badge-${c.status || 'registered'}">${statusLabel[c.status || 'registered']}</span>`}
