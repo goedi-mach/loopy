@@ -721,7 +721,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
         return;
       }
 
-      const rows = await sbGet(`clients?or=(${conditions.join(',')})&order=event_date.desc&select=id,event_date,signature`);
+      const rows = await sbGet(`clients?or=(${conditions.join(',')})&order=event_date.desc&select=id,event_date,waiver_signature,waiver_signed_at`);
 
       if (!rows.length) {
         el.innerHTML = '<div class="empty-state">No visits on record.</div>';
@@ -746,8 +746,8 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
               <tr>
                 <td style="color:var(--text-muted)">${rows.length - i}</td>
                 <td><strong>${fmt(r.event_date)}</strong></td>
-                <td>${r.signature
-                  ? '<span style="color:var(--green);font-weight:700;">✓ Signed</span>'
+                <td>${r.waiver_signature
+                  ? `<span style="color:var(--green);font-weight:700;">✓ Signed</span> <span style="color:var(--text-muted);font-size:0.78rem;">${new Date(r.waiver_signed_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'})}</span>`
                   : '<span style="color:var(--text-muted);">—</span>'}</td>
               </tr>
             `).join('')}
