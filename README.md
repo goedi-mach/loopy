@@ -13,7 +13,7 @@ Internal web tools for running free vaccine clinics. Built for [People Helping P
 | `dashboard.html`       | Role-selector landing page — routes staff to the appropriate tool                                |
 | `intake-staff.html`    | Staff intake tool — client search, walk-in registration, check-in, pet records                   |
 | `discharge-staff.html` | Staff discharge tool — vaccine logging, microchip, certificate download, mark as seen            |
-| `roster.html`          | Sortable, filterable table of all clients and pets; CSV export                                   |
+| `records.html`         | Sortable, filterable table of all clients and pets; CSV export                                   |
 | `client.html`          | Client profile page — edit client/pet records, vaccination history, cert download, signed waiver |
 
 ---
