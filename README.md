@@ -1,4 +1,4 @@
-# People Helping Pets — Pawkit
+# People Helping Pets — PHP Clinic App
 
 Internal web tools for running free vaccine clinics. Built for [People Helping Pets](https://peoplehelpingpets.org), a Chicago-based nonprofit providing bilingual vaccine clinics for cats and dogs in underserved neighborhoods.
 
