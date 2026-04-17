@@ -1795,5 +1795,64 @@ if (savedToken) {
   loadTodayCount();
 }
 </script>
+<!-- ── TOUR ──────────────────────────────────────────────────── -->
+<div id="tourHighlight" style="display:none;position:fixed;border-radius:8px;box-shadow:0 0 0 4px #f97316,0 0 0 9999px rgba(0,0,0,0.45);z-index:9998;pointer-events:none;transition:all 0.25s ease"></div>
+<div id="tourTooltip" style="display:none;position:fixed;background:#fff;border-radius:10px;padding:1rem 1.1rem;width:260px;box-shadow:0 4px 24px rgba(0,0,0,0.18);z-index:9999;font-family:inherit"></div>
+<button id="tourFab" style="position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;background:#1a3a8f;color:white;border:none;font-size:18px;font-weight:700;cursor:pointer;z-index:9997">?</button>
+
+<script>
+(function(){
+  const STEPS = [
+    { target:'searchInput',   title:'Search clients',       body:'Search by name, phone, or email to find a returning client quickly.',                          pos:'right' },
+    { target:'clientList',    title:'Queue numbers',         body:'Clients are numbered by arrival order so staff always know who is next.',                        pos:'right' },
+    { target:'filterBar',     title:'Filter by status',     body:'Switch between In Queue, Checked In, and Archived to manage the clinic flow.',                  pos:'right' },
+    { target:'checkinBtn',    title:'Check in a client',    body:'When a pre-registered client arrives, select them and tap Check In to move them into the queue.', pos:'left' },
+    { target:'walkinCard',    title:'Walk-in registration', body:'Use this form to register a brand-new client and their pet on the spot. They are checked in automatically.', pos:'left' },
+  ];
+
+  let cur = 0;
+
+  function showStep(i) {
+    const s = STEPS[i];
+    const el = document.getElementById(s.target);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const hl = document.getElementById('tourHighlight');
+    hl.style.cssText += `;display:block;top:${r.top-4}px;left:${r.left-4}px;width:${r.width+8}px;height:${r.height+8}px`;
+    const dots = STEPS.map((_,idx) =>
+      `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${idx===i?'#1a3a8f':'#e5e7eb'};margin-right:4px"></span>`
+    ).join('');
+    const tt = document.getElementById('tourTooltip');
+    tt.style.display = 'block';
+    tt.innerHTML = `
+      <div style="margin-bottom:6px">${dots}</div>
+      <div style="font-size:11px;color:#6b7280;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:3px">Step ${i+1} of ${STEPS.length}</div>
+      <div style="font-size:14px;font-weight:700;color:#1a3a8f;margin-bottom:6px">${s.title}</div>
+      <div style="font-size:13px;color:#374151;line-height:1.5;margin-bottom:12px">${s.body}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${i>0?'<button onclick="window.__tourPrev()" style="padding:5px 14px;border-radius:6px;background:#f3f4f6;border:none;cursor:pointer;font-size:13px;font-weight:600;color:#374151">← Back</button>':''}
+        <button onclick="window.__tourNext()" style="padding:5px 14px;border-radius:6px;background:#1a3a8f;color:white;border:none;cursor:pointer;font-size:13px;font-weight:600">${i===STEPS.length-1?'Done ✓':'Next →'}</button>
+        <button onclick="window.__tourEnd()" style="margin-left:auto;background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer">Skip</button>
+      </div>`;
+    setTimeout(() => {
+      const ttH = tt.offsetHeight, pad = 16, ttW = 260;
+      let top = r.top + r.height/2 - ttH/2;
+      let left = s.pos === 'right' ? r.right + pad : r.left - ttW - pad;
+      top = Math.max(pad, Math.min(top, window.innerHeight - ttH - pad));
+      left = Math.max(pad, Math.min(left, window.innerWidth - ttW - pad));
+      tt.style.top = top + 'px'; tt.style.left = left + 'px';
+    }, 10);
+  }
+
+  window.__tourNext = () => { cur < STEPS.length-1 ? showStep(++cur) : window.__tourEnd(); };
+  window.__tourPrev = () => { if (cur > 0) showStep(--cur); };
+  window.__tourEnd = () => {
+    document.getElementById('tourHighlight').style.display = 'none';
+    document.getElementById('tourTooltip').style.display = 'none';
+    cur = 0;
+  };
+  document.getElementById('tourFab').onclick = () => { cur = 0; showStep(0); };
+})();
+</script>
 </body>
 </html>
