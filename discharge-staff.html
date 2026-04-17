@@ -544,9 +544,8 @@
         <div class="card-body">
           <div style="display:flex; gap:0.4rem; margin-bottom:0.85rem; flex-wrap:wrap;">
   <button class="filter-btn active" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" onclick="setFilter('in_queue')">In Queue</button>
   <button class="filter-btn" onclick="setFilter('checked_in')">Checked In</button>
-  <button class="filter-btn" onclick="setFilter('registered')">Registered</button>
-  <button class="filter-btn" onclick="setFilter('seen')">Seen</button>
   <button class="filter-btn" onclick="setFilter('archived')">Archived</button>
 </div>
           <div class="search-wrap">
@@ -925,6 +924,7 @@
             <label>Administered By</label>
             <select id="vaxAdmin">
               <option value="Dr. Ana Valbuena">Dr. Ana Valbuena</option>
+              <option value="Dr. Alexandra Friedman">Dr. Alexandra Friedman</option>
             </select>
           </div>
           <!-- ── RABIES-ONLY FIELDS ───────────────────────────────────── -->
@@ -1160,7 +1160,7 @@ function renderClientList(clients) {
     list.innerHTML = '<li class="empty-state">No clients found.</li>';
     return;
   }
-  const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 'Seen' };
+  const statusLabel = { registered: 'In Queue', checked_in: 'Checked In' };
   list.innerHTML = clients.map(c => `
     <li class="client-item" style="${c.archived ? 'opacity:0.45;' : ''}" onclick="selectClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1321,7 +1321,7 @@ const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
-document.getElementById('seenBtn').style.display       = (!client.archived && status === 'checked_in') ? 'block' : 'none';
+document.getElementById('seenBtn').style.display       = 'none';
 document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
 document.getElementById('deleteClientBtn').style.display = client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
@@ -2040,10 +2040,13 @@ function setRadio(fieldName, index) {
     setText("Veterinarian's Name",    r.administered_by || 'Dr. Ana García', 9);
     setText("Veterinarian's address", 'People Helping Pets, Chicago IL',     8);
 
-    // ── Ana's signature ────────────────────────────────────────
+    // ── Vet signature ───────────────────────────────────────────
     try {
+      const sigFile = r.administered_by === 'Dr. Alexandra Friedman'
+        ? 'alex_signature.png'
+        : 'ana_signature.png';
       const sigBytes = await fetch(
-        'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/ana_signature.png'
+        `https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/${sigFile}`
       ).then(res => res.arrayBuffer());
       const sigImg = await pdfDoc.embedPng(sigBytes);
       page.drawImage(sigImg, { x: 370, y: 452, width: 175, height: 28 });
