@@ -432,7 +432,15 @@
 
     </div>
   </div>
-
+<!-- ── ATTENDANCE ── -->
+  <div class="card">
+    <div class="card-header">
+      <span style="cursor:pointer;user-select:none;" onclick="toggleAttendance()">📅 Attendance / Event History <span id="attendanceChevron" style="font-size:0.8rem;color:var(--text-muted);">▼</span></span>
+    </div>
+    <div class="card-body" id="attendanceBody" style="display:none;">
+      <div id="attendanceList"><div class="empty-state">Loading…</div></div>
+    </div>
+  </div>
   <!-- ── PETS ── -->
   <div class="card">
     <div class="card-header">
@@ -687,7 +695,70 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
       msg.textContent = err.message;
     }
   }
+  // ── ATTENDANCE TOGGLE ─────────────────────────────────────────────
+  function toggleAttendance() {
+    const body    = document.getElementById('attendanceBody');
+    const chevron = document.getElementById('attendanceChevron');
+    const opening = body.style.display === 'none';
+    body.style.display = opening ? 'block' : 'none';
+    chevron.textContent = opening ? '▲' : '▼';
+    if (opening && document.getElementById('attendanceList').innerHTML.includes('Loading')) {
+      loadAttendance();
+    }
+  }
+// ── ATTENDANCE ────────────────────────────────────────────────────
+  async function loadAttendance() {
+    const el = document.getElementById('attendanceList');
+    try {
+      const c = clientData;
 
+      // Find all client rows that share this phone or email
+      const conditions = [];
+      if (c.email) conditions.push(`email.eq.${encodeURIComponent(c.email)}`);
+      if (c.phone) conditions.push(`phone.eq.${encodeURIComponent(c.phone)}`);
+      if (!conditions.length) {
+        el.innerHTML = '<div class="empty-state">No contact info to match visits.</div>';
+        return;
+      }
+
+      const rows = await sbGet(`clients?or=(${conditions.join(',')})&order=event_date.desc&select=id,event_date,signature`);
+
+      if (!rows.length) {
+        el.innerHTML = '<div class="empty-state">No visits on record.</div>';
+        return;
+      }
+
+      const fmt = iso => iso
+        ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : 'Unknown date';
+
+      el.innerHTML = `
+        <table class="vax-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Clinic Date</th>
+              <th>Waiver Signed</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((r, i) => `
+              <tr>
+                <td style="color:var(--text-muted)">${rows.length - i}</td>
+                <td><strong>${fmt(r.event_date)}</strong></td>
+                <td>${r.signature
+                  ? '<span style="color:var(--green);font-weight:700;">✓ Signed</span>'
+                  : '<span style="color:var(--text-muted);">—</span>'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.75rem;">${rows.length} visit${rows.length !== 1 ? 's' : ''} on record</p>
+      `;
+    } catch (err) {
+      el.innerHTML = `<div class="empty-state" style="color:var(--coral-dark)">Error: ${err.message}</div>`;
+    }
+  }
   // ── PETS ──────────────────────────────────────────────────────────
   async function loadPets() {
     const list = document.getElementById('petList');
