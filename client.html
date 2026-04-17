@@ -308,6 +308,40 @@
     }
     .divider { border: none; border-top: 1.5px solid var(--border); margin: 1rem 0; }
     .empty-state { color: var(--text-muted); font-size: 0.88rem; padding: 1rem 0; text-align: center; }
+
+/* ── CLIPBOARD BTN ── */
+#copyIdBtn {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: var(--navy);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 16px rgba(26,58,143,0.25);
+  transition: background 0.15s, transform 0.1s;
+  z-index: 50;
+}
+#copyIdBtn:hover { background: var(--navy-dark); transform: translateY(-1px); }
+#copyIdBtn.copied { background: var(--green); }
+
+/* ── VAX EDIT FORM ── */
+.vax-edit-row td { background: var(--navy-light); padding: 0.75rem; }
+.vax-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+@media (max-width: 600px) { .vax-edit-grid { grid-template-columns: 1fr; } }
   </style>
   <script src="config.js"></script>
 </head>
@@ -344,6 +378,9 @@
 
 <!-- ── MAIN ── -->
 <div class="main">
+  <button id="copyIdBtn" onclick="copyClientId()" title="Copy Client ID">
+  📋 Copy Client ID
+</button>
   <a class="back-link" id="backLink" href="records.html">← Back to Records</a>
 
   <!-- ── CLIENT INFO ── -->
@@ -863,7 +900,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
       const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
       el.innerHTML = `
         <div style="overflow-x:auto">
-          <table class="vax-table">
+          <table class="vax-table" id="vaxTable_${id}">
             <thead>
               <tr>
                 <th>Vaccine</th><th>Date Given</th><th>Next Due</th>
@@ -872,17 +909,35 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
             </thead>
             <tbody>
               ${records.map(r => `
-                <tr>
+                <tr id="vaxRow_${r.id}">
                   <td><strong>${r.vaccine_name}</strong></td>
                   <td>${fmt(r.date_given)}</td>
                   <td>${fmt(r.next_due)}</td>
                   <td style="color:var(--text-muted)">${r.lot_number || '—'}</td>
                   <td style="color:var(--text-muted)">${r.rabies_tag_number || '—'}</td>
                   <td style="color:var(--text-muted)">${r.administered_by || '—'}</td>
-                  <td>
+                  <td style="white-space:nowrap;display:flex;gap:0.4rem;">
+                    <button class="btn btn-sm btn-outline" onclick="openEditVax('${r.id}', '${petId}', ${JSON.stringify(r).replace(/"/g,'&quot;')})">✏️</button>
                     ${r.vaccine_name === 'Rabies'
                       ? `<button class="btn btn-sm btn-outline" onclick="downloadCert(${JSON.stringify(r).replace(/"/g,'&quot;')}, '${petId}')">⬇ cert</button>`
                       : ''}
+                  </td>
+                </tr>
+                <tr id="vaxEditRow_${r.id}" class="vax-edit-row" style="display:none;">
+                  <td colspan="7">
+                    <div class="vax-edit-grid">
+                      <div class="field"><label>Vaccine Name</label><input type="text" id="veVaxName_${r.id}" value="${r.vaccine_name || ''}" /></div>
+                      <div class="field"><label>Date Given</label><input type="date" id="veDate_${r.id}" value="${r.date_given || ''}" /></div>
+                      <div class="field"><label>Next Due</label><input type="date" id="veNextDue_${r.id}" value="${r.next_due || ''}" /></div>
+                      <div class="field"><label>Lot #</label><input type="text" id="veLot_${r.id}" value="${r.lot_number || ''}" /></div>
+                      <div class="field"><label>Rabies Tag #</label><input type="text" id="veTag_${r.id}" value="${r.rabies_tag_number || ''}" /></div>
+                      <div class="field"><label>Administered By</label><input type="text" id="veAdmin_${r.id}" value="${r.administered_by || ''}" /></div>
+                    </div>
+                    <div class="msg" id="veMsg_${r.id}"></div>
+                    <div class="btn-group">
+                      <button class="btn btn-sm btn-primary" onclick="saveEditVax('${r.id}', '${petId}')">Save</button>
+                      <button class="btn btn-sm btn-outline" onclick="closeEditVax('${r.id}')">Cancel</button>
+                    </div>
                   </td>
                 </tr>
               `).join('')}
@@ -1031,7 +1086,48 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
     form.flatten();
     return new Blob([await pdfDoc.save()], { type: 'application/pdf' });
   }
+// ── COPY CLIENT ID ────────────────────────────────────────────────
+  function copyClientId() {
+    navigator.clipboard.writeText(clientId).then(() => {
+      const btn = document.getElementById('copyIdBtn');
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = '📋 Copy Client ID';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
 
+  // ── EDIT VAX ──────────────────────────────────────────────────────
+  function openEditVax(vaxId, petId, record) {
+    document.getElementById(`vaxRow_${vaxId}`).style.display = 'none';
+    document.getElementById(`vaxEditRow_${vaxId}`).style.display = 'table-row';
+  }
+
+  function closeEditVax(vaxId) {
+    document.getElementById(`vaxEditRow_${vaxId}`).style.display = 'none';
+    document.getElementById(`vaxRow_${vaxId}`).style.display = 'table-row';
+  }
+
+  async function saveEditVax(vaxId, petId) {
+    const msg = document.getElementById(`veMsg_${vaxId}`);
+    msg.className = 'msg';
+    try {
+      await sbPatch('vaccinations', `id=eq.${vaxId}`, {
+        vaccine_name:      document.getElementById(`veVaxName_${vaxId}`).value.trim() || null,
+        date_given:        document.getElementById(`veDate_${vaxId}`).value           || null,
+        next_due:          document.getElementById(`veNextDue_${vaxId}`).value        || null,
+        lot_number:        document.getElementById(`veLot_${vaxId}`).value.trim()     || null,
+        rabies_tag_number: document.getElementById(`veTag_${vaxId}`).value.trim()     || null,
+        administered_by:   document.getElementById(`veAdmin_${vaxId}`).value.trim()   || null,
+      });
+      await loadVaxHistory(petId);
+    } catch (err) {
+      msg.className = 'msg error';
+      msg.textContent = err.message;
+    }
+  }
   // ── START ─────────────────────────────────────────────────────────
 if (accessToken) {
     document.getElementById('loginOverlay').classList.add('hidden');
