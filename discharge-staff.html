@@ -952,8 +952,11 @@
       <input type="text" id="rabiesMan" maxlength="3" value="MER" readonly style="background:#e9ecef; color:var(--text-muted); cursor:not-allowed; text-transform:uppercase;" />
     </div>
    </div>
-  <p style="font-size:0.78rem; color:var(--text-muted); margin-top:-0.25rem; margin-bottom:0.75rem;">
+  <p style="font-size:0.78rem; color:var(--text-muted); margin-top:-0.25rem; margin-bottom:0.5rem;">
     If either value is incorrect, please notify admin.
+  </p>
+  <p style="font-size:0.82rem; color:#4a6741; background:#eef4e0; border:1px solid #c5daa0; border-radius:6px; padding:0.45rem 0.75rem; margin-bottom:0.75rem;">
+    ℹ️ <strong>IMRAB is a killed (inactivated) vaccine.</strong>
   </p>
   <div class="form-row">
     <div class="form-field">
@@ -970,21 +973,6 @@
         <option value="">— Select —</option>
         <option value="initial">Initial</option>
         <option value="booster">Booster</option>
-      </select>
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="form-field">
-      <label>Animal Control License #</label>
-      <input type="text" id="rabiesACNum" placeholder="Optional" />
-    </div>
-    <div class="form-field">
-      <label>AC License Type</label>
-      <select id="rabiesACType">
-        <option value="">— Select —</option>
-        <option value="1yr">1-Year</option>
-        <option value="3yr">3-Year</option>
-        <option value="other">Other</option>
       </select>
     </div>
   </div>
@@ -1599,8 +1587,6 @@ const vaxIdx   = document.getElementById('vaxName').value;
       payload.manufacturer      = document.getElementById('rabiesMan').value.trim().toUpperCase() || null;
       payload.usda_duration     = document.getElementById('rabiesUSDA').value           || null;
       payload.dose_type         = document.getElementById('rabiesDose').value           || null;
-      payload.ac_license_number = document.getElementById('rabiesACNum').value.trim()  || null;
-      payload.ac_license_type   = document.getElementById('rabiesACType').value         || null;
     }
 
     try {
@@ -1620,8 +1606,8 @@ const vaxIdx   = document.getElementById('vaxName').value;
       document.getElementById('vaxNextDue').value = '';
       document.getElementById('vaxAdmin').value   = '';
       document.getElementById('rabiesFields').style.display = 'none';
-      ['rabiesTagNum','rabiesColors','rabiesProduct','rabiesMan','rabiesACNum'].forEach(id => document.getElementById(id).value = '');
-      ['rabiesUSDA','rabiesDose','rabiesACType'].forEach(id => document.getElementById(id).value = '');
+      ['rabiesTagNum','rabiesColors','rabiesProduct','rabiesMan'].forEach(id => document.getElementById(id).value = '');
+      ['rabiesUSDA','rabiesDose'].forEach(id => document.getElementById(id).value = '');
 
       console.log('reloading history for:', selectedPetId, selectedPetObj?.name);
             await loadVaxHistory(selectedPetId, selectedPetObj.name);
