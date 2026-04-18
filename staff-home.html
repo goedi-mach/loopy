@@ -520,7 +520,7 @@
           {
             method:  'PATCH',
             headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-            body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
+            body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null, discharged_at: null })
           }
         );
         if (!res.ok) throw new Error('Reset failed');
@@ -623,7 +623,7 @@
           body:    JSON.stringify({ completed: true, completed_at: new Date().toISOString() })
         });
         // Reset client statuses
-        await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen)`, {
+        await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged`, {
           method:  'PATCH',
           headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
           body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })

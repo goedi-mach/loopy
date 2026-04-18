@@ -50,6 +50,7 @@
 .badge-registered { background: var(--amber-light); color: var(--amber); }
 .badge-checked_in { background: var(--green-light); color: var(--green); }
 .badge-seen { background: #e5e7eb; color: #6b7280; }
+.badge-discharged { background: var(--green-light); color: var(--green); }
     body {
       font-family: 'Nunito Sans', sans-serif;
       background: var(--bg);
@@ -641,7 +642,6 @@
              <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
   <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
   <div id="clientStatusBadge"></div>
-  <button id="seenBtn" class="btn-coral" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="markSeen()">✓ Mark as Seen</button>
   <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
   <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
   <button id="archiveClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit; display:none;" onclick="toggleArchiveClient()">Archive</button>
@@ -1268,7 +1268,7 @@ async function deleteEvent(eventId, location) {
       [client.phone, client.email, client.address].filter(Boolean).join(' · ') || 'No contact info';
     document.getElementById('clientSince').textContent    =
       'Client since ' + new Date(client.created_at).toLocaleDateString('en-US', { month:'short', year:'numeric' });
-const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 'Seen' };
+const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 'Seen', discharged: 'Discharged' };
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
@@ -1378,20 +1378,20 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
 
   // ─── STATUS UPDATES ────────────────────────────────────────────
 
-  async function markSeen() {
+async function markDischarged() {
+    if (currentClient.status === 'discharged') return; // already discharged
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
         method:  'PATCH',
         headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-        body:    JSON.stringify({ status: 'seen', seen_at: new Date().toISOString() })
+        body:    JSON.stringify({ status: 'discharged' })
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
-      currentClient.status = 'seen';
-      document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-seen">Seen</span>';
-      document.getElementById('seenBtn').style.display = 'none';
+      currentClient.status = 'discharged';
+      document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-discharged">Discharged</span>';
       await loadRecentClients();
     } catch (err) {
-      alert(err.message);
+      console.warn('Could not mark discharged:', err.message);
     }
   }
 
@@ -1565,8 +1565,9 @@ const vaxIdx   = document.getElementById('vaxName').value;
     try {
       await sbPost('vaccinations', payload);
 
-      showMsg(msg, 'success', `${vaxObj.label} logged for ${selectedPetObj.name}!`);
-
+showMsg(msg, 'success', `${vaxObj.label} logged for ${selectedPetObj.name}!`);
+      await markDischarged();
+      
       if (vaxObj.isRabies) {
         lastRabiesRecord = { ...payload, pet: selectedPetObj, client: currentClient };
         document.getElementById('downloadCertBtn').style.display = 'inline-block';

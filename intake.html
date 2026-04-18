@@ -51,6 +51,7 @@
 .badge-registered { background: var(--amber-light); color: var(--amber); }
 .badge-checked_in { background: var(--green-light); color: var(--green); }
 .badge-seen { background: #e5e7eb; color: #6b7280; }
+.badge-discharged { background: var(--green-light); color: var(--green); }
     body {
       font-family: 'Nunito Sans', sans-serif;
       background: var(--bg);
@@ -776,7 +777,6 @@
   <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
   <div id="clientStatusBadge"></div>
 <button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
-  <button id="seenBtn" class="btn-coral" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="markSeen()">✓ Mark as Seen</button>
   <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
   <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
   <button id="archiveClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit; display:none;" onclick="toggleArchiveClient()">Archive</button>
@@ -1094,7 +1094,7 @@ function renderClientList(clients) {
     list.innerHTML = '<li class="empty-state">No clients found.</li>';
     return;
   }
-  const statusLabel = { registered: 'In Queue', checked_in: 'Checked In' };
+const statusLabel = { registered: 'In Queue', checked_in: 'Checked In', discharged: 'Discharged' };
   // Build queue number map: position among non-archived, checked-in clients sorted by checked_in_at
   const queueClients = clients.filter(c => !c.archived && c.checked_in_at);
   queueClients.sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
@@ -1374,12 +1374,11 @@ async function deleteEvent(eventId, location) {
       [client.phone, client.email, client.address].filter(Boolean).join(' · ') || 'No contact info';
     document.getElementById('clientSince').textContent    =
       'Client since ' + new Date(client.created_at).toLocaleDateString('en-US', { month:'short', year:'numeric' });
-const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 'Seen' };
+const statusLabel = { registered: 'Registered', checked_in: 'Checked In', discharged: 'Discharged' };
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
 document.getElementById('checkinBtn').style.display    = (!client.archived && status === 'registered') ? 'block' : 'none';
-document.getElementById('seenBtn').style.display       = 'none';
 document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
 profileBtn.href = `client.html?id=${client.id}`;
@@ -1473,30 +1472,13 @@ function clearSelectedPet() {
       currentClient.status = 'checked_in';
       document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-checked_in">Checked In</span>';
       document.getElementById('checkinBtn').style.display = 'none';
-      document.getElementById('seenBtn').style.display    = 'block';
       await loadRecentClients();
     } catch (err) {
       alert(err.message);
     }
   }
 
-  async function markSeen() {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
-        method:  'PATCH',
-        headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-        body:    JSON.stringify({ status: 'seen', seen_at: new Date().toISOString() })
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
-      currentClient.status = 'seen';
-      document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-seen">Seen</span>';
-      document.getElementById('checkinBtn').style.display = 'none';
-      document.getElementById('seenBtn').style.display    = 'none';
-      await loadRecentClients();
-    } catch (err) {
-      alert(err.message);
-    }
-  }
+
 
   // ─── ADD PET ───────────────────────────────────────────────────
   async function addPet() {
