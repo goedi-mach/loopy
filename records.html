@@ -564,8 +564,10 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
       headers: { ...authHeaders(), 'Accept': 'application/json' }
     });
     if (res.status === 401) {
-      logout();
-      throw new Error('Session expired — please sign in again.');
+      localStorage.removeItem('php_token');
+      localStorage.removeItem('php_email');
+      window.location.href = 'dashboard.html?expired=1';
+      return;
     }
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
     return res.json();

@@ -162,6 +162,11 @@
       redirectForRole(getRoleFromToken(savedToken));
     }
 
+    // Show session expired message if redirected here with ?expired=1
+    if (new URLSearchParams(window.location.search).get('expired') === '1') {
+      document.getElementById('errorMsg').textContent = 'Your session has expired. Please sign in again.';
+    }
+
     // ── Login ─────────────────────────────────────────────────────
     async function login() {
       const email    = document.getElementById('loginEmail').value.trim();
