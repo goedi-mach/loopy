@@ -1112,6 +1112,7 @@ showScreen('dashScreen');
 loadRecentClients();
 loadEvents();
 loadActiveLots();
+showStaffHomeLink();
     } catch (err) {
       showMsg(msg, 'error', err.message);
       btn.disabled    = false;
@@ -2461,6 +2462,7 @@ if (savedToken) {
   loadEvents();
   loadTodayCount();
   loadActiveLots();
+  showStaffHomeLink();
 }
 </script>
 <!-- ── TOUR ──────────────────────────────────────────────────── -->
