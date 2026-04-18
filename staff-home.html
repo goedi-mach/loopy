@@ -364,6 +364,7 @@
     </div>
 
     <!-- ── User management ── -->
+    <div id="userMgmtSection">
     <p class="section-title">User Management</p>
 
     <!-- Invite new user -->
@@ -398,6 +399,7 @@
       </div>
     </div>
 
+    </div><!-- /userMgmtSection -->
   </div><!-- /page -->
 
   <script>
@@ -413,8 +415,11 @@
         return JSON.parse(atob(t.split('.')[1])).app_metadata?.role || 'volunteer';
       } catch { return 'volunteer'; }
     }
-    if (getRoleFromToken(token) !== 'staff') window.location.href = 'volunteer-home.html';
-
+const userRole = getRoleFromToken(token);
+    if (userRole !== 'staff' && userRole !== 'admin') window.location.href = 'volunteer-home.html';
+    if (userRole !== 'admin') {
+      document.getElementById('userMgmtSection').style.display = 'none';
+    }
     // ── Show email ────────────────────────────────────────────────
     const email = localStorage.getItem('php_email');
     if (email) document.getElementById('userLabel').textContent = `👋 ${email}`;

@@ -585,7 +585,7 @@ function requireStaff() {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const role = payload?.app_metadata?.role;
-    if (role !== 'staff') window.location.href = 'volunteer-home.html';
+    if (role !== 'staff' && role !== 'admin') window.location.href = 'volunteer-home.html';
   } catch {
     window.location.href = 'dashboard.html';
   }
