@@ -819,7 +819,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
         <div class="pet-card-header" onclick="togglePetCard('${id}')">
           <div class="pet-name">
             ${p.name} ${speciesPill(p.species)}
-            ${p.archived ? '<span class="pill" style="background:#f3f4f6;color:#9ca3af">Archived</span>' : ''}
+            ${p.archived ? `<span class="pill" style="background:#f3f4f6;color:#9ca3af">Archived${p.archive_reason ? `: ${p.archive_reason === 'other' ? (p.archive_note || 'Other') : p.archive_reason.charAt(0).toUpperCase() + p.archive_reason.slice(1)}` : ''}</span>` : ''}
           </div>
           <span style="color:var(--text-muted);font-size:0.8rem;" id="petChevron_${id}">▼</span>
         </div>
@@ -838,7 +838,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
             </div>
             <div class="btn-group">
               <button class="btn btn-sm btn-outline" onclick="openEditPet('${p.id}', '${id}')">✏️ Edit Pet</button>
-              <button class="btn btn-sm btn-danger" onclick="toggleArchive('${p.id}', ${!!p.archived})">${p.archived ? 'Unarchive' : 'Archive'}</button>
+              <button class="btn btn-sm btn-danger" onclick="${p.archived ? `toggleArchive('${p.id}', true)` : `openArchiveDialog('${p.id}')`}">${p.archived ? 'Unarchive' : 'Archive'}</button>
             </div>
           </div>
 
@@ -939,10 +939,101 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
   }
 
   async function toggleArchive(petId, isArchived) {
+    if (!isArchived) { openArchiveDialog(petId); return; }
+    // Unarchiving — no dialog needed
     try {
-      await sbPatch('pets', `id=eq.${petId}`, { archived: !isArchived });
+      await sbPatch('pets', `id=eq.${petId}`, {
+        archived:       false,
+        archive_reason: null,
+        archive_note:   null
+      });
       await loadPets();
     } catch (err) { alert(err.message); }
+  }
+
+  function openArchiveDialog(petId) {
+    const existing = document.getElementById('archiveDialog');
+    if (existing) existing.remove();
+
+    const dialog = document.createElement('div');
+    dialog.id = 'archiveDialog';
+    dialog.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      display:flex; align-items:center; justify-content:center; z-index:9999;
+    `;
+    dialog.innerHTML = `
+      <div style="background:white; border-radius:16px; padding:2rem; max-width:400px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.2); font-family:'Nunito',sans-serif;">
+        <div style="font-size:1.1rem; font-weight:800; color:#1a3a8f; margin-bottom:0.5rem;">Archive Pet</div>
+        <div style="font-size:0.85rem; color:#5a6380; margin-bottom:1.25rem;">Please select a reason for archiving this pet.</div>
+
+        <div style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1rem;">
+          <label style="display:flex; align-items:center; gap:0.6rem; font-size:0.9rem; cursor:pointer;">
+            <input type="radio" name="archiveReason" value="transfer" onchange="toggleArchiveNote()" /> Transferred to another owner
+          </label>
+          <label style="display:flex; align-items:center; gap:0.6rem; font-size:0.9rem; cursor:pointer;">
+            <input type="radio" name="archiveReason" value="death" onchange="toggleArchiveNote()" /> Deceased
+          </label>
+          <label style="display:flex; align-items:center; gap:0.6rem; font-size:0.9rem; cursor:pointer;">
+            <input type="radio" name="archiveReason" value="other" onchange="toggleArchiveNote()" /> Other
+          </label>
+        </div>
+
+        <div id="archiveNoteField" style="display:none; margin-bottom:1rem;">
+          <input type="text" id="archiveNoteInput"
+            placeholder="Please describe the reason…"
+            style="width:100%; padding:0.55rem 0.8rem; border:1.5px solid #c8d3ec; border-radius:8px; font-family:'Nunito Sans',sans-serif; font-size:0.9rem;" />
+        </div>
+
+        <div id="archiveDialogMsg" style="font-size:0.83rem; color:#d96b62; margin-bottom:0.75rem; display:none;"></div>
+
+        <div style="display:flex; gap:0.75rem;">
+          <button onclick="confirmArchive('${petId}')"
+            style="flex:1; padding:0.6rem; border-radius:999px; border:none; background:#d96b62; color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.88rem; cursor:pointer;">
+            Archive Pet
+          </button>
+          <button onclick="document.getElementById('archiveDialog').remove()"
+            style="flex:1; padding:0.6rem; border-radius:999px; border:1.5px solid #c8d3ec; background:none; color:#5a6380; font-family:'Nunito',sans-serif; font-weight:700; font-size:0.88rem; cursor:pointer;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+  }
+
+  function toggleArchiveNote() {
+    const reason = document.querySelector('input[name="archiveReason"]:checked')?.value;
+    document.getElementById('archiveNoteField').style.display = reason === 'other' ? 'block' : 'none';
+  }
+
+  async function confirmArchive(petId) {
+    const reason = document.querySelector('input[name="archiveReason"]:checked')?.value;
+    const note   = document.getElementById('archiveNoteInput')?.value.trim();
+    const msgEl  = document.getElementById('archiveDialogMsg');
+
+    if (!reason) {
+      msgEl.textContent = 'Please select a reason.';
+      msgEl.style.display = 'block';
+      return;
+    }
+    if (reason === 'other' && !note) {
+      msgEl.textContent = 'Please enter a note for "Other".';
+      msgEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      await sbPatch('pets', `id=eq.${petId}`, {
+        archived:       true,
+        archive_reason: reason,
+        archive_note:   reason === 'other' ? note : null
+      });
+      document.getElementById('archiveDialog').remove();
+      await loadPets();
+    } catch (err) {
+      msgEl.textContent = err.message;
+      msgEl.style.display = 'block';
+    }
   }
 
   // ── ADD PET ───────────────────────────────────────────────────────
