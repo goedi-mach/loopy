@@ -391,9 +391,11 @@
 <nav class="topnav">
   <div class="topnav-brand">🐾 People Helping Pets</div>
   <div class="topnav-links">
-    <a href="staff-home.html" class="nav-link">Dashboard</a>
-    <a href="records.html" class="nav-link">Records</a>
-    <a id="staffHomeLink" href="staff-home.html" style="display:none;" class="nav-link">🏠 Staff Home</a>
+    <a href="intake-staff.html" class="nav-link">🏥 Intake</a>
+    <a href="discharge-staff.html" class="nav-link">💉 Discharge</a>
+    <a href="records.html" class="nav-link">📋 Records</a>
+    <a id="reportsLink" href="reports.html" class="nav-link" style="display:none;">📊 Reports</a>
+    <a id="staffHomeLink" href="staff-home.html" class="nav-link" style="display:none;">🏠 Staff Home</a>
     <button class="btn-logout" onclick="logout()">Sign Out</button>
   </div>
 </nav>
@@ -536,9 +538,12 @@ function showStaffHomeLink() {
     const token = localStorage.getItem('php_token');
     if (!token) return;
     const payload = JSON.parse(atob(token.split('.')[1]));
-    if (payload?.app_metadata?.role === 'staff') {
-      const el = document.getElementById('staffHomeLink');
-      if (el) el.style.display = 'inline-block';
+    const role = payload?.app_metadata?.role;
+    if (['staff', 'admin'].includes(role)) {
+      const r = document.getElementById('reportsLink');
+      const s = document.getElementById('staffHomeLink');
+      if (r) r.style.display = 'inline-block';
+      if (s) s.style.display = 'inline-block';
     }
   } catch {}
 }
