@@ -9,7 +9,7 @@ Internal web tools for running free vaccine clinics. Built for [People Helping P
 | File                   | Purpose                                                                                          |
 | ---------------------- | ------------------------------------------------------------------------------------------------ |
 | `index.html`           | Landing / home page                                                                              |
-| `intake.html`          | Bilingual client & pet registration form (English/Spanish) with waiver and drawn signature       |
+| `registration.html`    | Bilingual client & pet registration form (English/Spanish) with waiver and drawn signature       |
 | `dashboard.html`       | Role-selector landing page — routes staff to the appropriate tool                                |
 | `intake-staff.html`    | Staff intake tool — client search, walk-in registration, check-in, pet records                   |
 | `discharge-staff.html` | Staff discharge tool — vaccine logging, microchip, certificate download, mark as seen            |
