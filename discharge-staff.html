@@ -573,50 +573,6 @@
           </ul>
         </div>
       </div>
-
-      <div class="card" style="margin-top:1.5rem;">
-        <div class="card-header">
-          <button class="section-toggle" onclick="toggleSection('eventsSection', 'eventsToggleIcon')">
-            <span>📅 Upcoming Events</span>
-            <span class="toggle-icon open" id="eventsToggleIcon">▼</span>
-          </button>
-        </div>
-        <div class="card-body collapsible open" id="eventsSection">
-          <div id="eventsList"></div>
-          <button class="section-toggle" style="margin-top:0.75rem"
-            onclick="toggleSection('addEventForm', 'addEventIcon')">
-            <span style="font-size:0.85rem; font-weight:700; color:var(--navy)">+ Add event</span>
-            <span class="toggle-icon" id="addEventIcon">▼</span>
-          </button>
-          <div class="collapsible" id="addEventForm" style="margin-top:0.75rem">
-            <div id="addEventMsg" class="msg"></div>
-            <div class="form-field">
-              <label>Location *</label>
-              <input type="text" id="newEventLocation" placeholder="Pilsen Community Center" />
-            </div>
-            <div class="form-row">
-              <div class="form-field">
-                <label>Date *</label>
-                <input type="date" id="newEventDate" />
-              </div>
-              <div class="form-field">
-                <label>Start Time *</label>
-                <input type="time" id="newEventStart" />
-              </div>
-            </div>
-            <div class="form-field">
-              <label>End Time</label>
-              <input type="time" id="newEventEnd" />
-            </div>
-            <div class="form-field">
-              <label>Notes</label>
-              <input type="text" id="newEventNotes" placeholder="Bring extra carriers…" />
-            </div>
-            <button class="btn-primary" onclick="addEvent()">Save Event</button>
-          </div>
-        </div>
-      </div>
-
     </div><!-- /left column -->
 
 <!-- RIGHT: Client detail -->
@@ -1255,35 +1211,7 @@ async function deleteEvent(eventId, location) {
     alert('Delete failed: ' + err.message);
   }
 }
-async function addEvent() {
-  const msg      = document.getElementById('addEventMsg');
-  const location = document.getElementById('newEventLocation').value.trim();
-  const date     = document.getElementById('newEventDate').value;
-  const start    = document.getElementById('newEventStart').value;
 
-  if (!location) { showMsg(msg, 'error', 'Location is required.'); return; }
-  if (!date)     { showMsg(msg, 'error', 'Date is required.'); return; }
-  if (!start)    { showMsg(msg, 'error', 'Start time is required.'); return; }
-
-  try {
-    await sbPost('events', {
-      location,
-      event_date: date,
-      start_time: start,
-      end_time:   document.getElementById('newEventEnd').value || null,
-      notes:      document.getElementById('newEventNotes').value.trim() || null
-    });
-
-    showMsg(msg, 'success', 'Event saved!');
-    ['newEventLocation','newEventNotes'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('newEventDate').value  = '';
-    document.getElementById('newEventStart').value = '';
-    document.getElementById('newEventEnd').value   = '';
-    await loadEvents();
-  } catch (err) {
-    showMsg(msg, 'error', err.message);
-  }
-}
   // ─── SEARCH ────────────────────────────────────────────────────
   async function searchClients() {
     const q    = document.getElementById('searchInput').value.trim();

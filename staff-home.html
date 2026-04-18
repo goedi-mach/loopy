@@ -80,8 +80,20 @@
       transition: background 0.15s;
     }
 
-    .btn-signout:hover { background: rgba(255,255,255,0.25); }
+.btn-signout:hover { background: rgba(255,255,255,0.25); }
 
+    .nav-link {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      transition: background 0.15s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
     /* ── Page layout ── */
     .page {
       max-width: 900px;
@@ -281,16 +293,29 @@
 </head>
 <body>
 
-  <!-- ── Nav ── -->
+<!-- ── Nav ── -->
   <nav class="topnav">
     <div class="topnav-brand">🐾 PHP Clinic App — Staff</div>
-    <div class="topnav-right">
+    <div style="display:flex; align-items:center; gap:0.25rem;">
       <span class="user-label" id="userLabel"></span>
+      <a href="intake-staff.html" class="nav-link">🏥 Intake</a>
+      <a href="discharge-staff.html" class="nav-link">💉 Discharge</a>
+      <a href="records.html" class="nav-link">📋 Records</a>
+      <a href="reports.html" class="nav-link">📊 Reports</a>
       <button class="btn-signout" onclick="signOut()">Sign Out</button>
     </div>
   </nav>
 
   <div class="page">
+
+<!-- ── Stale status warning ── -->
+    <div id="staleWarning" style="display:none; background:#fef3c7; border:1.5px solid #d97706; border-radius:var(--radius); padding:1rem 1.25rem; margin-bottom:1.5rem; display:none; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+      <div>
+        <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.9rem; color:#92400e;">⚠️ Clinic Not Closed Out</div>
+        <div id="staleWarningText" style="font-size:0.83rem; color:#92400e; margin-top:0.25rem;"></div>
+      </div>
+      <button onclick="completeStaleClinic()" style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.85rem; padding:0.5rem 1.1rem; border-radius:999px; border:none; background:#d97706; color:white; cursor:pointer; white-space:nowrap;">Close &amp; Reset Now</button>
+    </div>
 
     <!-- ── Navigation tiles ── -->
     <p class="section-title">Tools</p>
@@ -315,11 +340,53 @@
         <div class="nav-tile-label">Reports</div>
         <div class="nav-tile-sub">Stats &amp; grant reporting</div>
       </a>
+      <a href="user-management.html" class="nav-tile" id="userMgmtTile" style="display:none;">
+        <div class="nav-tile-icon">👥</div>
+        <div class="nav-tile-label">User Management</div>
+        <div class="nav-tile-sub">Invite users &amp; manage roles</div>
+      </a>
     </div>
 
-<!-- ── Vaccine Lot Management ── -->
-    <p class="section-title">Vaccine Lot Management</p>
+    <!-- ── Event management ── -->
+    <p class="section-title">Clinic Events</p>
+    <div class="card">
+      <div class="card-header">📅 Upcoming Events</div>
+      <div class="card-body">
+        <div id="eventsList"><div class="empty-state">Loading…</div></div>
+        <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1.5px dashed var(--border);">
+          <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.85rem; color:var(--navy); margin-bottom:0.75rem;">➕ Add Event</div>
+          <div id="addEventMsg" class="msg"></div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Location *</label>
+              <input type="text" id="newEventLocation" placeholder="Pilsen Community Center" />
+            </div>
+            <div class="form-field">
+              <label>Date *</label>
+              <input type="date" id="newEventDate" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Start Time *</label>
+              <input type="time" id="newEventStart" />
+            </div>
+            <div class="form-field">
+              <label>End Time</label>
+              <input type="time" id="newEventEnd" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Notes</label>
+            <input type="text" id="newEventNotes" placeholder="Bring extra carriers…" />
+          </div>
+          <button class="btn btn-primary" onclick="addEvent()">Save Event</button>
+        </div>
+      </div>
+    </div>
 
+    <!-- ── Vaccine lot management ── -->
+    <p class="section-title">Vaccine Lot Management</p>
     <div class="card">
       <div class="card-header">💉 Active Vaccine Lots</div>
       <div class="card-body">
@@ -363,76 +430,30 @@
       </div>
     </div>
 
-<!-- ── Clinic reset ── -->
-    <p class="section-title">Post-Clinic</p>
-    <div class="card">
-      <div class="card-header">🔄 Reset Clinic Statuses</div>
-      <div class="card-body">
-        <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:1rem;">
-          Resets all non-archived clients back to <strong>In Queue</strong> status at the end of a clinic day. This clears check-in times and discharge confirmations. <strong>This cannot be undone.</strong>
-        </p>
-        <div class="msg" id="resetMsg"></div>
-        <button class="btn btn-primary" style="background:#dc2626;" onclick="resetClinicStatuses()">🔄 Reset All Statuses</button>
-      </div>
-    </div>
-
-    <!-- ── User management ── -->
-    <div id="userMgmtSection">
-    <p class="section-title">User Management</p>
-
-    <!-- Invite new user -->
-    <div class="card">
-      <div class="card-header">➕ Invite New User</div>
-      <div class="card-body">
-        <div class="form-row">
-          <div class="form-field">
-            <label>Email</label>
-            <input type="email" id="inviteEmail" placeholder="volunteer@example.com" />
-          </div>
-          <div class="form-field">
-            <label>Role</label>
-            <select id="inviteRole">
-              <option value="volunteer">Volunteer</option>
-              <option value="staff">Staff</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn btn-primary" id="inviteBtn" onclick="inviteUser()">Send Invite</button>
-        <div class="msg" id="inviteMsg"></div>
-      </div>
-    </div>
-
-    <!-- Existing users -->
-    <div class="card">
-      <div class="card-header">👥 All Users</div>
-      <div class="card-body" style="padding:0;">
-        <div id="userTableWrap">
-          <div class="empty-state">Loading users…</div>
-        </div>
-      </div>
-    </div>
-
-    </div><!-- /userMgmtSection -->
   </div><!-- /page -->
 
   <script>
-    const SUPABASE_URL = CONFIG?.SUPABASE_URL;
+    const SUPABASE_URL      = CONFIG?.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = CONFIG?.SUPABASE_ANON_KEY;
 
     // ── Auth guard ────────────────────────────────────────────────
     const token = localStorage.getItem('php_token');
     if (!token) window.location.href = 'dashboard.html';
 
-    // Guard: make sure this is actually a staff user
     function getRoleFromToken(t) {
       try {
         return JSON.parse(atob(t.split('.')[1])).app_metadata?.role || 'volunteer';
       } catch { return 'volunteer'; }
     }
-const userRole = getRoleFromToken(token);
+
+    const userRole = getRoleFromToken(token);
     if (userRole !== 'staff' && userRole !== 'admin') window.location.href = 'volunteer-home.html';
-    if (userRole !== 'admin') {
-      document.getElementById('userMgmtSection').style.display = 'none';
+
+    // Show admin-only tile
+    if (userRole === 'admin') {
+      document.getElementById('userMgmtTile').style.display = 'block';
     }
+
     // ── Show email ────────────────────────────────────────────────
     const email = localStorage.getItem('php_email');
     if (email) document.getElementById('userLabel').textContent = `👋 ${email}`;
@@ -444,6 +465,15 @@ const userRole = getRoleFromToken(token);
       window.location.href = 'dashboard.html';
     }
 
+    // ── Auth headers ──────────────────────────────────────────────
+    function authHeaders() {
+      return {
+        'apikey':        SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type':  'application/json'
+      };
+    }
+
     // ── Show message ──────────────────────────────────────────────
     function showMsg(id, type, text) {
       const el = document.getElementById(id);
@@ -452,149 +482,245 @@ const userRole = getRoleFromToken(token);
       setTimeout(() => el.className = 'msg', 5000);
     }
 
-    // ── Invite user ───────────────────────────────────────────────
-    async function inviteUser() {
-      const email = document.getElementById('inviteEmail').value.trim();
-      const role  = document.getElementById('inviteRole').value;
-      const btn   = document.getElementById('inviteBtn');
-
-      if (!email) { showMsg('inviteMsg', 'error', 'Please enter an email address.'); return; }
-
-      btn.disabled = true;
-      btn.textContent = 'Sending…';
-
+    // ── STALE STATUS CHECK ────────────────────────────────────────
+    async function checkStaleStatuses() {
       try {
-        const res = await fetch('/api/admin-users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ action: 'invite', email, role })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Invite failed');
-        showMsg('inviteMsg', 'success', `Invite sent to ${email}.`);
-        document.getElementById('inviteEmail').value = '';
-        loadUsers();
+        const today = new Date().toISOString().split('T')[0];
+        const res   = await fetch(
+          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen)&event_date=lt.${today}&select=id,event_date&limit=1`,
+          { headers: authHeaders() }
+        );
+        const rows = await res.json();
+        if (!rows.length) return;
+
+        const staleDate = new Date(rows[0].event_date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+        // Count total stale clients
+        const countRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen)&event_date=lt.${today}`,
+          { method: 'HEAD', headers: { ...authHeaders(), 'Prefer': 'count=exact' } }
+        );
+        const count = countRes.headers.get('content-range')?.split('/')[1] ?? '?';
+
+        document.getElementById('staleWarningText').textContent =
+          `${count} client${count == 1 ? '' : 's'} from ${staleDate} still have active statuses. Did you forget to close that clinic?`;
+        const warning = document.getElementById('staleWarning');
+        warning.style.display = 'flex';
       } catch (err) {
-        showMsg('inviteMsg', 'error', err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Send Invite';
+        console.warn('Stale check failed:', err);
       }
     }
 
-    // ── Change role ───────────────────────────────────────────────
-    async function changeRole(userId, newRole) {
+    async function completeStaleClinic() {
+      if (!confirm('This will reset all active client statuses back to "In Queue". This cannot be undone.')) return;
       try {
-        const res = await fetch('/api/admin-users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ action: 'set_role', userId, role: newRole })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Role update failed');
-        loadUsers();
+        const today = new Date().toISOString().split('T')[0];
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen)&event_date=lt.${today}`,
+          {
+            method:  'PATCH',
+            headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+            body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
+          }
+        );
+        if (!res.ok) throw new Error('Reset failed');
+        document.getElementById('staleWarning').style.display = 'none';
       } catch (err) {
-        alert('Could not update role: ' + err.message);
+        alert('Error: ' + err.message);
       }
     }
 
-    // ── Load & render users ───────────────────────────────────────
-    async function loadUsers() {
-      const wrap = document.getElementById('userTableWrap');
-      wrap.innerHTML = '<div class="empty-state">Loading…</div>';
-      try {
-        const res = await fetch('/api/admin-users?action=list', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Could not load users');
+    // ── EVENT MANAGEMENT ──────────────────────────────────────────
+    const fmt     = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+    const fmtTime = t => {
+      if (!t) return '';
+      const [h, m] = t.split(':');
+      const hour = +h;
+      return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+    };
 
-        const users = data.users;
-        if (!users.length) {
-          wrap.innerHTML = '<div class="empty-state">No users found.</div>';
+    async function loadEvents() {
+      const list = document.getElementById('eventsList');
+      try {
+        const today  = new Date().toISOString().split('T')[0];
+        const events = await (await fetch(
+          `${SUPABASE_URL}/rest/v1/events?order=event_date.asc,start_time.asc&limit=20`,
+          { headers: authHeaders() }
+        )).json();
+
+        if (!events.length) {
+          list.innerHTML = '<div class="empty-state">No events yet.</div>';
           return;
         }
 
-        const myEmail = localStorage.getItem('php_email');
-
-        wrap.innerHTML = `
-          <table class="user-table">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Joined</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${users.map(u => {
-                const role    = u.app_metadata?.role || 'volunteer';
-                const joined  = u.created_at ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-                const isMe    = u.email === myEmail;
-                return `
-                  <tr>
-                    <td>${u.email}${isMe ? ' <span style="font-size:0.72rem;color:var(--text-muted)">(you)</span>' : ''}</td>
-                    <td>
-                      <span class="badge badge-${role}">${role}</span>
-                    </td>
-                    <td style="color:var(--text-muted)">${joined}</td>
-                    <td style="white-space:nowrap;">
-                      ${!isMe ? `
-                        <select class="btn btn-sm" style="border:1.5px solid var(--border);background:#f8faff;color:var(--text);border-radius:8px;padding:0.25rem 0.5rem;" onchange="changeRole('${u.id}', this.value)">
-                          <option value="volunteer" ${role === 'volunteer' ? 'selected' : ''}>Volunteer</option>
-                          <option value="staff"     ${role === 'staff'     ? 'selected' : ''}>Staff</option>
-                        </select>
-                      ` : '<span style="font-size:0.78rem;color:var(--text-muted)">—</span>'}
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        `;
+        list.innerHTML = events.map(e => {
+          const isPast      = e.event_date < today;
+          const isCompleted = e.completed;
+          return `
+            <div style="padding:0.85rem 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem; ${isPast && !isCompleted ? 'opacity:0.6;' : ''}">
+              <div>
+                <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.9rem; color:var(--navy); display:flex; align-items:center; gap:0.5rem;">
+                  ${e.location}
+                  ${isCompleted ? '<span style="font-size:0.72rem; font-weight:700; background:var(--green-light); color:var(--green); padding:0.1rem 0.5rem; border-radius:999px;">✓ Completed</span>' : ''}
+                  ${isPast && !isCompleted ? '<span style="font-size:0.72rem; font-weight:700; background:var(--amber-light); color:var(--amber); padding:0.1rem 0.5rem; border-radius:999px;">Not closed</span>' : ''}
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
+                  ${fmt(e.event_date)} · ${fmtTime(e.start_time)}${e.end_time ? ` – ${fmtTime(e.end_time)}` : ''}
+                </div>
+                ${e.notes ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; font-style:italic;">${e.notes}</div>` : ''}
+              </div>
+              <div style="display:flex; gap:0.4rem; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
+                ${!isCompleted ? `<button onclick="completeEvent('${e.id}')" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--green); background:none; color:var(--green); cursor:pointer; font-family:inherit; font-weight:700;">✓ Complete</button>` : ''}
+                <button onclick="openEditEvent('${e.id}', '${e.location.replace(/'/g,"\\'")}', '${e.event_date}', '${e.start_time}', '${(e.end_time||'').replace(/'/g,"\\'")}', '${(e.notes||'').replace(/'/g,"\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️ Edit</button>
+                <button onclick="deleteEvent('${e.id}', '${e.location.replace(/'/g,"\\'")}' )" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit;">✕ Delete</button>
+              </div>
+            </div>
+          `;
+        }).join('');
       } catch (err) {
-        wrap.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
+        list.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
       }
     }
 
-  // Load users on page load
-    loadUsers();
+    async function addEvent() {
+      const msg      = document.getElementById('addEventMsg');
+      const location = document.getElementById('newEventLocation').value.trim();
+      const date     = document.getElementById('newEventDate').value;
+      const start    = document.getElementById('newEventStart').value;
 
-    // ── RESET CLINIC STATUSES ─────────────────────────────────────
-    async function resetClinicStatuses() {
-      if (!confirm('Reset all non-archived clients back to "In Queue"? This cannot be undone.')) return;
-      const btn = document.querySelector('[onclick="resetClinicStatuses()"]');
-      btn.disabled = true;
-      btn.textContent = 'Resetting…';
+      if (!location) { showMsg('addEventMsg', 'error', 'Location is required.'); return; }
+      if (!date)     { showMsg('addEventMsg', 'error', 'Date is required.'); return; }
+      if (!start)    { showMsg('addEventMsg', 'error', 'Start time is required.'); return; }
+
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false`, {
-          method: 'PATCH',
-          headers: { ...authHeaders(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-          body: JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/events`, {
+          method:  'POST',
+          headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+          body:    JSON.stringify({
+            location,
+            event_date: date,
+            start_time: start,
+            end_time:   document.getElementById('newEventEnd').value   || null,
+            notes:      document.getElementById('newEventNotes').value.trim() || null
+          })
         });
-        if (res.ok) {
-          showMsg('resetMsg', 'success', 'All client statuses reset to In Queue.');
-        } else {
-          showMsg('resetMsg', 'error', 'Reset failed. Check console.');
-          console.error(await res.text());
-        }
+        if (!res.ok) throw new Error('Save failed');
+        showMsg('addEventMsg', 'success', 'Event saved!');
+        ['newEventLocation','newEventDate','newEventStart','newEventEnd','newEventNotes'].forEach(id => document.getElementById(id).value = '');
+        await loadEvents();
       } catch (err) {
-        showMsg('resetMsg', 'error', err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '🔄 Reset All Statuses';
+        showMsg('addEventMsg', 'error', err.message);
+      }
+    }
+
+    async function completeEvent(eventId) {
+      if (!confirm('Mark this event as complete? This will reset all active client statuses back to "In Queue".')) return;
+      try {
+        // Mark event complete
+        await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}`, {
+          method:  'PATCH',
+          headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+          body:    JSON.stringify({ completed: true, completed_at: new Date().toISOString() })
+        });
+        // Reset client statuses
+        await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen)`, {
+          method:  'PATCH',
+          headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+          body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
+        });
+        await loadEvents();
+        document.getElementById('staleWarning').style.display = 'none';
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    function openEditEvent(id, location, date, start, end, notes) {
+      const existing = document.getElementById('editEventDialog');
+      if (existing) existing.remove();
+
+      const dialog = document.createElement('div');
+      dialog.id = 'editEventDialog';
+      dialog.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+      dialog.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:2rem;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);font-family:'Nunito',sans-serif;">
+          <div style="font-size:1.05rem;font-weight:800;color:var(--navy);margin-bottom:1.25rem;">✏️ Edit Event</div>
+          <div class="form-field">
+            <label>Location *</label>
+            <input type="text" id="eeLocation" value="${location}" />
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Date *</label>
+              <input type="date" id="eeDate" value="${date}" />
+            </div>
+            <div class="form-field">
+              <label>Start Time *</label>
+              <input type="time" id="eeStart" value="${start}" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>End Time</label>
+              <input type="time" id="eeEnd" value="${end}" />
+            </div>
+            <div class="form-field">
+              <label>Notes</label>
+              <input type="text" id="eeNotes" value="${notes}" />
+            </div>
+          </div>
+          <div id="eeMsg" class="msg"></div>
+          <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+            <button onclick="saveEditEvent('${id}')" class="btn btn-primary" style="flex:1;">Save</button>
+            <button onclick="document.getElementById('editEventDialog').remove()" style="flex:1;padding:0.55rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--text-muted);font-family:inherit;font-weight:700;cursor:pointer;">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(dialog);
+    }
+
+    async function saveEditEvent(id) {
+      const location = document.getElementById('eeLocation').value.trim();
+      const date     = document.getElementById('eeDate').value;
+      const start    = document.getElementById('eeStart').value;
+      if (!location) { showMsg('eeMsg', 'error', 'Location is required.'); return; }
+      if (!date)     { showMsg('eeMsg', 'error', 'Date is required.'); return; }
+      if (!start)    { showMsg('eeMsg', 'error', 'Start time is required.'); return; }
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${id}`, {
+          method:  'PATCH',
+          headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+          body:    JSON.stringify({
+            location,
+            event_date: date,
+            start_time: start,
+            end_time:   document.getElementById('eeEnd').value   || null,
+            notes:      document.getElementById('eeNotes').value.trim() || null
+          })
+        });
+        if (!res.ok) throw new Error('Save failed');
+        document.getElementById('editEventDialog').remove();
+        await loadEvents();
+      } catch (err) {
+        showMsg('eeMsg', 'error', err.message);
+      }
+    }
+
+    async function deleteEvent(eventId, location) {
+      if (!confirm(`Delete the event at "${location}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}`, {
+          method:  'DELETE',
+          headers: authHeaders()
+        });
+        if (!res.ok) throw new Error('Delete failed');
+        await loadEvents();
+      } catch (err) {
+        alert('Delete failed: ' + err.message);
       }
     }
 
     // ── VACCINE LOT MANAGEMENT ────────────────────────────────────
-
     const VAX_LABELS = {
       rv_1yr:        'Rabies 1-Year (RV 1yr)',
       rv_3yr:        'Rabies 3-Year (RV 3yr)',
@@ -610,14 +736,6 @@ const userRole = getRoleFromToken(token);
       lepto_1yr:     'Lepto 1-Year',
     };
 
-    function authHeaders() {
-      return {
-        'apikey': CONFIG.SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-    }
-
     async function loadLots() {
       const wrap = document.getElementById('lotTableWrap');
       try {
@@ -631,18 +749,13 @@ const userRole = getRoleFromToken(token);
           return;
         }
 
-        const fmt = iso => iso ? new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+        const fmtD = iso => iso ? new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
 
         wrap.innerHTML = `
           <table class="user-table">
             <thead>
               <tr>
-                <th>Vaccine</th>
-                <th>Lot #</th>
-                <th>Status</th>
-                <th>Added</th>
-                <th>Deactivated</th>
-                <th></th>
+                <th>Vaccine</th><th>Lot #</th><th>Status</th><th>Added</th><th>Deactivated</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -650,16 +763,10 @@ const userRole = getRoleFromToken(token);
                 <tr style="${r.active ? '' : 'opacity:0.5;'}">
                   <td><strong>${VAX_LABELS[r.vaccine_type] || r.vaccine_type}</strong></td>
                   <td style="font-family:monospace;">${r.lot_number}</td>
-                  <td>
-                    ${r.active
-                      ? '<span class="badge badge-staff">active</span>'
-                      : '<span class="badge badge-volunteer">inactive</span>'}
-                  </td>
-                  <td style="color:var(--text-muted)">${fmt(r.created_at)}</td>
-                  <td style="color:var(--text-muted)">${fmt(r.deactivated_at)}</td>
-                  <td>
-                    ${r.active ? `<button class="btn btn-sm" style="border:1.5px solid var(--coral);color:var(--coral-dark);background:none;" onclick="deactivateLot('${r.id}')">Deactivate</button>` : ''}
-                  </td>
+                  <td>${r.active ? '<span class="badge badge-staff">active</span>' : '<span class="badge badge-volunteer">inactive</span>'}</td>
+                  <td style="color:var(--text-muted)">${fmtD(r.created_at)}</td>
+                  <td style="color:var(--text-muted)">${fmtD(r.deactivated_at)}</td>
+                  <td>${r.active ? `<button class="btn btn-sm" style="border:1.5px solid var(--coral);color:var(--coral-dark);background:none;" onclick="deactivateLot('${r.id}')">Deactivate</button>` : ''}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -671,9 +778,9 @@ const userRole = getRoleFromToken(token);
     }
 
     async function addLot() {
-      const type   = document.getElementById('newLotType').value;
-      const lot    = document.getElementById('newLotNumber').value.trim();
-      const btn    = document.getElementById('addLotBtn');
+      const type = document.getElementById('newLotType').value;
+      const lot  = document.getElementById('newLotNumber').value.trim();
+      const btn  = document.getElementById('addLotBtn');
 
       if (!type) { showMsg('lotMsg', 'error', 'Please select a vaccine type.'); return; }
       if (!lot)  { showMsg('lotMsg', 'error', 'Please enter a lot number.'); return; }
@@ -682,29 +789,16 @@ const userRole = getRoleFromToken(token);
       btn.textContent = 'Saving…';
 
       try {
-        // Deactivate any existing active lot for this type first
         await fetch(
           `${SUPABASE_URL}/rest/v1/vaccine_inventory?vaccine_type=eq.${type}&active=eq.true`,
-          {
-            method: 'PATCH',
-            headers: authHeaders(),
-            body: JSON.stringify({ active: false, deactivated_at: new Date().toISOString() })
-          }
+          { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ active: false, deactivated_at: new Date().toISOString() }) }
         );
-
-        // Insert the new active lot
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory`, {
-          method: 'POST',
+          method:  'POST',
           headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-          body: JSON.stringify({
-            vaccine_type: type,
-            label:        VAX_LABELS[type],
-            lot_number:   lot,
-            active:       true
-          })
+          body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, active: true })
         });
         if (!res.ok) throw new Error((await res.json()).message || 'Save failed');
-
         showMsg('lotMsg', 'success', `Lot saved for ${VAX_LABELS[type]}.`);
         document.getElementById('newLotType').value   = '';
         document.getElementById('newLotNumber').value = '';
@@ -721,9 +815,9 @@ const userRole = getRoleFromToken(token);
       if (!confirm('Deactivate this lot? Discharge volunteers will no longer see it.')) return;
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${id}`, {
-          method: 'PATCH',
+          method:  'PATCH',
           headers: authHeaders(),
-          body: JSON.stringify({ active: false, deactivated_at: new Date().toISOString() })
+          body:    JSON.stringify({ active: false, deactivated_at: new Date().toISOString() })
         });
         if (!res.ok) throw new Error('Deactivate failed');
         showMsg('lotMsg', 'success', 'Lot deactivated.');
@@ -733,7 +827,10 @@ const userRole = getRoleFromToken(token);
       }
     }
 
+    // ── INIT ──────────────────────────────────────────────────────
+    loadEvents();
     loadLots();
+    checkStaleStatuses();
   </script>
 </body>
 </html>
