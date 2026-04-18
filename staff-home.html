@@ -363,6 +363,19 @@
       </div>
     </div>
 
+<!-- ── Clinic reset ── -->
+    <p class="section-title">Post-Clinic</p>
+    <div class="card">
+      <div class="card-header">🔄 Reset Clinic Statuses</div>
+      <div class="card-body">
+        <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:1rem;">
+          Resets all non-archived clients back to <strong>In Queue</strong> status at the end of a clinic day. This clears check-in times and discharge confirmations. <strong>This cannot be undone.</strong>
+        </p>
+        <div class="msg" id="resetMsg"></div>
+        <button class="btn btn-primary" style="background:#dc2626;" onclick="resetClinicStatuses()">🔄 Reset All Statuses</button>
+      </div>
+    </div>
+
     <!-- ── User management ── -->
     <div id="userMgmtSection">
     <p class="section-title">User Management</p>
@@ -551,8 +564,34 @@ const userRole = getRoleFromToken(token);
       }
     }
 
-    // Load users on page load
+  // Load users on page load
     loadUsers();
+
+    // ── RESET CLINIC STATUSES ─────────────────────────────────────
+    async function resetClinicStatuses() {
+      if (!confirm('Reset all non-archived clients back to "In Queue"? This cannot be undone.')) return;
+      const btn = document.querySelector('[onclick="resetClinicStatuses()"]');
+      btn.disabled = true;
+      btn.textContent = 'Resetting…';
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false`, {
+          method: 'PATCH',
+          headers: { ...authHeaders(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
+        });
+        if (res.ok) {
+          showMsg('resetMsg', 'success', 'All client statuses reset to In Queue.');
+        } else {
+          showMsg('resetMsg', 'error', 'Reset failed. Check console.');
+          console.error(await res.text());
+        }
+      } catch (err) {
+        showMsg('resetMsg', 'error', err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Reset All Statuses';
+      }
+    }
 
     // ── VACCINE LOT MANAGEMENT ────────────────────────────────────
 
