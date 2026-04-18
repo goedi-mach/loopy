@@ -562,7 +562,6 @@
   <button class="filter-btn active" onclick="setFilter('all')">All</button>
   <button class="filter-btn" onclick="setFilter('registered')">In Queue</button>
   <button class="filter-btn" onclick="setFilter('checked_in')">Checked In</button>
-  <button id="resetStatusBtn" onclick="resetClinicStatuses()" style="display:none; margin-left:auto; background:#dc2626; color:white; border:none; border-radius:6px; padding:0.4rem 1rem; cursor:pointer; font-size:0.85rem;">🔄 Reset All Statuses</button>
 </div>
           <div class="search-wrap">
             <input type="text" id="searchInput" placeholder="Name, email, or phone…"
@@ -1760,21 +1759,6 @@ function getRole() {
   } catch { return null; }
 }
 
-async function resetClinicStatuses() {
-  if (!confirm('Reset all non-archived clients back to "In Queue"? This cannot be undone.')) return;
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false`, {
-    method: 'PATCH',
-    headers: { ...authHeaders(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-    body: JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
-  });
-  if (res.ok) {
-    alert('All statuses reset to In Queue.');
-    loadRecentClients();
-  } else {
-    alert('Error resetting statuses. Check console.');
-    console.error(await res.text());
-  }
-}
   // Restore session on refresh
 const savedToken = localStorage.getItem('php_token');
 async function loadTodayCount() {
@@ -1801,7 +1785,6 @@ if (savedToken) {
   accessToken = savedToken;
   const savedEmail = localStorage.getItem('php_email');
   if (savedEmail) document.getElementById('loggedInUser').textContent = `👋 ${savedEmail}`;
-  if (getRole() === 'admin') document.getElementById('resetStatusBtn').style.display = 'inline-block';
   showScreen('dashScreen');
   loadRecentClients();
   loadEvents();
