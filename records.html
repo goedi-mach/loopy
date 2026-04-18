@@ -28,8 +28,20 @@
       --shadow:      0 2px 16px rgba(26,58,143,0.10);
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    .due-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .due-green  { background: var(--green-light);  color: var(--green); }
+    .due-amber  { background: var(--amber-light);  color: var(--amber); }
+    .due-red    { background: var(--coral-light);  color: var(--coral-dark); }
+    .due-list   { display: flex; flex-direction: column; gap: 0.25rem; }
     body {
       font-family: 'Nunito Sans', sans-serif;
       background: var(--bg);
@@ -393,7 +405,8 @@
   <!-- Tabs -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab('clients', this)">👤 Clients</button>
-    <button class="tab" onclick="switchTab('pets', this)">🐾 Pets & Vaccines</button>
+    <button class="tab" onclick="switchTab('pets', this)">💉 Vaccination Records</button>
+    <button class="tab" onclick="switchTab('nextdue', this)">🐾 Pets</button>
   </div>
 
   <!-- Clients tab -->
@@ -422,11 +435,11 @@
     </div>
   </div>
 
-  <!-- Pets & Vaccines tab -->
+<!-- Vaccination Records tab -->
   <div class="tab-panel" id="tab-pets">
     <div class="card">
       <div class="card-header">
-        <span>Pets & Vaccines</span>
+        <span>Vaccination Records</span>
         <span class="record-count" id="petCount"></span>
       </div>
       <div class="table-wrap">
@@ -450,6 +463,35 @@
       </div>
     </div>
   </div>
+
+  <!-- Pets tab -->
+  <div class="tab-panel" id="tab-nextdue">
+    <div class="card">
+      <div class="card-header">
+        <span>Pets</span>
+        <span class="record-count" id="nextdueCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="nextdueTable">
+          <thead>
+            <tr>
+              <th onclick="sortNextDue('pet_name')">Pet Name <span class="sort-icon">↕</span></th>
+              <th onclick="sortNextDue('species')">Species <span class="sort-icon">↕</span></th>
+              <th onclick="sortNextDue('breed')">Breed <span class="sort-icon">↕</span></th>
+              <th onclick="sortNextDue('owner_name')">Owner <span class="sort-icon">↕</span></th>
+              <th onclick="sortNextDue('owner_phone')">Phone <span class="sort-icon">↕</span></th>
+              <th onclick="sortNextDue('soonest_due')">Next Due <span class="sort-icon">↕</span></th>
+              <th>All Due Dates</th>
+            </tr>
+          </thead>
+          <tbody id="nextdueBody">
+            <tr><td colspan="7" class="state-msg">Select a date and click Load, or click "All dates".</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -533,7 +575,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
 async function loadAll() {
     const date = document.getElementById('dateFilter').value;
     document.getElementById('searchInput').value = '';
-    await Promise.all([loadClients(date), loadPets(date)]);
+    await Promise.all([loadClients(date), loadPets(date), loadNextDue()]);
     document.getElementById('exportClientsBtn').disabled = false;
     document.getElementById('exportPetsBtn').disabled    = false;
   }
@@ -681,6 +723,110 @@ async function loadAll() {
     renderPets(filteredPets);
     document.getElementById('petCount').textContent = `${filteredPets.length} of ${petsData.length} record${petsData.length !== 1 ? 's' : ''}`;
   }
+  // ── NEXT DUE TAB ──────────────────────────────────────────────────
+  let nextDueData = [];
+  let nextDueSortKey = 'soonest_due';
+  let nextDueSortAsc = true;
+
+  function dueBadgeClass(dateStr) {
+    if (!dateStr) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dateStr + 'T12:00:00');
+    const daysUntil = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    if (daysUntil < 0)   return 'due-red';    // overdue
+    if (daysUntil <= 60) return 'due-red';    // due within 60 days
+    if (daysUntil <= 180) return 'due-amber'; // due within 6 months
+    return 'due-green';                        // more than 6 months out
+  }
+
+  function dueBadgeLabel(dateStr) {
+    if (!dateStr) return '—';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dateStr + 'T12:00:00');
+    const daysUntil = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    const fmt = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    if (daysUntil < 0)  return `${fmt} (overdue)`;
+    if (daysUntil === 0) return `${fmt} (today)`;
+    return fmt;
+  }
+
+  async function loadNextDue() {
+    const body = document.getElementById('nextdueBody');
+    body.innerHTML = `<tr><td colspan="7" class="state-msg">Loading…</td></tr>`;
+    try {
+      const rows = await sbGet('pet_next_due?order=soonest_due.asc.nullslast&limit=1000');
+      nextDueData = rows;
+      document.getElementById('nextdueCount').textContent = `${rows.length} pet${rows.length !== 1 ? 's' : ''}`;
+      renderNextDue(nextDueData);
+    } catch (err) {
+      body.innerHTML = `<tr><td colspan="7" class="state-msg" style="color:var(--coral-dark)">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  function renderNextDue(data) {
+    const body = document.getElementById('nextdueBody');
+    if (!data.length) {
+      body.innerHTML = `<tr><td colspan="7" class="state-msg">No pets found.</td></tr>`;
+      return;
+    }
+    const speciesPill = s => {
+      const sl = (s || '').toLowerCase();
+      const cls = sl === 'dog' ? 'pill-dog' : sl === 'cat' ? 'pill-cat' : 'pill-other';
+      return `<span class="pill ${cls}">${s || '—'}</span>`;
+    };
+    body.innerHTML = data.map(row => {
+      const dueDates = row.due_dates || [];
+      const allDueDates = dueDates.length
+        ? `<div class="due-list">${dueDates.map(d => `
+            <span class="due-badge ${dueBadgeClass(d.next_due)}">
+              ${d.vaccine_name}: ${dueBadgeLabel(d.next_due)}
+            </span>`).join('')}</div>`
+        : '—';
+      const soonestClass = dueBadgeClass(row.soonest_due);
+      const soonestLabel = dueBadgeLabel(row.soonest_due);
+      return `
+        <tr onclick="openInDashboard('${row.client_id}')">
+          <td class="cell-name">${row.pet_name || '—'}</td>
+          <td>${speciesPill(row.species)}</td>
+          <td class="cell-muted">${row.breed || '—'}</td>
+          <td>${row.owner_name || '—'}</td>
+          <td class="cell-muted">${row.owner_phone || '—'}</td>
+          <td>${soonestClass ? `<span class="due-badge ${soonestClass}">${soonestLabel}</span>` : '—'}</td>
+          <td>${allDueDates}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function sortNextDue(key) {
+    if (nextDueSortKey === key) {
+      nextDueSortAsc = !nextDueSortAsc;
+    } else {
+      nextDueSortKey = key;
+      nextDueSortAsc = true;
+    }
+    nextDueData.sort((a, b) => {
+      const av = a[key] ?? '';
+      const bv = b[key] ?? '';
+      // nulls always last
+      if (av === '' && bv !== '') return 1;
+      if (bv === '' && av !== '') return -1;
+      return nextDueSortAsc
+        ? String(av).localeCompare(String(bv), undefined, { numeric: true })
+        : String(bv).localeCompare(String(av), undefined, { numeric: true });
+    });
+    renderNextDue(nextDueData);
+
+    // Update sort icons
+    document.querySelectorAll('#nextdueTable th').forEach(th => {
+      const icon = th.querySelector('.sort-icon');
+      if (!icon) return;
+      const thKey = th.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
+      icon.textContent = thKey === key ? (nextDueSortAsc ? '↑' : '↓') : '↕';
+    });
+  }
+
   // ── OPEN IN DASHBOARD ─────────────────────────────────────────────
   function openInDashboard(clientId) {
   window.location.href = `client.html?id=${clientId}`;
@@ -752,6 +898,8 @@ async function loadAll() {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`tab-${name}`).classList.add('active');
+    // Pets tab ignores date filter — always shows all pets
+    if (name === 'nextdue') loadNextDue();
   }
 
   // ── INIT ──────────────────────────────────────────────────────────
