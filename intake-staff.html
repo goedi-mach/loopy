@@ -562,7 +562,6 @@
   <button class="filter-btn active" onclick="setFilter('all')">All</button>
   <button class="filter-btn" onclick="setFilter('registered')">In Queue</button>
   <button class="filter-btn" onclick="setFilter('checked_in')">Checked In</button>
-  <button class="filter-btn" onclick="setFilter('archived')">Archived</button>  
   <button id="resetStatusBtn" onclick="resetClinicStatuses()" style="display:none; margin-left:auto; background:#dc2626; color:white; border:none; border-radius:6px; padding:0.4rem 1rem; cursor:pointer; font-size:0.85rem;">🔄 Reset All Statuses</button>
 </div>
           <div class="search-wrap">
@@ -1112,12 +1111,8 @@ async function loadRecentClients() {
   list.innerHTML = '<li class="empty-state">Loading…</li>';
   try {
     let path = `clients?order=checked_in_at.asc.nullslast,created_at.desc&limit=5`;
-    if (currentFilter === 'archived') {
-      path += `&archived=eq.true`;
-    } else {
-      path += `&archived=eq.false`;
-      if (currentFilter !== 'all') path += `&status=eq.${currentFilter}`;
-    }
+    path += `&archived=eq.false`;
+    if (currentFilter !== 'all') path += `&status=eq.${currentFilter}`;
     const clients = await sbGet(path);
     renderClientList(clients);
   } catch (err) {
