@@ -675,6 +675,7 @@
   <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
   <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
   <button id="archiveClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit; display:none;" onclick="toggleArchiveClient()">Archive</button>
+  <button id="printMemoBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--green); background:none; color:var(--green); cursor:pointer; font-family:inherit; font-weight:700; display:none;" onclick="openMemoDialog()">📄 Print Memo</button>
 <button id="deleteClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--coral); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit; display:none;" onclick="deleteClient()">Delete</button>
 </div>
             </div>
@@ -1027,6 +1028,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
 // ─── STATE ─────────────────────────────────────────────────────
 let accessToken    = null;
 let activeLots     = {};   // keyed by vaccine_type
+let todayMicrochip = null; // set when a chip is logged this session
 let currentClient  = null;
 let selectedPetId  = null;
 let selectedPetObj = null;
@@ -1326,6 +1328,8 @@ document.getElementById('archiveClientBtn').style.display = 'block';
 document.getElementById('archiveClientBtn').textContent   = client.archived ? 'Unarchive' : 'Archive';
     // Show cards
     ['petsCard','vaxCard','historyCard','microchipCard'].forEach(id => document.getElementById(id).style.display = 'block');
+    document.getElementById('printMemoBtn').style.display = 'inline-block';
+    todayMicrochip = null;
 
     // Reset vaccine section
     clearSelectedPet();
@@ -1647,6 +1651,7 @@ async function logMicrochip() {
 
     showMsg(msg, 'success', `Microchip ${number} saved for ${selectedPetObj.name}!`);
     document.getElementById('microchipNumber').value = '';
+    todayMicrochip = number;
     lockMicrochip(number);
     await loadPets(currentClient.id);
   } catch (err) {
@@ -2222,6 +2227,168 @@ function setRadio(fieldName, index) {
     } catch (err) {
       console.warn('Could not load active lots:', err);
     }
+  }
+
+  // ─── PRINT MEMO ────────────────────────────────────────────────
+  function openMemoDialog() {
+    if (!currentClient) return;
+    const dialog = document.createElement('div');
+    dialog.id = 'memoDialog';
+    dialog.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      display:flex; align-items:center; justify-content:center; z-index:9999;
+    `;
+    dialog.innerHTML = `
+      <div style="background:white; border-radius:16px; padding:2rem; max-width:360px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.2); font-family:'Nunito',sans-serif;">
+        <div style="font-size:1.1rem; font-weight:800; color:var(--navy); margin-bottom:0.5rem;">📄 Print Take-Home Memo</div>
+        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">Select the language for the memo:</div>
+        <div style="display:flex; gap:0.75rem; justify-content:center; margin-bottom:1.5rem;">
+          <button onclick="printMemo('en')" style="flex:1; padding:0.75rem; border-radius:999px; border:none; background:var(--navy); color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem; cursor:pointer;">🇺🇸 English</button>
+          <button onclick="printMemo('es')" style="flex:1; padding:0.75rem; border-radius:999px; border:none; background:var(--coral-dark); color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem; cursor:pointer;">🇲🇽 Español</button>
+        </div>
+        <button onclick="document.getElementById('memoDialog').remove()" style="width:100%; padding:0.5rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); font-family:'Nunito',sans-serif; font-weight:700; cursor:pointer;">Cancel</button>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+  }
+
+  async function printMemo(lang) {
+    document.getElementById('memoDialog')?.remove();
+
+    const en = lang === 'en';
+
+    // Fetch today's vaccinations for the selected pet
+    let vaccinations = [];
+    if (selectedPetId) {
+      try {
+        vaccinations = await sbGet(`vaccinations?pet_id=eq.${selectedPetId}&order=date_given.desc`);
+      } catch (_) {}
+    }
+
+    const today = new Date().toLocaleDateString(en ? 'en-US' : 'es-MX', { month:'long', day:'numeric', year:'numeric' });
+    const fmt   = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString(en ? 'en-US' : 'es-MX', { month:'long', day:'numeric', year:'numeric' }) : '—';
+
+    // Split into today's vs prior vaccines (by date_given = today)
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todaysVax = vaccinations.filter(v => v.date_given === todayStr);
+    const priorVax  = vaccinations.filter(v => v.date_given !== todayStr);
+
+    const petName    = selectedPetObj?.name || '—';
+    const clientName = currentClient?.name  || '—';
+
+    const t = {
+      title:        en ? 'Take-Home Visit Summary'          : 'Resumen de Visita',
+      subtitle:     en ? 'People Helping Pets — Free Vaccine Clinic' : 'People Helping Pets — Clínica de Vacunas Gratuita',
+      date:         en ? `Date: ${today}`                   : `Fecha: ${today}`,
+      client:       en ? `Owner:`                           : `Dueño/a:`,
+      pet:          en ? `Pet:`                             : `Mascota:`,
+      todayVax:     en ? '💉 Vaccines Given Today'          : '💉 Vacunas Aplicadas Hoy',
+      nextDue:      en ? 'Next due:'                        : 'Próxima dosis:',
+      priorVax:     en ? '📋 Prior Vaccinations on Record'  : '📋 Vacunas Previas Registradas',
+      microchip:    en ? '🔖 Microchip'                     : '🔖 Microchip',
+      chipNum:      en ? 'Chip number:'                     : 'Número de chip:',
+      chipReg:      en ? 'Register your chip online:'       : 'Registra tu chip en línea:',
+      noTodayVax:   en ? 'No vaccines recorded today.'      : 'No se registraron vacunas hoy.',
+      noPriorVax:   en ? 'No prior vaccination records.'    : 'Sin registros previos de vacunación.',
+      footer:       en ? 'Thank you for keeping your pet healthy! Questions? Contact us at peoplehelpingpets.org'
+                       : '¡Gracias por cuidar la salud de tu mascota! ¿Preguntas? Contáctanos en peoplehelpingpets.org',
+    };
+
+    const vaxRow = v => `
+      <tr>
+        <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb; font-weight:600;">${v.vaccine_name}</td>
+        <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb; color:#6b7280;">${v.date_given ? fmt(v.date_given) : '—'}</td>
+        <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb; color:#6b7280;">${v.next_due ? `<strong style="color:#d97706">${fmt(v.next_due)}</strong>` : '—'}</td>
+      </tr>`;
+
+    const html = `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8"/>
+  <title>${t.title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Nunito Sans',sans-serif; color:#1a1a2e; padding:2rem; max-width:680px; margin:0 auto; }
+    .header { text-align:center; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:2px solid #1a3a8f; }
+    .logo { font-family:'Nunito',sans-serif; font-weight:800; font-size:1.4rem; color:#1a3a8f; }
+    .subtitle { font-size:0.85rem; color:#5a6380; margin-top:0.25rem; }
+    .date { font-size:0.82rem; color:#5a6380; margin-top:0.25rem; }
+    .client-block { background:#f4f7fe; border-radius:10px; padding:0.85rem 1rem; margin-bottom:1.25rem; display:flex; gap:2rem; }
+    .client-block span { font-size:0.83rem; color:#5a6380; }
+    .client-block strong { display:block; font-family:'Nunito',sans-serif; font-size:1rem; color:#1a3a8f; }
+    .section { margin-bottom:1.25rem; }
+    .section-title { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.9rem; color:#1a3a8f; margin-bottom:0.6rem; padding-bottom:0.3rem; border-bottom:1.5px solid #dce6f9; }
+    table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+    th { text-align:left; padding:0.4rem 0.75rem; background:#dce6f9; color:#1a3a8f; font-family:'Nunito',sans-serif; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; }
+    .chip-box { background:#eef4e0; border:1px solid #c5daa0; border-radius:8px; padding:0.75rem 1rem; font-size:0.85rem; }
+    .chip-box strong { font-family:'Nunito',sans-serif; color:#3a5a1a; }
+    .chip-url { color:#1a3a8f; font-size:0.82rem; margin-top:0.25rem; }
+    .empty { color:#9ca3af; font-style:italic; font-size:0.83rem; padding:0.5rem 0; }
+    .footer { margin-top:2rem; padding-top:1rem; border-top:1px solid #e5e7eb; text-align:center; font-size:0.78rem; color:#9ca3af; }
+    @media print {
+      body { padding:0.5rem; }
+      button { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">🐾 People Helping Pets</div>
+    <div class="subtitle">${t.subtitle}</div>
+    <div class="date">${t.date}</div>
+  </div>
+
+  <div class="client-block">
+    <div><span>${t.client}</span><strong>${clientName}</strong></div>
+    <div><span>${t.pet}</span><strong>${petName}</strong></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">${t.todayVax}</div>
+    ${todaysVax.length ? `
+      <table>
+        <thead><tr>
+          <th>${en ? 'Vaccine' : 'Vacuna'}</th>
+          <th>${en ? 'Date Given' : 'Fecha'}</th>
+          <th>${en ? 'Next Due' : 'Próxima Dosis'}</th>
+        </tr></thead>
+        <tbody>${todaysVax.map(vaxRow).join('')}</tbody>
+      </table>` : `<div class="empty">${t.noTodayVax}</div>`}
+  </div>
+
+  ${todayMicrochip ? `
+  <div class="section">
+    <div class="section-title">${t.microchip}</div>
+    <div class="chip-box">
+      <div>${t.chipNum} <strong>${todayMicrochip}</strong></div>
+      <div class="chip-url">${t.chipReg} <strong>nano.fitracking.com/register/chip</strong></div>
+    </div>
+  </div>` : ''}
+
+  <div class="section">
+    <div class="section-title">${t.priorVax}</div>
+    ${priorVax.length ? `
+      <table>
+        <thead><tr>
+          <th>${en ? 'Vaccine' : 'Vacuna'}</th>
+          <th>${en ? 'Date Given' : 'Fecha'}</th>
+          <th>${en ? 'Next Due' : 'Próxima Dosis'}</th>
+        </tr></thead>
+        <tbody>${priorVax.map(vaxRow).join('')}</tbody>
+      </table>` : `<div class="empty">${t.noPriorVax}</div>`}
+  </div>
+
+  <div class="footer">${t.footer}</div>
+
+  <script>window.print();<\/script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
   }
 
   function resetDetailPanel() {
