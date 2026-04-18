@@ -6,15 +6,15 @@ Internal web tools for running free vaccine clinics. Built for [People Helping P
 
 ## Pages
 
-| File                   | Purpose                                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------------------ |
-| `index.html`           | Landing / home page                                                                              |
-| `registration.html`    | Bilingual client & pet registration form (English/Spanish) with waiver and drawn signature       |
-| `dashboard.html`       | Role-selector landing page — routes staff to the appropriate tool                                |
-| `intake-staff.html`    | Staff intake tool — client search, walk-in registration, check-in, pet records                   |
-| `discharge-staff.html` | Staff discharge tool — vaccine logging, microchip, certificate download, mark as seen            |
-| `records.html`         | Sortable, filterable table of all clients and pets; CSV export                                   |
-| `client.html`          | Client profile page — edit client/pet records, vaccination history, cert download, signed waiver |
+| File                | Purpose                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| `index.html`        | Landing / home page                                                                              |
+| `registration.html` | Bilingual client & pet registration form (English/Spanish) with waiver and drawn signature       |
+| `dashboard.html`    | Role-selector landing page — routes staff to the appropriate tool                                |
+| `intake.html`       | Staff intake tool — client search, walk-in registration, check-in, pet records                   |
+| `discharge.html`    | Staff discharge tool — vaccine logging, microchip, certificate download, mark as seen            |
+| `records.html`      | Sortable, filterable table of all clients and pets; CSV export                                   |
+| `client.html`       | Client profile page — edit client/pet records, vaccination history, cert download, signed waiver |
 
 ---
 
@@ -199,4 +199,4 @@ pip install pypdf requests python-dateutil reportlab
 - Client upsert matches by email or phone — names alone are not deduplicated
 - No server-side validation; all validation is client-side
 - The `fill_cert.py` script is CLI-only and not wired into the app UI
-- Waiver signature is only captured via the public intake form — walk-in registrations through `intake-staff.html` do not currently collect a signature
+- Waiver signature is only captured via the public intake form — walk-in registrations through `intake.html` do not currently collect a signature
