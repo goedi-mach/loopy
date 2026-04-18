@@ -501,7 +501,7 @@ function showStaffHomeLink() {
     const token = localStorage.getItem('php_token');
     if (!token) return;
     const payload = JSON.parse(atob(token.split('.')[1]));
-    if (payload?.app_metadata?.role === 'staff') {
+    if (['staff', 'admin'].includes(payload?.app_metadata?.role)) {
       const el = document.getElementById('staffHomeLink');
       if (el) el.style.display = 'inline-block';
     }
