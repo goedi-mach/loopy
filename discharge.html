@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Intake — PHP Clinic App</title>
-  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <title>Discharge — PHP Clinic App</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
   <style>
@@ -532,11 +531,11 @@
 <div id="dashScreen" class="screen">
 
   <nav class="topnav">
-    <div class="topnav-brand">🏥 Intake — People Helping Pets</div>
+    <div class="topnav-brand">💉 Discharge — People Helping Pets</div>
     <div style="display:flex; align-items:center; gap:0.75rem;">
       <div style="font-size:0.8rem; opacity:0.8;" id="loggedInUser"></div>
-      <a href="intake-staff.html" class="nav-link active">🏥 Intake</a>
-      <a href="discharge-staff.html" class="nav-link">💉 Discharge</a>
+      <a href="intake.html" class="nav-link">🏥 Intake</a>
+      <a href="discharge.html" class="nav-link active">💉 Discharge</a>
       <a href="records.html" class="nav-link">📋 Records</a>
       <a id="reportsLink" href="reports.html" class="nav-link" style="display:none;">📊 Reports</a>
       <a id="staffHomeLink" href="staff-home.html" class="nav-link" style="display:none;">🏠 Staff Home</a>
@@ -555,12 +554,12 @@
       <div class="card">
         <div class="card-header" style="justify-content:space-between;">
   <span>🔍 Search Clients</span>
-  <button class="btn-primary" style="font-size:0.78rem; padding:0.3rem 0.75rem; white-space:nowrap;" onclick="openWalkin()">+ Walk-in</button>
+
 </div>
         <div class="card-body">
           <div style="display:flex; gap:0.4rem; margin-bottom:0.85rem; flex-wrap:wrap;">
   <button class="filter-btn active" onclick="setFilter('all')">All</button>
-  <button class="filter-btn" onclick="setFilter('registered')">In Queue</button>
+  <button class="filter-btn" onclick="setFilter('in_queue')">In Queue</button>
   <button class="filter-btn" onclick="setFilter('checked_in')">Checked In</button>
 </div>
           <div class="search-wrap">
@@ -576,141 +575,8 @@
       </div>
     </div><!-- /left column -->
 
-    <!-- RIGHT: Client detail -->
+<!-- RIGHT: Client detail -->
     <div id="detailPanel">
-      <!-- Walk-in form-->
-       <div class="card" id="walkinCard" style="display:none">
-  <div class="card-header">🚶 Walk-in Registration</div>
-  <div class="card-body">
-    <div id="walkinMsg" class="msg"></div>
-    <div id="duplicateWarning" style="display:none; background:#fef3c7; border:1.5px solid #d97706; border-radius:10px; padding:1rem; margin-bottom:1rem;">
-      <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.88rem; color:#92400e; margin-bottom:0.5rem;">⚠️ Possible duplicate — does this client already exist?</div>
-      <div id="duplicateList" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
-      <button onclick="dismissDuplicates()" style="margin-top:0.75rem; font-size:0.78rem; background:none; border:none; color:#92400e; cursor:pointer; font-family:inherit; text-decoration:underline;">No, this is a new client — continue anyway</button>
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>Client Name *</label>
-        <input type="text" id="walkinName" placeholder="Jane Smith" onblur="checkDuplicates()" />
-      </div>
-      <div class="form-field">
-        <label>Phone</label>
-        <input type="tel" id="walkinPhone" placeholder="(773) 555-0100" />
-      </div>
-    </div>
-    <div class="form-field">
-      <label>Email</label>
-      <input type="email" id="walkinEmail" placeholder="correo@ejemplo.com" />
-    </div>
-    <div class="form-field">
-      <label>Street</label>
-      <input type="text" id="walkinStreet" placeholder="123 Main St" />
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>City</label>
-        <input type="text" id="walkinCity" placeholder="Chicago" />
-      </div>
-      <div class="form-field">
-        <label>State</label>
-        <input type="text" id="walkinState" placeholder="IL" maxlength="2" style="text-transform:uppercase;" />
-      </div>
-    </div>
-    <div class="form-field">
-      <label>ZIP</label>
-      <input type="text" id="walkinZip" placeholder="60601" maxlength="10" />
-    </div>
-    <hr style="margin:0.75rem 0; border-color:var(--border);" />
-    <div class="form-row">
-      <div class="form-field">
-        <label>Pet Name *</label>
-        <input type="text" id="walkinPetName" placeholder="Fido" />
-      </div>
-      <div class="form-field">
-        <label>Species *</label>
-        <select id="walkinPetSpecies">
-          <option value="">— Select —</option>
-          <option value="dog">Dog</option>
-          <option value="cat">Cat</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>Breed</label>
-        <input type="text" id="walkinPetBreed" placeholder="Mixed" />
-      </div>
-      <div class="form-field">
-        <label>Age</label>
-        <div style="display:flex; gap:0.5rem;">
-          <input type="number" id="walkinPetAge" min="0" max="30" step="1" placeholder="2" style="flex:1;" />
-          <select id="walkinPetAgeUnit" style="flex:1;">
-            <option value="years">Years</option>
-            <option value="months">Months</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>Weight (lbs)</label>
-        <input type="number" id="walkinPetWeight" min="0" step="0.1" placeholder="25" />
-      </div>
-      <div class="form-field">
-        <label>Sex</label>
-        <select id="walkinPetSex">
-          <option value="unknown">Not sure</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-field">
-        <label>Spayed / Neutered</label>
-        <select id="walkinPetAltered">
-          <option value="unknown">Not sure</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label>Microchipped?</label>
-        <select id="walkinPetMicrochipped">
-          <option value="unknown">Not sure</option>
-          <option value="yes">Yes</option>
-          <option value="no">No</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-field">
-      <label>Colors / Markings</label>
-      <input type="text" id="walkinPetColors" placeholder="e.g. Black & white, tabby" />
-    </div>
-    <div class="form-field" style="margin-top:0.75rem;">
-      <label>Client Signature <span style="font-weight:400; color:var(--text-muted);">(waiver)</span></label>
-      <div style="border:1.5px solid var(--border); border-radius:8px; background:#f8faff; position:relative;">
-        <canvas id="walkinSigCanvas" style="width:100%; height:120px; display:block; border-radius:8px;"></canvas>
-      </div>
-      <div style="display:flex; justify-content:flex-end; margin-top:0.3rem;">
-        <button type="button" onclick="clearWalkinSig()" style="font-size:0.75rem; background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; text-decoration:underline;">Clear signature</button>
-      </div>
-    </div>
-    <div class="form-field" style="margin-top:0.75rem;">
-      <label>Client Signature <span style="font-weight:400; color:var(--text-muted);">(waiver)</span></label>
-      <div style="border:1.5px solid var(--border); border-radius:8px; background:#f8faff; position:relative;">
-        <canvas id="walkinSigCanvas" style="width:100%; height:120px; display:block; border-radius:8px;"></canvas>
-      </div>
-      <div style="display:flex; justify-content:flex-end; margin-top:0.3rem;">
-        <button type="button" onclick="clearWalkinSig()" style="font-size:0.75rem; background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; text-decoration:underline;">Clear signature</button>
-      </div>
-    </div>
-    <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
-      <button class="btn-primary" onclick="submitWalkin()">Save & Check In</button>
-      <button onclick="closeWalkin()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; font-size:0.88rem;">Cancel</button>
-    </div>
-  </div>
-</div>
       <div class="card">
         <div class="card-body">
           <div id="detailEmpty" style="display:block">
@@ -721,19 +587,19 @@
     <div style="display:flex; flex-direction:column; gap:0.75rem; font-size:0.87rem; color:var(--text);">
       <div style="display:flex; gap:0.75rem; align-items:flex-start;">
         <span style="font-size:1rem;">🔍</span>
-        <div><strong>Find a client</strong> using the search bar, records tab, or click <strong>+ Walk-in</strong> to register someone new. Walk-ins are automatically checked in.</div>
-      </div>
-      <div style="display:flex; gap:0.75rem; align-items:flex-start;">
-        <span style="font-size:1rem;">✓</span>
-        <div><strong>Check In</strong> and verify a registered client's info as they come in for service.</div>
+        <div><strong>Find a client</strong> using the search bar to pull up their record.</div>
       </div>
       <div style="display:flex; gap:0.75rem; align-items:flex-start;">
         <span style="font-size:1rem;">🐾</span>
-        <div><strong>Select a pet</strong> from their record to edit their basic information.</div>
+        <div><strong>Select a pet</strong> from their record to log vaccines or a microchip.</div>
       </div>
       <div style="display:flex; gap:0.75rem; align-items:flex-start;">
-        <span style="font-size:1rem;">🗄️</span>
-        <div><strong>Archive</strong> any pet that is no longer part of the client's household.</div>
+        <span style="font-size:1rem;">💉</span>
+        <div><strong>Log each vaccine</strong> with the lot and serial number. A rabies cert will be generated.</div>
+      </div>
+      <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+        <span style="font-size:1rem;">✅</span>
+        <div><strong>Mark as Seen</strong> when the visit is complete.</div>
       </div>
     </div>
   </div>
@@ -775,16 +641,17 @@
              <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
   <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
   <div id="clientStatusBadge"></div>
-<button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
   <button id="seenBtn" class="btn-coral" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="markSeen()">✓ Mark as Seen</button>
   <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
   <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
   <button id="archiveClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit; display:none;" onclick="toggleArchiveClient()">Archive</button>
+  <button id="printMemoBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--green); background:none; color:var(--green); cursor:pointer; font-family:inherit; font-weight:700; display:none;" onclick="openMemoDialog()">📄 Print Memo</button>
+<button id="deleteClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--coral); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit; display:none;" onclick="deleteClient()">Delete</button>
 </div>
             </div>
           </div>
         </div>
-      </div>
+      </div><!-- /card -->
 
       <!-- Pets section -->
       <div class="card" id="petsCard" style="display:none">
@@ -936,6 +803,176 @@
           </div>
         </div>
       </div>
+      <!-- Microchip Log -->
+<div class="card" id="microchipCard" style="display:none">
+  <div class="card-header">
+    <button class="section-toggle" onclick="toggleSection('microchipSection', 'microchipToggleIcon')">
+      <span>🔖 Log Microchip</span>
+      <span class="toggle-icon open" id="microchipToggleIcon">▼</span>
+    </button>
+  </div>
+  <div class="card-body collapsible open" id="microchipSection">
+    <div id="microchipPetBadge" style="margin-bottom:0.85rem; display:none">
+      Logging for: <strong id="microchipPetName"></strong>
+    </div>
+    <div id="logMicrochipMsg" class="msg"></div>
+
+    <!-- Locked state (shown after microchip is saved) -->
+    <div id="microchipLocked" style="display:none; background:#f0f4ff; border:1.5px solid var(--border); border-radius:8px; padding:0.85rem; margin-bottom:0.75rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:0.83rem; font-weight:700; color:var(--navy);">🔖 Microchip logged</div>
+          <div id="microchipLockedNumber" style="font-size:0.9rem; color:var(--text); margin-top:0.2rem;"></div>
+        </div>
+        <button onclick="unlockMicrochip()" style="font-size:0.78rem; padding:0.3rem 0.75rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️ Edit</button>
+      </div>
+    </div>
+
+    <!-- Input state -->
+    <div id="microchipInput">
+      <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:0.85rem">
+        Select a pet above, then indicate whether a microchip was implanted today.
+      </p>
+      <div style="display:flex; gap:0.75rem; margin-bottom:0.85rem;">
+        <button id="microchipYesBtn" class="btn-primary" style="font-size:0.85rem;" onclick="if(!selectedPetObj) { showMsg(document.getElementById('logMicrochipMsg'), 'error', 'Please select a pet first.'); return; } showMicrochipInput()">Yes</button>
+        <button id="microchipNoBtn" style="font-size:0.85rem; padding:0.6rem 1.4rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;" onclick="if(!selectedPetObj) { showMsg(document.getElementById('logMicrochipMsg'), 'error', 'Please select a pet first.'); return; }">No</button>
+      </div>
+      <div id="microchipNumberField" style="display:none;">
+        <div class="form-field">
+          <label>Microchip Number *</label>
+          <input type="text" id="microchipNumber" placeholder="985112345678901" inputmode="numeric" pattern="[0-9]*" maxlength="15" />
+        </div>
+        <button class="btn-primary" onclick="logMicrochip()" id="logMicrochipBtn" disabled>Save Microchip</button>
+      </div>
+    </div>
+  </div>
+</div>
+      <!-- Vaccine log section -->
+      <div class="card" id="vaxCard" style="display:none">
+        <div class="card-header">
+          <button class="section-toggle" onclick="toggleSection('vaxSection', 'vaxToggleIcon')">
+            <span>💉 Log a Vaccine</span>
+            <span class="toggle-icon open" id="vaxToggleIcon">▼</span>
+          </button>
+        </div>
+        <div class="card-body collapsible open" id="vaxSection">
+          <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:0.85rem">
+            Select a pet above, then fill in vaccine details.
+          </p>
+          <div id="selectedPetBadge" style="margin-bottom:0.85rem; display:none">
+            Logging for: <strong id="selectedPetName"></strong>
+            <button onclick="clearSelectedPet()"
+              style="margin-left:0.5rem; font-size:0.75rem; color:var(--coral-dark); background:none; border:none; cursor:pointer;">✕ clear</button>
+          </div>
+          <div id="logVaxMsg" class="msg"></div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Vaccine Name *</label>
+              <select id="vaxName" onchange="onVaxNameChange()" onfocus="if(!selectedPetObj) { this.blur(); showMsg(document.getElementById('logVaxMsg'), 'error', 'Please select a pet first.'); }">
+                <option value="">— Select —</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Lot / Serial #</label>
+              <input type="text" id="vaxLot" placeholder="ABC123" />
+            </div>
+          </div>
+          <div class="form-field" style="display:none;">
+  <label>Vaccine Serial Number</label>
+  <input type="text" id="vaxSerial" placeholder="e.g. 12345678" />
+</div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Date Given *</label>
+              <input type="date" id="vaxDate" onchange="onVaxNameChange()" />
+            </div>
+            <div class="form-field">
+              <label>Next Due</label>
+              <input type="date" id="vaxNextDue" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Administered By</label>
+            <select id="vaxAdmin">
+              <option value="Dr. Ana Valbuena">Dr. Ana Valbuena</option>
+              <option value="Dr. Alexandra Friedman">Dr. Alexandra Friedman</option>
+            </select>
+          </div>
+          <!-- ── RABIES-ONLY FIELDS ───────────────────────────────────── -->
+<div id="rabiesFields" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1.5px dashed var(--border);">
+  <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.82rem; color:var(--navy); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.75rem;">
+    📋 NASPHV Form 51 — Rabies Certificate Fields
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label>Rabies Tag #</label>
+      <input type="text" id="rabiesTagNum" placeholder="e.g. 2025-00123" />
+    </div>
+    <div class="form-field">
+      <label>Colors / Markings</label>
+      <input type="text" id="rabiesColors" placeholder="e.g. Black & white, tabby" />
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label>Vaccine Product Name</label>
+      <input type="text" id="rabiesProduct" value="IMRAB 3" readonly style="background:#e9ecef; color:var(--text-muted); cursor:not-allowed;" />
+    </div>
+    <div class="form-field">
+      <label>Manufacturer (first 3 letters)</label>
+      <input type="text" id="rabiesMan" maxlength="3" value="MER" readonly style="background:#e9ecef; color:var(--text-muted); cursor:not-allowed; text-transform:uppercase;" />
+    </div>
+   </div>
+  <p style="font-size:0.78rem; color:var(--text-muted); margin-top:-0.25rem; margin-bottom:0.5rem;">
+    If either value is incorrect, please notify admin.
+  </p>
+  <p style="font-size:0.82rem; color:#4a6741; background:#eef4e0; border:1px solid #c5daa0; border-radius:6px; padding:0.45rem 0.75rem; margin-bottom:0.75rem;">
+    ℹ️ <strong>IMRAB is a killed (inactivated) vaccine.</strong>
+  </p>
+  <div class="form-row">
+    <div class="form-field">
+      <label>USDA License Duration</label>
+      <select id="rabiesUSDA">
+        <option value="">— Select —</option>
+        <option value="1yr">1-Year vaccine</option>
+        <option value="3yr">3-Year vaccine</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label>Dose Type</label>
+      <select id="rabiesDose">
+        <option value="">— Select —</option>
+        <option value="initial">Initial</option>
+        <option value="booster">Booster</option>
+      </select>
+    </div>
+  </div>
+</div>
+<!-- ── END RABIES FIELDS ─────────────────────────────────────── -->
+
+
+<div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-top:0.25rem;">
+  <button class="btn-coral" onclick="logVaccine()" id="logVaxBtn" disabled>Log Vaccine</button>
+  <button id="downloadCertBtn" style="display:none; padding:0.55rem 1.2rem; border-radius:999px; border:1.5px solid var(--navy); background:none; color:var(--navy); font-family:inherit; font-weight:700; font-size:0.88rem; cursor:pointer;" onclick="downloadRabiesCert()">⬇ Download Rabies Certificate</button>
+  <button id="emailCertBtn" style="display:none; padding:0.55rem 1.2rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); font-family:inherit; font-weight:700; font-size:0.88rem; cursor:pointer;" onclick="emailRabiesCert()">✉ Email to Client</button>
+</div>
+        </div>
+      </div>
+
+      <!-- Vaccination history -->
+      <div class="card" id="historyCard" style="display:none">
+        <div class="card-header">
+          <button class="section-toggle" onclick="toggleSection('historySection', 'histToggleIcon')">
+            <span>📋 Vaccination History</span>
+            <span class="toggle-icon open" id="histToggleIcon">▼</span>
+          </button>
+        </div>
+        <div class="card-body collapsible open" id="historySection">
+          <div id="vaxHistoryContent">
+            <div class="empty-state">Select a pet above to view its history.</div>
+          </div>
+        </div>
+      </div>
 
     </div><!-- /detailPanel -->
   </div><!-- /dash-body -->
@@ -961,8 +998,10 @@ function showStaffHomeLink() {
   const SUPABASE_URL      = CONFIG.SUPABASE_URL;
 const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
 
-  // ─── STATE ─────────────────────────────────────────────────────
+// ─── STATE ─────────────────────────────────────────────────────
 let accessToken    = null;
+let activeLots     = {};   // keyed by vaccine_type
+let todayMicrochip = null; // set when a chip is logged this session
 let currentClient  = null;
 let selectedPetId  = null;
 let selectedPetObj = null;
@@ -1036,10 +1075,11 @@ let currentFilter  = 'all';
 localStorage.setItem('php_token', data.access_token);
 localStorage.setItem('php_email', email);
 document.getElementById('loggedInUser').textContent = `👋 ${email}`;
-showStaffHomeLink();
 showScreen('dashScreen');
 loadRecentClients();
 loadEvents();
+loadActiveLots();
+showStaffHomeLink();
     } catch (err) {
       showMsg(msg, 'error', err.message);
       btn.disabled    = false;
@@ -1058,8 +1098,7 @@ function logout() {
   document.getElementById('loginPassword').addEventListener('keydown', e => {
     if (e.key === 'Enter') login();
   });
-
-  // ─── SCREEN MANAGEMENT ─────────────────────────────────────────
+// ─── SCREEN MANAGEMENT ─────────────────────────────────────────
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -1114,151 +1153,6 @@ function renderClientList(clients) {
   `).join('');
 }
 
-// ─── WALK-IN ───────────────────────────────────────────────────
-function openWalkin() {
-  document.getElementById('walkinCard').style.display = 'block';
-  document.getElementById('detailEmpty').style.display = 'none';
-  // Init after the canvas is visible so dimensions are correct
-  setTimeout(initWalkinSigPad, 50);
-}
-
-function closeWalkin() {
-  document.getElementById('walkinCard').style.display = 'none';
-  document.getElementById('detailEmpty').style.display = 'block';
-  ['walkinName','walkinPhone','walkinEmail','walkinStreet','walkinCity','walkinState','walkinZip','walkinPetName','walkinPetBreed','walkinPetAge','walkinPetWeight','walkinPetColors'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('walkinPetSpecies').value     = '';
-  document.getElementById('walkinPetAgeUnit').value     = 'years';
-  document.getElementById('walkinPetSex').value         = 'unknown';
-  document.getElementById('walkinPetAltered').value     = 'unknown';
-  document.getElementById('walkinPetMicrochipped').value = 'unknown';
-  document.getElementById('duplicateWarning').style.display = 'none';
-  if (walkinSigPad) { walkinSigPad.clear(); walkinSigPad = null; }
-}
-// ─── SIGNATURE PAD ─────────────────────────────────────────────
-let walkinSigPad = null;
-
-function initWalkinSigPad() {
-  const canvas = document.getElementById('walkinSigCanvas');
-  if (!canvas) return;
-  // Match canvas resolution to display size
-  const ratio = Math.max(window.devicePixelRatio || 1, 1);
-  canvas.width  = canvas.offsetWidth  * ratio;
-  canvas.height = canvas.offsetHeight * ratio;
-  canvas.getContext('2d').scale(ratio, ratio);
-  walkinSigPad = new SignaturePad(canvas, {
-    penColor: '#1a1a2e',
-    minWidth: 1,
-    maxWidth: 2.5
-  });
-}
-
-function clearWalkinSig() {
-  if (walkinSigPad) walkinSigPad.clear();
-}
-// ─── DUPLICATE DETECTION ───────────────────────────────────────
-async function checkDuplicates() {
-  const name = document.getElementById('walkinName').value.trim();
-  if (name.length < 2) return;
-
-  // Build a fuzzy search: search for each word in the name
-  const tokens = name.split(/\s+/).filter(t => t.length >= 2);
-  if (!tokens.length) return;
-
-  try {
-    const encoded = encodeURIComponent(`%${tokens[0]}%`);
-    const results = await sbGet(
-      `clients?name=ilike.${encoded}&archived=eq.false&order=name.asc&limit=5`
-    );
-
-    // Filter further: at least one other token must also appear in the name
-    const matches = results.filter(c => {
-      const lower = c.name.toLowerCase();
-      return tokens.some(t => lower.includes(t.toLowerCase()));
-    });
-
-    if (!matches.length) {
-      document.getElementById('duplicateWarning').style.display = 'none';
-      return;
-    }
-
-    const list = document.getElementById('duplicateList');
-    list.innerHTML = matches.map(c => `
-      <div style="background:white; border:1.5px solid #d97706; border-radius:8px; padding:0.6rem 0.8rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
-        <div>
-          <div style="font-weight:700; font-size:0.88rem;">${c.name}</div>
-          <div style="font-size:0.78rem; color:var(--text-muted);">${[c.phone, c.email].filter(Boolean).join(' · ') || 'No contact info'}</div>
-        </div>
-        <button onclick="useExistingClient(${JSON.stringify(c).replace(/"/g,'&quot;')})"
-          style="font-size:0.75rem; padding:0.3rem 0.75rem; border-radius:999px; border:1.5px solid #d97706; background:#d97706; color:white; cursor:pointer; font-family:inherit; font-weight:700; white-space:nowrap;">
-          Use this client
-        </button>
-      </div>
-    `).join('');
-
-    document.getElementById('duplicateWarning').style.display = 'block';
-  } catch (_) {
-    // Silently fail — duplicate check is advisory only
-  }
-}
-
-function dismissDuplicates() {
-  document.getElementById('duplicateWarning').style.display = 'none';
-}
-
-async function useExistingClient(client) {
-  closeWalkin();
-  await selectClient(client);
-  // Scroll to the client detail panel
-  document.getElementById('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-async function submitWalkin() {
-  const msg     = document.getElementById('walkinMsg');
-  const name    = document.getElementById('walkinName').value.trim();
-  const petName = document.getElementById('walkinPetName').value.trim();
-  const petSpec = document.getElementById('walkinPetSpecies').value;
-
-  if (!name)    { showMsg(msg, 'error', 'Client name is required.'); return; }
-  if (!petName) { showMsg(msg, 'error', 'Pet name is required.'); return; }
-  if (!petSpec) { showMsg(msg, 'error', 'Please select a species.'); return; }
-
-  try {
-    const sigData = (walkinSigPad && !walkinSigPad.isEmpty())
-      ? walkinSigPad.toDataURL('image/png')
-      : null;
-
-    const [client] = await sbPost('clients', {
-      name,
-      phone:             document.getElementById('walkinPhone').value.trim() || null,
-      email:             document.getElementById('walkinEmail').value.trim() || null,
-      street:            document.getElementById('walkinStreet').value.trim() || null,
-      city:              document.getElementById('walkinCity').value.trim() || null,
-      state:             document.getElementById('walkinState').value.trim().toUpperCase() || null,
-      zip:               document.getElementById('walkinZip').value.trim() || null,
-      status:            'checked_in',
-      checked_in_at:     new Date().toISOString(),
-      waiver_signature:  sigData
-    });
-
-    await sbPost('pets', {
-      client_id:      client.id,
-      name:           petName,
-      species:        petSpec,
-      breed:          document.getElementById('walkinPetBreed').value.trim() || null,
-      age:            document.getElementById('walkinPetAge').value ? +document.getElementById('walkinPetAge').value : null,
-      age_unit:       document.getElementById('walkinPetAgeUnit').value || 'years',
-      weight:         document.getElementById('walkinPetWeight').value ? +document.getElementById('walkinPetWeight').value : null,
-      sex:            document.getElementById('walkinPetSex').value || 'unknown',
-      altered:        document.getElementById('walkinPetAltered').value || 'unknown',
-      microchipped:   document.getElementById('walkinPetMicrochipped').value || 'unknown',
-      colors_markings: document.getElementById('walkinPetColors').value.trim() || null,
-    });
-
-    closeWalkin();
-await loadRecentClients();
-  } catch (err) {
-    showMsg(msg, 'error', err.message);
-  }
-}
 // ─── EVENTS ────────────────────────────────────────────────────
 async function loadEvents() {
   const list = document.getElementById('eventsList');
@@ -1279,7 +1173,7 @@ async function loadEvents() {
       return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
     };
 
-   list.innerHTML = events.map(e => `
+    list.innerHTML = events.map(e => `
       <div style="padding:0.75rem 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
         <div>
           <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.9rem; color:var(--navy)">${e.location}</div>
@@ -1378,19 +1272,22 @@ const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
-document.getElementById('checkinBtn').style.display    = (!client.archived && status === 'registered') ? 'block' : 'none';
 document.getElementById('seenBtn').style.display       = 'none';
 document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
+document.getElementById('deleteClientBtn').style.display = client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
 profileBtn.href = `client.html?id=${client.id}`;
 profileBtn.style.display = 'inline-block';
 document.getElementById('archiveClientBtn').style.display = 'block';
 document.getElementById('archiveClientBtn').textContent   = client.archived ? 'Unarchive' : 'Archive';
-document.getElementById('petsCard').style.display = 'block';
+    // Show cards
+    ['petsCard','vaxCard','historyCard','microchipCard'].forEach(id => document.getElementById(id).style.display = 'block');
+    document.getElementById('printMemoBtn').style.display = 'inline-block';
+    todayMicrochip = null;
 
     // Reset vaccine section
     clearSelectedPet();
-    
+    document.getElementById('vaxHistoryContent').innerHTML = '<div class="empty-state">Select a pet above to view its history.</div>';
 
     // Load pets
     await loadPets(client.id);
@@ -1435,6 +1332,7 @@ document.getElementById('petsCard').style.display = 'block';
             <div style="display:flex; gap:0.4rem; flex-shrink:0; margin-left:0.5rem;">
               ${!p.archived ? `<button onclick="event.stopPropagation(); openEditPet(${JSON.stringify(p).replace(/"/g,'&quot;')})" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️</button>` : ''}
               <button onclick="event.stopPropagation(); toggleArchivePet('${p.id}', ${p.archived})" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">${p.archived ? 'Unarchive' : 'Archive'}</button>
+              ${p.archived ? `<button onclick="event.stopPropagation(); deletePet('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--coral); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit;">Delete</button>` : ''}
             </div>
           </div>
         </div>
@@ -1452,33 +1350,33 @@ document.getElementById('petsCard').style.display = 'block';
     document.querySelectorAll('.pet-card').forEach(el => el.classList.remove('selected'));
     document.getElementById(`pet-${pet.id}`).classList.add('selected');
 
+    // Update vaccine section
+    unlockMicrochip();
+    buildVaxDropdown();
+    document.getElementById('vaxName').value  = '';
+    document.getElementById('vaxDate').value  = new Date().toISOString().split('T')[0];
+    document.getElementById('selectedPetBadge').style.display = 'block';
     document.getElementById('selectedPetName').textContent    = pet.name;
+    document.getElementById('logVaxBtn').disabled             = false;
+    document.getElementById('microchipPetBadge').style.display = 'block';
+    document.getElementById('microchipPetName').textContent    = pet.name;
+    document.getElementById('logMicrochipBtn').disabled        = false;
+
+    // Load vaccine history for this pet
+    await loadVaxHistory(pet.id, pet.name);
   }
 
-function clearSelectedPet() {
+ function clearSelectedPet() {
     selectedPetId  = null;
     selectedPetObj = null;
     document.querySelectorAll('.pet-card').forEach(el => el.classList.remove('selected'));
+    document.getElementById('selectedPetBadge').style.display = 'none';
+    document.getElementById('logVaxBtn').disabled             = true;
+    document.getElementById('microchipPetBadge').style.display = 'none';
+    document.getElementById('logMicrochipBtn').disabled        = true;
   }
 
   // ─── STATUS UPDATES ────────────────────────────────────────────
-  async function checkInClient() {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
-        method:  'PATCH',
-        headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-        body:    JSON.stringify({ status: 'checked_in', checked_in_at: new Date().toISOString() })
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
-      currentClient.status = 'checked_in';
-      document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-checked_in">Checked In</span>';
-      document.getElementById('checkinBtn').style.display = 'none';
-      document.getElementById('seenBtn').style.display    = 'block';
-      await loadRecentClients();
-    } catch (err) {
-      alert(err.message);
-    }
-  }
 
   async function markSeen() {
     try {
@@ -1490,8 +1388,7 @@ function clearSelectedPet() {
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
       currentClient.status = 'seen';
       document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-seen">Seen</span>';
-      document.getElementById('checkinBtn').style.display = 'none';
-      document.getElementById('seenBtn').style.display    = 'none';
+      document.getElementById('seenBtn').style.display = 'none';
       await loadRecentClients();
     } catch (err) {
       alert(err.message);
@@ -1536,7 +1433,202 @@ function clearSelectedPet() {
       showMsg(msg, 'error', err.message);
     }
   }
- 
+// ─── VAX NAME CHANGE ───────────────────────────────────────────
+const VACCINE_OPTIONS = {
+    dog: [
+      { label: 'RV 1 Year',     value: 'Rabies',        nextDue: { unit: 'years',  amount: 1  }, isRabies: true,  usdaDuration: '1yr', inventoryKey: 'rv_1yr'        },
+      { label: 'RV 3 Year',     value: 'Rabies',        nextDue: { unit: 'years',  amount: 3  }, isRabies: true,  usdaDuration: '3yr', inventoryKey: 'rv_3yr'        },
+      { label: 'DAPP Booster',  value: 'DAPP Booster',  nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false,                       inventoryKey: 'dapp_booster'  },
+      { label: 'DAPP 1YR',      value: 'DAPP 1YR',      nextDue: { unit: 'months', amount: 12 }, isRabies: false,                       inventoryKey: 'dapp_1yr'      },
+      { label: 'DAPP 3YR',      value: 'DAPP 3YR',      nextDue: { unit: 'months', amount: 36 }, isRabies: false,                       inventoryKey: 'dapp_3yr'      },
+      { label: 'Lepto Booster', value: 'Lepto Booster', nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false,                       inventoryKey: 'lepto_booster' },
+      { label: 'Lepto 1YR',     value: 'Lepto 1YR',     nextDue: { unit: 'months', amount: 12 }, isRabies: false,                       inventoryKey: 'lepto_1yr'     },
+    ],
+    cat: [
+      { label: 'RV 1 Year',     value: 'Rabies',        nextDue: { unit: 'years',  amount: 1  }, isRabies: true,  usdaDuration: '1yr', inventoryKey: 'rv_1yr'        },
+      { label: 'RV 3 Year',     value: 'Rabies',        nextDue: { unit: 'years',  amount: 3  }, isRabies: true,  usdaDuration: '3yr', inventoryKey: 'rv_3yr'        },
+      { label: 'FVRCP Booster', value: 'FVRCP Booster', nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false,                       inventoryKey: 'fvrcp_booster' },
+      { label: 'FVRCP 1 YR',   value: 'FVRCP 1 YR',   nextDue: { unit: 'months', amount: 12 }, isRabies: false,                       inventoryKey: 'fvrcp_1yr'     },
+    ],
+  };
+
+  function calcNextDue(dateGiven, rule) {
+    const d = new Date(dateGiven + 'T12:00:00');
+    if (rule.unit === 'years')  d.setFullYear(d.getFullYear() + rule.amount);
+    if (rule.unit === 'months') d.setMonth(d.getMonth() + rule.amount);
+    if (rule.unit === 'weeks')  d.setDate(d.getDate() + rule.amount * 7);
+    return d.toISOString().split('T')[0];
+  }
+
+  function buildVaxDropdown() {
+    const select  = document.getElementById('vaxName');
+    const species = selectedPetObj?.species;
+
+    select.innerHTML = '<option value="">— Select —</option>';
+
+    if (!species || !VACCINE_OPTIONS[species]) return;
+
+    VACCINE_OPTIONS[species].forEach((vax, idx) => {
+      const opt = document.createElement('option');
+      opt.value       = idx;          // store index so we can look up the full object
+      opt.textContent = vax.label;
+      select.appendChild(opt);
+    });
+  }
+
+  function onVaxNameChange() {
+    const select  = document.getElementById('vaxName');
+    const idx     = select.value;
+    const species = selectedPetObj?.species;
+
+    // Reset dependent fields
+    document.getElementById('rabiesFields').style.display    = 'none';
+    document.getElementById('downloadCertBtn').style.display = 'none';
+    document.getElementById('emailCertBtn').style.display    = 'none';
+    document.getElementById('vaxNextDue').value              = '';
+
+    if (idx === '' || !species) return;
+
+    const vax      = VACCINE_OPTIONS[species][idx];
+    const dateGiven = document.getElementById('vaxDate').value;
+
+    // Auto-fill next due date
+    if (dateGiven) {
+      document.getElementById('vaxNextDue').value = calcNextDue(dateGiven, vax.nextDue);
+    }
+
+    // Auto-fill lot number from active inventory
+    const lotField = document.getElementById('vaxLot');
+    if (activeLots[vax.inventoryKey]) {
+      lotField.value    = activeLots[vax.inventoryKey];
+      lotField.readOnly = true;
+      lotField.style.background = '#f0f4ff';
+      lotField.title    = 'Auto-filled from vaccine inventory. Contact staff to change.';
+    } else {
+      lotField.value    = '';
+      lotField.readOnly = false;
+      lotField.style.background = '';
+      lotField.title    = '';
+    }
+
+    // Show rabies fields if applicable
+    if (vax.isRabies) {
+      document.getElementById('rabiesFields').style.display = 'block';
+
+      // Auto-set USDA duration
+      if (vax.usdaDuration) {
+        document.getElementById('rabiesUSDA').value = vax.usdaDuration;
+      }
+
+      // Pre-fill colors from pet record
+      const petColors  = selectedPetObj?.colors_markings || '';
+      const colorsField = document.getElementById('rabiesColors');
+      colorsField.value    = petColors;
+      colorsField.readOnly = !!petColors;
+      colorsField.style.background = petColors ? '#f0f4ff' : '';
+      colorsField.title = petColors ? 'Pre-filled from intake form. Clear to override.' : '';
+    }
+  }
+
+  let lastRabiesRecord = null;
+  // ─── LOG VACCINE ───────────────────────────────────────────────
+async function logVaccine() {
+    const msg         = document.getElementById('logVaxMsg');
+    const vaccineName = document.getElementById('vaxName').value;
+    const dateGiven   = document.getElementById('vaxDate').value;
+
+    if (!selectedPetId) { showMsg(msg, 'error', 'Please select a pet first.'); return; }
+    if (!vaccineName)   { showMsg(msg, 'error', 'Please select or enter a vaccine name.'); return; }
+    if (!dateGiven)     { showMsg(msg, 'error', 'Please enter the date given.'); return; }
+
+const vaxIdx   = document.getElementById('vaxName').value;
+    const vaxObj   = VACCINE_OPTIONS[selectedPetObj.species][vaxIdx];
+
+    const payload = {
+      pet_id:          selectedPetId,
+      vaccine_name:    vaxObj.value,
+      lot_number:      document.getElementById('vaxLot').value.trim() || null,
+      date_given:      dateGiven,
+      next_due:        document.getElementById('vaxNextDue').value || null,
+      administered_by: document.getElementById('vaxAdmin').value || null,
+    };
+
+    if (vaxObj.isRabies) {
+      payload.rabies_tag_number = document.getElementById('rabiesTagNum').value.trim()  || null;
+      payload.colors_markings   = document.getElementById('rabiesColors').value.trim()  || selectedPetObj?.colors_markings || null;
+      payload.product_name      = document.getElementById('rabiesProduct').value.trim() || null;
+      payload.manufacturer      = document.getElementById('rabiesMan').value.trim().toUpperCase() || null;
+      payload.usda_duration     = document.getElementById('rabiesUSDA').value           || null;
+      payload.dose_type         = document.getElementById('rabiesDose').value           || null;
+    }
+
+    try {
+      await sbPost('vaccinations', payload);
+
+      showMsg(msg, 'success', `${vaxObj.label} logged for ${selectedPetObj.name}!`);
+
+      if (vaxObj.isRabies) {
+        lastRabiesRecord = { ...payload, pet: selectedPetObj, client: currentClient };
+        document.getElementById('downloadCertBtn').style.display = 'inline-block';
+        document.getElementById('emailCertBtn').style.display    = 'inline-block';
+      }
+
+      document.getElementById('vaxName').value    = '';
+      document.getElementById('vaxLot').value     = '';
+      document.getElementById('vaxDate').value    = '';
+      document.getElementById('vaxNextDue').value = '';
+      document.getElementById('vaxAdmin').value   = '';
+      document.getElementById('rabiesFields').style.display = 'none';
+      ['rabiesTagNum','rabiesColors','rabiesProduct','rabiesMan'].forEach(id => document.getElementById(id).value = '');
+      ['rabiesUSDA','rabiesDose'].forEach(id => document.getElementById(id).value = '');
+
+      console.log('reloading history for:', selectedPetId, selectedPetObj?.name);
+            await loadVaxHistory(selectedPetId, selectedPetObj.name);
+    } catch (err) {
+      showMsg(msg, 'error', err.message);
+    }
+  }
+async function logMicrochip() {
+  const msg    = document.getElementById('logMicrochipMsg');
+  const number = document.getElementById('microchipNumber').value.trim();
+
+  if (!selectedPetId) { showMsg(msg, 'error', 'Please select a pet first.'); return; }
+  if (!number)        { showMsg(msg, 'error', 'Please enter a microchip number.'); return; }
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/pets?id=eq.${selectedPetId}`, {
+      method:  'PATCH',
+      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      body:    JSON.stringify({ microchipped: 'yes', microchip_number: number })
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
+
+    showMsg(msg, 'success', `Microchip ${number} saved for ${selectedPetObj.name}!`);
+    document.getElementById('microchipNumber').value = '';
+    todayMicrochip = number;
+    lockMicrochip(number);
+    await loadPets(currentClient.id);
+  } catch (err) {
+    showMsg(msg, 'error', err.message);
+  }
+}
+
+function lockMicrochip(number) {
+  document.getElementById('microchipInput').style.display          = 'none';
+  document.getElementById('microchipLocked').style.display         = 'block';
+  document.getElementById('microchipLockedNumber').textContent      = number;
+}
+
+function showMicrochipInput() {
+  document.getElementById('microchipNumberField').style.display = 'block';
+  document.getElementById('logMicrochipBtn').disabled = !selectedPetId;
+}
+
+function unlockMicrochip() {
+  document.getElementById('microchipLocked').style.display       = 'none';
+  document.getElementById('microchipInput').style.display        = 'block';
+  document.getElementById('microchipNumberField').style.display  = 'none';
+}
 // ─── EDIT CLIENT ───────────────────────────────────────────────
 function openEditClient() {
   document.getElementById('editClientName').value    = currentClient.name || '';
@@ -1580,7 +1672,27 @@ async function saveEditClient() {
     showMsg(msg, 'error', err.message);
   }
 }
+// ─── DELETE CLIENT ─────────────────────────────────────────────
+async function deleteClient() {
+  const name = currentClient.name || 'this client';
+  const confirmed = confirm(
+    `⚠️ Permanently delete ${name}?\n\nThis will also delete all their pets and vaccination records. This cannot be undone.`
+  );
+  if (!confirmed) return;
 
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
+      method:  'DELETE',
+      headers: authHeaders()
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    currentClient = null;
+    document.getElementById('detailPanel').style.display = 'none';
+    await loadRecentClients();
+  } catch (err) {
+    alert('Delete failed: ' + err.message);
+  }
+}
 // ─── ARCHIVE CLIENT ────────────────────────────────────────────
 async function toggleArchiveClient() {
   const archiving = !currentClient.archived;
@@ -1591,11 +1703,11 @@ async function toggleArchiveClient() {
       body:    JSON.stringify({ archived: archiving })
     });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
-    currentClient.archived = archiving;
-    document.getElementById('archiveClientBtn').textContent   = archiving ? 'Unarchive' : 'Archive';
-    document.getElementById('editClientBtn').style.display    = archiving ? 'none' : 'block';
-    document.getElementById('checkinBtn').style.display       = 'none';
-    document.getElementById('seenBtn').style.display          = 'none';
+ currentClient.archived = archiving;
+document.getElementById('archiveClientBtn').textContent    = archiving ? 'Unarchive' : 'Archive';
+document.getElementById('editClientBtn').style.display     = archiving ? 'none' : 'block';
+document.getElementById('deleteClientBtn').style.display   = archiving ? 'block' : 'none';
+document.getElementById('seenBtn').style.display           = 'none';
     await loadRecentClients();
   } catch (err) {
     alert(err.message);
@@ -1654,7 +1766,24 @@ async function saveEditPet() {
     showMsg(msg, 'error', err.message);
   }
 }
+// ─── DELETE PET ────────────────────────────────────────────────
+async function deletePet(petId, petName) {
+  const confirmed = confirm(
+    `⚠️ Permanently delete ${petName}?\n\nThis will also delete all their vaccination records. This cannot be undone.`
+  );
+  if (!confirmed) return;
 
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/pets?id=eq.${petId}`, {
+      method:  'DELETE',
+      headers: authHeaders()
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+    await loadPets(currentClient.id);
+  } catch (err) {
+    alert('Delete failed: ' + err.message);
+  }
+}
 // ─── ARCHIVE PET ───────────────────────────────────────────────
 async function toggleArchivePet(petId, currentlyArchived) {
   try {
@@ -1669,13 +1798,557 @@ async function toggleArchivePet(petId, currentlyArchived) {
     alert(err.message);
   }
 }
+// ─── RABIES CERT PDF ───────────────────────────────────────────
+  async function downloadRabiesCert() {
+    if (!lastRabiesRecord) return;
+    const btn = document.getElementById('downloadCertBtn');
+    btn.textContent = '⏳ Generating…';
+    btn.disabled = true;
+    try {
+      const pdf = await generateRabiesCertPDF(lastRabiesRecord);
+      const url = URL.createObjectURL(pdf);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = `RabiesCert_${lastRabiesRecord.pet.name}_${lastRabiesRecord.date_given}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('PDF generation failed: ' + err.message);
+    } finally {
+      btn.textContent = '⬇ Download Rabies Certificate';
+      btn.disabled = false;
+    }
+  }
+
+  async function emailRabiesCert() {
+    if (!lastRabiesRecord) return;
+    const email = lastRabiesRecord.client?.email;
+    if (!email) { alert('No email address on file for this client.'); return; }
+    const btn = document.getElementById('emailCertBtn');
+    btn.textContent = '⏳ Sending…';
+    btn.disabled = true;
+    try {
+      const pdf      = await generateRabiesCertPDF(lastRabiesRecord);
+      const arrayBuf = await pdf.arrayBuffer();
+      const base64   = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)));
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-rabies-cert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          to:        email,
+          petName:   lastRabiesRecord.pet.name,
+          pdfBase64: base64,
+          filename:  `RabiesCert_${lastRabiesRecord.pet.name}_${lastRabiesRecord.date_given}.pdf`,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Email failed');
+      alert(`✅ Certificate emailed to ${email}`);
+    } catch (err) {
+      alert('Email failed: ' + err.message);
+    } finally {
+      btn.textContent = '✉ Email to Client';
+      btn.disabled = false;
+    }
+  }
+
+async function generateRabiesCertPDF(r) {
+    if (!window.PDFLib) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    const { PDFDocument, PDFName, PDFString } = window.PDFLib;
+    console.log('PDFName type:', typeof PDFName, '| PDFString type:', typeof PDFString);
+
+    const templateUrl   = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/RabiesVacCert.pdf';
+    const templateRes   = await fetch(templateUrl);
+    console.log('Template fetch status:', templateRes.status, templateRes.headers.get('content-type'));
+    const templateBytes = await templateRes.arrayBuffer();
+    console.log('Template size bytes:', templateBytes.byteLength);
+    console.log('PDFLib loaded:', !!window.PDFLib);
+    console.log('PDFName available:', !!window.PDFLib?.PDFName);
+    console.log('r.pet:', JSON.stringify(r.pet));
+    console.log('r.client:', JSON.stringify(r.client));
+    console.log('r.dose_type:', r.dose_type, '| r.usda_duration:', r.usda_duration);
+    console.log('r.rabies_tag_number:', r.rabies_tag_number);
+    const pdfDoc        = await PDFDocument.load(templateBytes);
+    const form          = pdfDoc.getForm();
+    const page          = pdfDoc.getPages()[0];
+
+    // ── Set text with explicit font size ───────────────────────
+   function setText(fieldName, value, fontSize) {
+      try {
+        if (!value) return;
+        const field = form.getTextField(fieldName);
+        const v = PDFString.of(String(value));
+        field.acroField.dict.set(PDFName.of('V'), v);
+        const da = `0 0 0 rg /Helv ${fontSize || 10} Tf`;
+        field.acroField.dict.set(PDFName.of('DA'), PDFString.of(da));
+        for (const w of field.acroField.getWidgets()) {
+          w.dict.set(PDFName.of('V'), v);
+        }
+      } catch(e) { console.warn(`setText "${fieldName}" failed:`, e.message); }
+    }
+
+    // ── Select radio by position index ─────────────────────────
+    // These radios all have duplicate option values so we must
+    // set /AS directly on each widget's dict
+function setRadio(fieldName, index) {
+      try {
+        if (index == null) return;
+        const field = form.getRadioGroup(fieldName);
+        const widgets = field.acroField.getWidgets();
+        const onKey = PDFName.of(String(index));
+        for (let i = 0; i < widgets.length; i++) {
+          widgets[i].dict.set(PDFName.of('AS'),
+            i === index ? onKey : PDFName.of('Off')
+          );
+        }
+        field.acroField.dict.set(PDFName.of('V'), onKey);
+        console.log(`setRadio "${fieldName}" index=${index} ✓`);
+      } catch(e) { console.warn(`setRadio "${fieldName}" failed:`, e.message); }
+    }
+
+    function setCheck(fieldName, checked) {
+      try {
+        checked ? form.getCheckBox(fieldName).check()
+                : form.getCheckBox(fieldName).uncheck();
+      } catch(_) {}
+    }
+
+    const pet    = r.pet    || {};
+    const client = r.client || {};
+
+    // ── Owner ──────────────────────────────────────────────────
+    const nameParts = (client.name || '').trim().split(' ');
+    setText('First Name', nameParts[0] || '');
+    setText('Last Name',  nameParts.slice(1).join(' ') || '');
+    setText('Telephone #', client.phone || '', 9);
+
+    const addr = (client.address || '').trim();
+    if (addr) {
+      const m = addr.match(/^(.*?),\s*(.*?),\s*([A-Z]{2})\s+(\d[\d-]*)$/);
+      if (m) {
+        setText('Street',   m[1].trim());
+        setText('City',     m[2].trim());
+        setText('State',    m[3].trim());
+        setText('Zip Code', m[4].trim());
+      } else {
+        const parts = addr.split(',').map(s => s.trim());
+        if (parts[0]) setText('Street', parts[0]);
+        if (parts[1]) setText('City',   parts[1]);
+        if (parts[2]) {
+          const sz = parts[2].trim().split(' ');
+          setText('State',    sz[0] || '');
+          setText('Zip Code', sz[1] || '');
+        }
+      }
+    }
+
+    // ── Pet ────────────────────────────────────────────────────
+    setText('Animal Name',             pet.name              || '');
+    setText('Microchip #',             pet.microchip_number  || '', 8);
+    setText('Predominent Breed',       pet.breed             || '', 9);
+    setText('Predominemt Colors/Markings', r.colors_markings || '', 8);
+
+    const ageNum = parseFloat(pet.age);
+    if (!isNaN(ageNum)) {
+      const isMonths = (pet.age_unit || 'years') === 'months';
+      setText('Age', String(ageNum), 9);
+      setRadio('Months/Years', isMonths ? 0 : 1);
+    }
+
+    const w = parseFloat(pet.weight);
+    if (!isNaN(w)) setRadio('Size', w < 20 ? 0 : w <= 50 ? 1 : 2);
+
+    const speciesMap = { dog: 0, cat: 1, ferret: 2 };
+    const speciesIdx = speciesMap[(pet.species || '').toLowerCase()];
+    if (speciesIdx != null) setRadio('Species', speciesIdx);
+
+    if (pet.sex === 'male')   setRadio('Sex', 0);
+    if (pet.sex === 'female') setRadio('Sex', 1);
+    setCheck('Neutered', pet.altered === 'yes');
+
+    // ── Rabies fields ──────────────────────────────────────────
+    setText('Rabies Tag #',          r.rabies_tag_number  || '', 9);
+    setText('Product Name',          r.product_name       || '', 9);
+    setText('Vaccine Serial Number', r.lot_number         || '', 9);
+    setText('License Number',        r.ac_license_number  || '', 9);
+
+    const man = (r.manufacturer || '').toUpperCase().padEnd(3, ' ');
+    setText('Manufacturer', man[0]);
+    setText('Man2',         man[1]);
+    setText('Man3',         man[2]);
+
+    const usdaMap = { '1yr': 0, '3yr': 1, '4yr': 2 };
+    if (r.usda_duration) setRadio('USDA Licensed Vaccine', usdaMap[r.usda_duration]);
+
+    if (r.dose_type === 'initial') setRadio('Dose', 0);
+    if (r.dose_type === 'booster') setRadio('Dose', 1);
+
+    if (r.ac_license_type === '1yr')   setCheck('AC 1 year', true);
+    if (r.ac_license_type === '3yr')   setCheck('AC 3 year', true);
+    if (r.ac_license_type === 'other') setCheck('AC other',  true);
+
+    // ── Dates ──────────────────────────────────────────────────
+    const fmtDate = iso => {
+      if (!iso) return '';
+      const d = new Date(iso + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { month:'2-digit', day:'2-digit', year:'numeric' });
+    };
+    setText('Date Vaccinated',       fmtDate(r.date_given), 9);
+    setText('Next Vaccination Date', fmtDate(r.next_due),   9);
+
+    // ── Vet ────────────────────────────────────────────────────
+    setText("Veterinarian's Name",    r.administered_by || 'Dr. Ana García', 9);
+    setText("Veterinarian's address", 'People Helping Pets, Chicago IL',     8);
+
+    // ── Vet signature ───────────────────────────────────────────
+    try {
+      const sigFile = r.administered_by === 'Dr. Alexandra Friedman'
+        ? 'alex_signature.png'
+        : 'ana_signature.png';
+      const sigBytes = await fetch(
+        `https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/${sigFile}`
+      ).then(res => res.arrayBuffer());
+      const sigImg = await pdfDoc.embedPng(sigBytes);
+      page.drawImage(sigImg, { x: 370, y: 452, width: 175, height: 28 });
+    } catch (_) {}
+
+    form.flatten();
+    const pdfBytes = await pdfDoc.save();
+    return new Blob([pdfBytes], { type: 'application/pdf' });
+  }
+  // ─── EDIT / DELETE VAX ─────────────────────────────────────────
+  let editingVaxRecord = null;
+
+  function openEditVax(record) {
+    editingVaxRecord = record;
+
+    // Build or reuse the inline edit row
+    let editRow = document.getElementById('vaxEditRow');
+    if (!editRow) {
+      const tbody = document.querySelector('.vax-table tbody');
+      editRow = document.createElement('tr');
+      editRow.id = 'vaxEditRow';
+      editRow.style.background = 'var(--navy-light)';
+      tbody.prepend(editRow);
+    }
+
+    editRow.innerHTML = `
+      <td colspan="7" style="padding:0.75rem;">
+        <div style="font-family:'Nunito',sans-serif;font-weight:800;font-size:0.82rem;color:var(--navy);margin-bottom:0.6rem;">
+          Editing: <strong>${record.vaccine_name}</strong>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.6rem;">
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Lot #</label>
+            <input id="editVaxLot" type="text" value="${record.lot_number || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Serial #</label>
+            <input id="editVaxSerial" type="text" value="${record.serial_number || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Date Given</label>
+            <input id="editVaxDate" type="date" value="${record.date_given || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Next Due</label>
+            <input id="editVaxNextDue" type="date" value="${record.next_due || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button onclick="saveEditVax()" style="padding:0.35rem 1rem;border-radius:999px;border:none;background:var(--navy);color:white;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;">Save</button>
+          <button onclick="closeEditVax()" style="padding:0.35rem 1rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--text-muted);font-family:inherit;font-size:0.82rem;cursor:pointer;">Cancel</button>
+        </div>
+      </td>
+    `;
+  }
+
+  function closeEditVax() {
+    const editRow = document.getElementById('vaxEditRow');
+    if (editRow) editRow.remove();
+    editingVaxRecord = null;
+  }
+
+  async function saveEditVax() {
+    if (!editingVaxRecord) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccinations?id=eq.${editingVaxRecord.id}`, {
+        method:  'PATCH',
+        headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+        body: JSON.stringify({
+          lot_number:    document.getElementById('editVaxLot').value.trim()    || null,
+          serial_number: document.getElementById('editVaxSerial').value.trim() || null,
+          date_given:    document.getElementById('editVaxDate').value          || null,
+          next_due:      document.getElementById('editVaxNextDue').value       || null,
+        })
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
+      closeEditVax();
+      await loadVaxHistory(selectedPetId, selectedPetObj.name);
+    } catch (err) {
+      alert('Save failed: ' + err.message);
+    }
+  }
+
+  async function deleteVax(id, vaccineName) {
+    if (!confirm(`Delete the ${vaccineName} record? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccinations?id=eq.${id}`, {
+        method:  'DELETE',
+        headers: authHeaders()
+      });
+      await loadVaxHistory(selectedPetId, selectedPetObj.name);
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
+  }
+  // ─── VAX HISTORY ───────────────────────────────────────────────
+  async function loadVaxHistory(petId, petName) {
+    const content = document.getElementById('vaxHistoryContent');
+    content.innerHTML = '<div class="empty-state">Loading…</div>';
+
+    try {
+      const records = await sbGet(`vaccinations?pet_id=eq.${petId}&order=date_given.desc`);
+      if (!records.length) {
+        content.innerHTML = `<div class="empty-state">No vaccines on record for ${petName}.</div>`;
+        return;
+      }
+
+      const fmt = d => d ? new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+
+      content.innerHTML = `
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem">
+          Showing history for <strong>${petName}</strong>
+        </p>
+        <div style="overflow-x:auto">
+          <table class="vax-table">
+            <thead>
+              <tr>
+                <th>Vaccine</th>
+                <th>Lot #</th>
+                <th>Serial #</th>
+                <th>Date Given</th>
+                <th>Next Due</th>
+                <th>Administered By</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${records.map(r => `
+                <tr>
+                  <td><strong>${r.vaccine_name}</strong></td>
+                  <td>${r.lot_number || '—'}</td>
+                  <td>${r.serial_number || '—'}</td>
+                  <td>${fmt(r.date_given)}</td>
+                  <td>${fmt(r.next_due)}</td>
+                  <td>${r.administered_by || '—'}</td>
+                  <td style="white-space:nowrap">
+  <button onclick="openEditVax(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--text-muted);cursor:pointer;font-family:inherit;">✏️</button>
+  <button onclick="deleteVax('${r.id}','${r.vaccine_name}')" style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--coral-dark);cursor:pointer;font-family:inherit;">✕</button>
+  ${r.vaccine_name === 'Rabies' ? `<button onclick="downloadCertFromHistory(${JSON.stringify(r).replace(/"/g,'&quot;')})" style="font-size:0.72rem;padding:0.2rem 0.6rem;border-radius:999px;border:1.5px solid var(--navy);background:none;color:var(--navy);cursor:pointer;font-family:inherit;">⬇ cert</button>` : ''}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (err) {
+      content.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
+    }
+  }
 
   // ─── HELPERS ───────────────────────────────────────────────────
- 
-function resetDetailPanel() {
+ async function downloadCertFromHistory(record) {
+  lastRabiesRecord = { ...record, pet: selectedPetObj, client: currentClient };
+  await downloadRabiesCert();
+}
+  async function loadActiveLots() {
+    try {
+      const res  = await fetch(
+        `${SUPABASE_URL}/rest/v1/vaccine_inventory?active=eq.true`,
+        { headers: authHeaders() }
+      );
+      const rows = await res.json();
+      activeLots = {};
+      rows.forEach(r => { activeLots[r.vaccine_type] = r.lot_number; });
+    } catch (err) {
+      console.warn('Could not load active lots:', err);
+    }
+  }
+
+  // ─── PRINT MEMO ────────────────────────────────────────────────
+  function openMemoDialog() {
+    if (!currentClient) return;
+    const dialog = document.createElement('div');
+    dialog.id = 'memoDialog';
+    dialog.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      display:flex; align-items:center; justify-content:center; z-index:9999;
+    `;
+    dialog.innerHTML = `
+      <div style="background:white; border-radius:16px; padding:2rem; max-width:360px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.2); font-family:'Nunito',sans-serif;">
+        <div style="font-size:1.1rem; font-weight:800; color:var(--navy); margin-bottom:0.5rem;">📄 Print Take-Home Memo</div>
+        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">Select the language for the memo:</div>
+        <div style="display:flex; gap:0.75rem; justify-content:center; margin-bottom:1.5rem;">
+          <button onclick="printMemo('en')" style="flex:1; padding:0.75rem; border-radius:999px; border:none; background:var(--navy); color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem; cursor:pointer;">🇺🇸 English</button>
+          <button onclick="printMemo('es')" style="flex:1; padding:0.75rem; border-radius:999px; border:none; background:var(--coral-dark); color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem; cursor:pointer;">🇲🇽 Español</button>
+        </div>
+        <button onclick="document.getElementById('memoDialog').remove()" style="width:100%; padding:0.5rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); font-family:'Nunito',sans-serif; font-weight:700; cursor:pointer;">Cancel</button>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+  }
+
+  async function printMemo(lang) {
+    document.getElementById('memoDialog')?.remove();
+
+    const en = lang === 'en';
+
+    // Fetch today's vaccinations for the selected pet
+    let vaccinations = [];
+    if (selectedPetId) {
+      try {
+        vaccinations = await sbGet(`vaccinations?pet_id=eq.${selectedPetId}&order=date_given.desc`);
+      } catch (_) {}
+    }
+
+    const today = new Date().toLocaleDateString(en ? 'en-US' : 'es-MX', { month:'long', day:'numeric', year:'numeric' });
+    const fmt   = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString(en ? 'en-US' : 'es-MX', { month:'long', day:'numeric', year:'numeric' }) : '—';
+
+    // Split into today's vs prior vaccines (by date_given = today)
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todaysVax = vaccinations.filter(v => v.date_given === todayStr);
+    const priorVax  = vaccinations.filter(v => v.date_given !== todayStr);
+
+    const petName    = selectedPetObj?.name || '—';
+    const clientName = currentClient?.name  || '—';
+
+    const t = {
+      title:        en ? 'Take-Home Visit Summary'          : 'Resumen de Visita',
+      subtitle:     en ? 'People Helping Pets — Free Vaccine Clinic' : 'People Helping Pets — Clínica de Vacunas Gratuita',
+      date:         en ? `Date: ${today}`                   : `Fecha: ${today}`,
+      client:       en ? `Owner:`                           : `Dueño/a:`,
+      pet:          en ? `Pet:`                             : `Mascota:`,
+      todayVax:     en ? '💉 Vaccines Given Today'          : '💉 Vacunas Aplicadas Hoy',
+      nextDue:      en ? 'Next due:'                        : 'Próxima dosis:',
+      priorVax:     en ? '📋 Prior Vaccinations on Record'  : '📋 Vacunas Previas Registradas',
+      microchip:    en ? '🔖 Microchip'                     : '🔖 Microchip',
+      chipNum:      en ? 'Chip number:'                     : 'Número de chip:',
+      chipReg:      en ? 'Register your chip online:'       : 'Registra tu chip en línea:',
+      noTodayVax:   en ? 'No vaccines recorded today.'      : 'No se registraron vacunas hoy.',
+      noPriorVax:   en ? 'No prior vaccination records.'    : 'Sin registros previos de vacunación.',
+      footer:       en ? 'Thank you for keeping your pet healthy! Questions? Contact us at peoplehelpingpets.org'
+                       : '¡Gracias por cuidar la salud de tu mascota! ¿Preguntas? Contáctanos en peoplehelpingpets.org',
+    };
+
+    const vaxRow = v => `
+      <tr>
+        <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb; font-weight:600;">${v.vaccine_name}</td>
+        <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb; color:#6b7280;">${v.date_given ? fmt(v.date_given) : '—'}</td>
+        <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e5e7eb; color:#6b7280;">${v.next_due ? `<strong style="color:#d97706">${fmt(v.next_due)}</strong>` : '—'}</td>
+      </tr>`;
+
+    const html = `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8"/>
+  <title>${t.title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Nunito Sans',sans-serif; color:#1a1a2e; padding:2rem; max-width:680px; margin:0 auto; }
+    .header { text-align:center; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:2px solid #1a3a8f; }
+    .logo { font-family:'Nunito',sans-serif; font-weight:800; font-size:1.4rem; color:#1a3a8f; }
+    .subtitle { font-size:0.85rem; color:#5a6380; margin-top:0.25rem; }
+    .date { font-size:0.82rem; color:#5a6380; margin-top:0.25rem; }
+    .client-block { background:#f4f7fe; border-radius:10px; padding:0.85rem 1rem; margin-bottom:1.25rem; display:flex; gap:2rem; }
+    .client-block span { font-size:0.83rem; color:#5a6380; }
+    .client-block strong { display:block; font-family:'Nunito',sans-serif; font-size:1rem; color:#1a3a8f; }
+    .section { margin-bottom:1.25rem; }
+    .section-title { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.9rem; color:#1a3a8f; margin-bottom:0.6rem; padding-bottom:0.3rem; border-bottom:1.5px solid #dce6f9; }
+    table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+    th { text-align:left; padding:0.4rem 0.75rem; background:#dce6f9; color:#1a3a8f; font-family:'Nunito',sans-serif; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em; }
+    .chip-box { background:#eef4e0; border:1px solid #c5daa0; border-radius:8px; padding:0.75rem 1rem; font-size:0.85rem; }
+    .chip-box strong { font-family:'Nunito',sans-serif; color:#3a5a1a; }
+    .chip-url { color:#1a3a8f; font-size:0.82rem; margin-top:0.25rem; }
+    .empty { color:#9ca3af; font-style:italic; font-size:0.83rem; padding:0.5rem 0; }
+    .footer { margin-top:2rem; padding-top:1rem; border-top:1px solid #e5e7eb; text-align:center; font-size:0.78rem; color:#9ca3af; }
+    @media print {
+      body { padding:0.5rem; }
+      button { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">🐾 People Helping Pets</div>
+    <div class="subtitle">${t.subtitle}</div>
+    <div class="date">${t.date}</div>
+  </div>
+
+  <div class="client-block">
+    <div><span>${t.client}</span><strong>${clientName}</strong></div>
+    <div><span>${t.pet}</span><strong>${petName}</strong></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">${t.todayVax}</div>
+    ${todaysVax.length ? `
+      <table>
+        <thead><tr>
+          <th>${en ? 'Vaccine' : 'Vacuna'}</th>
+          <th>${en ? 'Date Given' : 'Fecha'}</th>
+          <th>${en ? 'Next Due' : 'Próxima Dosis'}</th>
+        </tr></thead>
+        <tbody>${todaysVax.map(vaxRow).join('')}</tbody>
+      </table>` : `<div class="empty">${t.noTodayVax}</div>`}
+  </div>
+
+  ${todayMicrochip ? `
+  <div class="section">
+    <div class="section-title">${t.microchip}</div>
+    <div class="chip-box">
+      <div>${t.chipNum} <strong>${todayMicrochip}</strong></div>
+      <div class="chip-url">${t.chipReg} <strong>nano.fitracking.com/register/chip</strong></div>
+    </div>
+  </div>` : ''}
+
+  <div class="section">
+    <div class="section-title">${t.priorVax}</div>
+    ${priorVax.length ? `
+      <table>
+        <thead><tr>
+          <th>${en ? 'Vaccine' : 'Vacuna'}</th>
+          <th>${en ? 'Date Given' : 'Fecha'}</th>
+          <th>${en ? 'Next Due' : 'Próxima Dosis'}</th>
+        </tr></thead>
+        <tbody>${priorVax.map(vaxRow).join('')}</tbody>
+      </table>` : `<div class="empty">${t.noPriorVax}</div>`}
+  </div>
+
+  <div class="footer">${t.footer}</div>
+
+  <script>window.print();<\/script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+  }
+
+  function resetDetailPanel() {
     document.getElementById('detailEmpty').style.display = 'block';
     document.getElementById('clientInfo').style.display  = 'none';
-    document.getElementById('petsCard').style.display    = 'none';
+    ['petsCard','vaxCard','historyCard','microchipCard'].forEach(id => document.getElementById(id).style.display = 'none');
   }
 
   function showMsg(el, type, text) {
@@ -1690,15 +2363,9 @@ function resetDetailPanel() {
     content.classList.toggle('open');
     icon.classList.toggle('open');
   }
-function getRole() {
-  try {
-    const token = localStorage.getItem('php_token');
-    if (!token) return null;
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.app_metadata?.role || null;
-  } catch { return null; }
-}
 
+  // Set today's date as default for vaccine date field
+  document.getElementById('vaxDate').value = new Date().toISOString().split('T')[0];
   // Restore session on refresh
 const savedToken = localStorage.getItem('php_token');
 async function loadTodayCount() {
@@ -1729,6 +2396,7 @@ if (savedToken) {
   loadRecentClients();
   loadEvents();
   loadTodayCount();
+  loadActiveLots();
   showStaffHomeLink();
 }
 </script>
@@ -1740,11 +2408,12 @@ if (savedToken) {
 <script>
 (function(){
   const STEPS = [
-    { target:'searchInput',   title:'Search clients',       body:'Search by name, phone, or email to find a returning client quickly.',                          pos:'right' },
-    { target:'clientList',    title:'Queue numbers',         body:'Clients are numbered by arrival order so staff always know who is next.',                        pos:'right' },
-    { target:'filterBar',     title:'Filter by status',     body:'Switch between In Queue, Checked In, and Archived to manage the clinic flow.',                  pos:'right' },
-    { target:'checkinBtn',    title:'Check in a client',    body:'When a pre-registered client arrives, select them and tap Check In to move them into the queue.', pos:'left' },
-    { target:'walkinCard',    title:'Walk-in registration', body:'Use this form to register a brand-new client and their pet on the spot. They are checked in automatically.', pos:'left' },
+    { target:'searchInput',   title:'Find a client',        body:'Search by name, phone, or email. Select a client to see their pets and record.',                 pos:'right' },
+    { target:'clientList',    title:'Queue order',          body:'Clients are numbered by arrival so discharge staff can work through them in order.',              pos:'right' },
+    { target:'petList',       title:'Select a pet',         body:'Tap a pet to load their record. Vaccine and microchip logging are tied to the selected pet.',     pos:'left'  },
+    { target:'vaxCard',       title:'Log vaccines',         body:'Choose the vaccine, lot number, date given, and administering vet. Next due date is auto-filled.', pos:'left'  },
+    { target:'microchipCard', title:'Log a microchip',      body:'Record whether the pet received a microchip today and enter the chip number if so.',              pos:'left'  },
+    { target:'vaxHistory',    title:'Visit history',        body:'All past vaccines for this pet appear here. Tap a row to edit or delete a record.',               pos:'left'  },
   ];
 
   let cur = 0;
