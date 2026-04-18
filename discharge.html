@@ -600,7 +600,7 @@
       </div>
       <div style="display:flex; gap:0.75rem; align-items:flex-start;">
         <span style="font-size:1rem;">✅</span>
-        <div><strong>Mark as Seen</strong> when the visit is complete.</div>
+        <div><strong>Status updates automatically</strong> to Discharged when a vaccine is logged.</div>
       </div>
     </div>
   </div>
@@ -1272,7 +1272,6 @@ const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
-document.getElementById('seenBtn').style.display       = 'none';
 document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
 document.getElementById('deleteClientBtn').style.display = client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
@@ -1708,7 +1707,6 @@ async function toggleArchiveClient() {
 document.getElementById('archiveClientBtn').textContent    = archiving ? 'Unarchive' : 'Archive';
 document.getElementById('editClientBtn').style.display     = archiving ? 'none' : 'block';
 document.getElementById('deleteClientBtn').style.display   = archiving ? 'block' : 'none';
-document.getElementById('seenBtn').style.display           = 'none';
     await loadRecentClients();
   } catch (err) {
     alert(err.message);
