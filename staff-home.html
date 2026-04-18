@@ -487,7 +487,7 @@
       try {
         const today = new Date().toISOString().split('T')[0];
         const res   = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen)&event_date=lt.${today}&select=id,event_date&limit=1`,
+          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=lt.${today}&select=id,event_date&limit=1`,
           { headers: authHeaders() }
         );
         const rows = await res.json();
@@ -497,7 +497,7 @@
 
         // Count total stale clients
         const countRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen)&event_date=lt.${today}`,
+          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=lt.${today}`,
           { method: 'HEAD', headers: { ...authHeaders(), 'Prefer': 'count=exact' } }
         );
         const count = countRes.headers.get('content-range')?.split('/')[1] ?? '?';
@@ -520,7 +520,7 @@
           {
             method:  'PATCH',
             headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-            body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null, discharged_at: null })
+            body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
           }
         );
         if (!res.ok) throw new Error('Reset failed');
@@ -623,7 +623,7 @@
           body:    JSON.stringify({ completed: true, completed_at: new Date().toISOString() })
         });
         // Reset client statuses
-        await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged`, {
+        await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)`, {
           method:  'PATCH',
           headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
           body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })

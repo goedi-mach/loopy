@@ -1577,7 +1577,6 @@ async function toggleArchiveClient() {
     document.getElementById('archiveClientBtn').textContent   = archiving ? 'Unarchive' : 'Archive';
     document.getElementById('editClientBtn').style.display    = archiving ? 'none' : 'block';
     document.getElementById('checkinBtn').style.display       = 'none';
-    document.getElementById('seenBtn').style.display          = 'none';
     await loadRecentClients();
   } catch (err) {
     alert(err.message);
