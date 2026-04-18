@@ -317,6 +317,50 @@
       </a>
     </div>
 
+<!-- ── Vaccine Lot Management ── -->
+    <p class="section-title">Vaccine Lot Management</p>
+
+    <div class="card">
+      <div class="card-header">💉 Active Vaccine Lots</div>
+      <div class="card-body">
+        <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:1rem;">
+          Set the active lot number for each vaccine type. Discharge volunteers will see these automatically — no manual entry needed.
+        </p>
+        <div id="lotMsg" class="msg"></div>
+        <div id="lotTableWrap">
+          <div class="empty-state">Loading…</div>
+        </div>
+        <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1.5px dashed var(--border);">
+          <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.85rem; color:var(--navy); margin-bottom:0.75rem;">
+            ➕ Add / Replace a Lot
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>Vaccine Type</label>
+              <select id="newLotType">
+                <option value="">— Select —</option>
+                <option value="rv_1yr">Rabies 1-Year (RV 1yr)</option>
+                <option value="rv_3yr">Rabies 3-Year (RV 3yr)</option>
+                <option value="dapp_puppy">DAPP Puppy</option>
+                <option value="dapp_booster">DAPP Booster</option>
+                <option value="dapp_1yr">DAPP 1-Year</option>
+                <option value="dapp_3yr">DAPP 3-Year</option>
+                <option value="fvrcp_kitten">FVRCP Kitten</option>
+                <option value="fvrcp_booster">FVRCP Booster</option>
+                <option value="fvrcp_1yr">FVRCP 1-Year</option>
+                <option value="fvrcp_3yr">FVRCP 3-Year</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Lot Number</label>
+              <input type="text" id="newLotNumber" placeholder="e.g. A12345B" />
+            </div>
+          </div>
+          <button class="btn btn-primary" id="addLotBtn" onclick="addLot()">Save Lot</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── User management ── -->
     <p class="section-title">User Management</p>
 
@@ -502,6 +546,146 @@
 
     // Load users on page load
     loadUsers();
+
+    // ── VACCINE LOT MANAGEMENT ────────────────────────────────────
+
+    const VAX_LABELS = {
+      rv_1yr:        'Rabies 1-Year (RV 1yr)',
+      rv_3yr:        'Rabies 3-Year (RV 3yr)',
+      dapp_puppy:    'DAPP Puppy',
+      dapp_booster:  'DAPP Booster',
+      dapp_1yr:      'DAPP 1-Year',
+      dapp_3yr:      'DAPP 3-Year',
+      fvrcp_kitten:  'FVRCP Kitten',
+      fvrcp_booster: 'FVRCP Booster',
+      fvrcp_1yr:     'FVRCP 1-Year',
+      fvrcp_3yr:     'FVRCP 3-Year',
+    };
+
+    function authHeaders() {
+      return {
+        'apikey': CONFIG.SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    async function loadLots() {
+      const wrap = document.getElementById('lotTableWrap');
+      try {
+        const res  = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?order=vaccine_type.asc`, {
+          headers: authHeaders()
+        });
+        const rows = await res.json();
+
+        if (!rows.length) {
+          wrap.innerHTML = '<div class="empty-state">No lots configured yet.</div>';
+          return;
+        }
+
+        const fmt = iso => iso ? new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+
+        wrap.innerHTML = `
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>Vaccine</th>
+                <th>Lot #</th>
+                <th>Status</th>
+                <th>Added</th>
+                <th>Deactivated</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr style="${r.active ? '' : 'opacity:0.5;'}">
+                  <td><strong>${VAX_LABELS[r.vaccine_type] || r.vaccine_type}</strong></td>
+                  <td style="font-family:monospace;">${r.lot_number}</td>
+                  <td>
+                    ${r.active
+                      ? '<span class="badge badge-staff">active</span>'
+                      : '<span class="badge badge-volunteer">inactive</span>'}
+                  </td>
+                  <td style="color:var(--text-muted)">${fmt(r.created_at)}</td>
+                  <td style="color:var(--text-muted)">${fmt(r.deactivated_at)}</td>
+                  <td>
+                    ${r.active ? `<button class="btn btn-sm" style="border:1.5px solid var(--coral);color:var(--coral-dark);background:none;" onclick="deactivateLot('${r.id}')">Deactivate</button>` : ''}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        wrap.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
+      }
+    }
+
+    async function addLot() {
+      const type   = document.getElementById('newLotType').value;
+      const lot    = document.getElementById('newLotNumber').value.trim();
+      const btn    = document.getElementById('addLotBtn');
+
+      if (!type) { showMsg('lotMsg', 'error', 'Please select a vaccine type.'); return; }
+      if (!lot)  { showMsg('lotMsg', 'error', 'Please enter a lot number.'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      try {
+        // Deactivate any existing active lot for this type first
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/vaccine_inventory?vaccine_type=eq.${type}&active=eq.true`,
+          {
+            method: 'PATCH',
+            headers: authHeaders(),
+            body: JSON.stringify({ active: false, deactivated_at: new Date().toISOString() })
+          }
+        );
+
+        // Insert the new active lot
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory`, {
+          method: 'POST',
+          headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+          body: JSON.stringify({
+            vaccine_type: type,
+            label:        VAX_LABELS[type],
+            lot_number:   lot,
+            active:       true
+          })
+        });
+        if (!res.ok) throw new Error((await res.json()).message || 'Save failed');
+
+        showMsg('lotMsg', 'success', `Lot saved for ${VAX_LABELS[type]}.`);
+        document.getElementById('newLotType').value   = '';
+        document.getElementById('newLotNumber').value = '';
+        loadLots();
+      } catch (err) {
+        showMsg('lotMsg', 'error', err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Lot';
+      }
+    }
+
+    async function deactivateLot(id) {
+      if (!confirm('Deactivate this lot? Discharge volunteers will no longer see it.')) return;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${id}`, {
+          method: 'PATCH',
+          headers: authHeaders(),
+          body: JSON.stringify({ active: false, deactivated_at: new Date().toISOString() })
+        });
+        if (!res.ok) throw new Error('Deactivate failed');
+        showMsg('lotMsg', 'success', 'Lot deactivated.');
+        loadLots();
+      } catch (err) {
+        showMsg('lotMsg', 'error', err.message);
+      }
+    }
+
+    loadLots();
   </script>
 </body>
 </html>
