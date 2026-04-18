@@ -29,8 +29,19 @@
       --shadow-lg:   0 8px 32px rgba(26,58,143,0.15);
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    .due-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .due-green { background: var(--green-light); color: var(--green); }
+    .due-amber { background: var(--amber-light); color: var(--amber); }
+    .due-red   { background: var(--coral-light); color: var(--coral-dark); }
     body {
       font-family: 'Nunito Sans', sans-serif;
       background: var(--bg);
@@ -961,6 +972,31 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
     }
   }
 
+  // ── DUE DATE BADGE HELPERS ────────────────────────────────────────
+  function dueBadgeClass(dateStr) {
+    if (!dateStr) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dateStr + 'T12:00:00');
+    const daysUntil = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    if (daysUntil < 0)    return 'due-red';
+    if (daysUntil <= 60)  return 'due-red';
+    if (daysUntil <= 180) return 'due-amber';
+    return 'due-green';
+  }
+
+  function dueBadgeLabel(dateStr) {
+    if (!dateStr) return '—';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dateStr + 'T12:00:00');
+    const daysUntil = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    const fmt = due.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    if (daysUntil < 0)   return `${fmt} (overdue)`;
+    if (daysUntil === 0) return `${fmt} (today)`;
+    return fmt;
+  }
+
   // ── VAX HISTORY ───────────────────────────────────────────────────
   async function loadVaxHistory(petId) {
     const id  = petId.replace(/-/g, '_');
@@ -987,7 +1023,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
                 <tr id="vaxRow_${r.id}">
                   <td><strong>${r.vaccine_name}</strong></td>
                   <td>${fmt(r.date_given)}</td>
-                  <td>${fmt(r.next_due)}</td>
+                  <td>${r.next_due ? `<span class="due-badge ${dueBadgeClass(r.next_due)}">${dueBadgeLabel(r.next_due)}</span>` : '—'}</td>
                   <td style="color:var(--text-muted)">${r.lot_number || '—'}</td>
                   <td style="color:var(--text-muted)">${r.rabies_tag_number || '—'}</td>
                   <td style="color:var(--text-muted)">${r.administered_by || '—'}</td>
