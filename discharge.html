@@ -559,9 +559,9 @@
 </div>
         <div class="card-body">
           <div style="display:flex; gap:0.4rem; margin-bottom:0.85rem; flex-wrap:wrap;">
-  <button class="filter-btn active" onclick="setFilter('all')">All</button>
-  <button class="filter-btn" onclick="setFilter('in_queue')">In Queue</button>
-  <button class="filter-btn" onclick="setFilter('checked_in')">Checked In</button>
+  <button class="filter-btn" id="filterAll" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" id="filterRegistered" onclick="setFilter('registered')">In Queue</button>
+  <button class="filter-btn" id="filterCheckedIn" onclick="setFilter('checked_in')">Checked In</button>
 </div>
           <div class="search-wrap">
             <input type="text" id="searchInput" placeholder="Name, email, or phone…"
@@ -1006,6 +1006,7 @@ let currentClient  = null;
 let selectedPetId  = null;
 let selectedPetObj = null;
 let currentFilter  = 'all';
+let clinicType     = null; // 'Vaccine Clinic' | 'Booster Clinic' | null
 
   // ─── SUPABASE HELPERS ──────────────────────────────────────────
   function authHeaders() {
@@ -1076,7 +1077,6 @@ localStorage.setItem('php_token', data.access_token);
 localStorage.setItem('php_email', email);
 document.getElementById('loggedInUser').textContent = `👋 ${email}`;
 showScreen('dashScreen');
-loadRecentClients();
 loadEvents();
 loadActiveLots();
 showStaffHomeLink();
@@ -1115,9 +1115,29 @@ function setFilter(filter) {
 async function loadRecentClients() {
   const list = document.getElementById('clientList');
   list.innerHTML = '<li class="empty-state">Loading…</li>';
+
+  if (!clinicType) {
+    list.innerHTML = '<li class="empty-state">No clinic scheduled today.</li>';
+    return;
+  }
+
   try {
-    let path = `clients?order=checked_in_at.asc.nullslast,created_at.desc&limit=5`;
-    path += `&archived=eq.false`;
+    const today = new Date().toISOString().split('T')[0];
+    let eventDate = today;
+
+    if (clinicType === 'Booster Clinic') {
+      // Find the most recent completed vaccine clinic
+      const pastEvents = await sbGet(
+        `events?notes=eq.Vaccine Clinic&completed=eq.true&order=event_date.desc&limit=1`
+      );
+      if (!pastEvents.length) {
+        list.innerHTML = '<li class="empty-state">No previous vaccine clinic found.</li>';
+        return;
+      }
+      eventDate = pastEvents[0].event_date;
+    }
+
+    let path = `clients?archived=eq.false&event_date=eq.${eventDate}&order=created_at.asc&limit=200`;
     if (currentFilter !== 'all') path += `&status=eq.${currentFilter}`;
     const clients = await sbGet(path);
     renderClientList(clients);
@@ -1133,7 +1153,7 @@ function renderClientList(clients) {
     list.innerHTML = '<li class="empty-state">No clients found.</li>';
     return;
   }
-  const statusLabel = { registered: 'In Queue', checked_in: 'Checked In' };
+  const statusLabel = { registered: 'In Queue', checked_in: 'Checked In', discharged: 'Discharged' };
   // Build queue number map: position among non-archived, checked-in clients sorted by checked_in_at
   const queueClients = clients.filter(c => !c.archived && c.checked_in_at);
   queueClients.sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
@@ -1189,6 +1209,23 @@ async function loadEvents() {
     // Show banner for today's event if there is one
     const todayEvent = events.find(e => e.event_date === today);
     updateClinicBanner(todayEvent || null);
+
+    // Set clinic type and default filter
+    if (todayEvent) {
+      clinicType = todayEvent.notes || null;
+      if (clinicType === 'Booster Clinic') {
+        currentFilter = 'registered';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('filterRegistered').classList.add('active');
+      } else {
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('filterAll').classList.add('active');
+      }
+    } else {
+      clinicType = null;
+    }
+    await loadRecentClients();
 
   } catch (err) {
     list.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
@@ -2392,7 +2429,6 @@ if (savedToken) {
   const savedEmail = localStorage.getItem('php_email');
   if (savedEmail) document.getElementById('loggedInUser').textContent = `👋 ${savedEmail}`;
   showScreen('dashScreen');
-  loadRecentClients();
   loadEvents();
   loadTodayCount();
   loadActiveLots();
