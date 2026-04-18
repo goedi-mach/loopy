@@ -377,8 +377,12 @@
             </div>
           </div>
           <div class="form-field">
-            <label>Notes</label>
-            <input type="text" id="newEventNotes" placeholder="Bring extra carriers…" />
+            <label>Clinic Type</label>
+            <select id="newEventNotes">
+              <option value="">— Select —</option>
+              <option value="Vaccine Clinic">Vaccine Clinic</option>
+              <option value="Booster Clinic">Booster Clinic</option>
+            </select>
           </div>
           <button class="btn btn-primary" onclick="addEvent()">Save Event</button>
         </div>
@@ -665,8 +669,12 @@
               <input type="time" id="eeEnd" value="${end}" />
             </div>
             <div class="form-field">
-              <label>Notes</label>
-              <input type="text" id="eeNotes" value="${notes}" />
+              <label>Clinic Type</label>
+              <select id="eeNotes">
+                <option value="" ${notes === '' ? 'selected' : ''}>— Select —</option>
+                <option value="Vaccine Clinic" ${notes === 'Vaccine Clinic' ? 'selected' : ''}>Vaccine Clinic</option>
+                <option value="Booster Clinic" ${notes === 'Booster Clinic' ? 'selected' : ''}>Booster Clinic</option>
+              </select>
             </div>
           </div>
           <div id="eeMsg" class="msg"></div>
