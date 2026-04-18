@@ -149,7 +149,11 @@
     }
 
     function redirectForRole(role) {
-      window.location.href = role === 'staff' ? 'staff-home.html' : 'volunteer-home.html';
+      if (role === 'staff' || role === 'admin') {
+        window.location.href = 'staff-home.html';
+      } else {
+        window.location.href = 'volunteer-home.html';
+      }
     }
 
     // ── On page load: skip login if already authenticated ────────

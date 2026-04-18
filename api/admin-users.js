@@ -6,12 +6,10 @@ const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SERVICE_ROLE_KEY     = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_ANON_KEY    = process.env.SUPABASE_ANON_KEY;
 
-// ── Verify the caller is a logged-in staff member ─────────────
-async function verifyStaff(authHeader) {
+async function verifyAdmin(authHeader) {
   if (!authHeader?.startsWith('Bearer ')) throw new Error('Missing token');
   const token = authHeader.slice(7);
 
-  // Verify the JWT with Supabase
   const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: {
       'apikey':        SUPABASE_ANON_KEY,
@@ -22,7 +20,7 @@ async function verifyStaff(authHeader) {
 
   const user = await res.json();
   const role = user.app_metadata?.role || 'volunteer';
-  if (role !== 'staff') throw new Error('Forbidden: staff only');
+  if (role !== 'admin') throw new Error('Forbidden: admin only');
 }
 
 // ── Admin fetch helper (uses service role key) ────────────────
@@ -50,7 +48,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    await verifyStaff(req.headers.authorization);
+    await verifyAdmin(req.headers.authorization);
   } catch (err) {
     return res.status(403).json({ error: err.message });
   }
