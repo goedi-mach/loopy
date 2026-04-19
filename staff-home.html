@@ -740,16 +740,22 @@
       lepto_1yr:     'Lepto 1-Year',
     };
 
+    let showArchived = false;
+
     async function loadLots() {
       const wrap = document.getElementById('lotTableWrap');
       try {
-        const res  = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?order=vaccine_type.asc`, {
-          headers: authHeaders()
-        });
+        const url = showArchived
+          ? `${SUPABASE_URL}/rest/v1/vaccine_inventory?order=vaccine_type.asc`
+          : `${SUPABASE_URL}/rest/v1/vaccine_inventory?archived=eq.false&order=vaccine_type.asc`;
+        const res  = await fetch(url, { headers: authHeaders() });
         const rows = await res.json();
 
+        const toggleLabel = showArchived ? 'Hide archived' : 'Show archived';
+        const toggleLink  = `<a href="#" onclick="showArchived=!showArchived;loadLots();return false;" style="font-size:0.78rem;color:var(--text-muted);text-decoration:underline;">${toggleLabel}</a>`;
+
         if (!rows.length) {
-          wrap.innerHTML = '<div class="empty-state">No lots configured yet.</div>';
+          wrap.innerHTML = `<div class="empty-state">No lots configured yet.</div><div style="text-align:center;margin-top:0.5rem;">${toggleLink}</div>`;
           return;
         }
 
@@ -763,18 +769,26 @@
               </tr>
             </thead>
             <tbody>
-              ${rows.map(r => `
+              ${rows.map(r => {
+                const actions = r.active
+                  ? `<button class="btn btn-sm" style="border:1.5px solid var(--coral);color:var(--coral-dark);background:none;" onclick="deactivateLot('${r.id}')">Deactivate</button>`
+                  : `<span style="display:inline-flex;gap:0.4rem;">
+                       <button class="btn btn-sm" style="border:1.5px solid var(--green);color:var(--green);background:none;" onclick="reactivateLot('${r.id}')">Reactivate</button>
+                       <button class="btn btn-sm" style="border:1.5px solid var(--border);color:var(--text-muted);background:none;" onclick="archiveLot('${r.id}')">Archive</button>
+                     </span>`;
+                return `
                 <tr style="${r.active ? '' : 'opacity:0.5;'}">
                   <td><strong>${VAX_LABELS[r.vaccine_type] || r.vaccine_type}</strong></td>
                   <td style="font-family:monospace;">${r.lot_number}</td>
                   <td>${r.active ? '<span class="badge badge-staff">active</span>' : '<span class="badge badge-volunteer">inactive</span>'}</td>
                   <td style="color:var(--text-muted)">${fmtD(r.created_at)}</td>
                   <td style="color:var(--text-muted)">${fmtD(r.deactivated_at)}</td>
-                  <td>${r.active ? `<button class="btn btn-sm" style="border:1.5px solid var(--coral);color:var(--coral-dark);background:none;" onclick="deactivateLot('${r.id}')">Deactivate</button>` : ''}</td>
-                </tr>
-              `).join('')}
+                  <td>${actions}</td>
+                </tr>`;
+              }).join('')}
             </tbody>
           </table>
+          <div style="text-align:right;margin-top:0.5rem;">${toggleLink}</div>
         `;
       } catch (err) {
         wrap.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
@@ -825,6 +839,38 @@
         });
         if (!res.ok) throw new Error('Deactivate failed');
         showMsg('lotMsg', 'success', 'Lot deactivated.');
+        loadLots();
+      } catch (err) {
+        showMsg('lotMsg', 'error', err.message);
+      }
+    }
+
+    async function reactivateLot(id) {
+      if (!confirm('Reactivate this lot? It will become the active lot for its vaccine type.')) return;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${id}`, {
+          method:  'PATCH',
+          headers: authHeaders(),
+          body:    JSON.stringify({ active: true, deactivated_at: null })
+        });
+        if (!res.ok) throw new Error('Reactivate failed');
+        showMsg('lotMsg', 'success', 'Lot reactivated.');
+        loadLots();
+      } catch (err) {
+        showMsg('lotMsg', 'error', err.message);
+      }
+    }
+
+    async function archiveLot(id) {
+      if (!confirm('Archive this lot? It will be hidden from the list. You can still view it with "Show archived".')) return;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${id}`, {
+          method:  'PATCH',
+          headers: authHeaders(),
+          body:    JSON.stringify({ archived: true })
+        });
+        if (!res.ok) throw new Error('Archive failed');
+        showMsg('lotMsg', 'success', 'Lot archived.');
         loadLots();
       } catch (err) {
         showMsg('lotMsg', 'error', err.message);
