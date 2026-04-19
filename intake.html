@@ -1798,6 +1798,7 @@ if (savedToken) {
     }, 10);
   }
 
+  window.__tourStart = () => { cur = 0; showStep(0); };
   window.__tourNext = () => { cur < STEPS.length-1 ? showStep(++cur) : window.__tourEnd(); };
   window.__tourPrev = () => { if (cur > 0) showStep(--cur); };
   window.__tourEnd = () => {
@@ -1817,7 +1818,7 @@ if (savedToken) {
         style="width:100%;text-align:left;padding:0.6rem 0.75rem;border-radius:8px;border:1.5px solid #c8d3ec;background:none;font-family:inherit;font-size:0.88rem;font-weight:700;color:#1a3a8f;cursor:pointer;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
         📖 User Manual
       </button>
-      <button onclick="document.getElementById('helpDialog').remove();cur=0;showStep(0);"
+      <button onclick="document.getElementById('helpDialog').remove();window.__tourStart();"
         style="width:100%;text-align:left;padding:0.6rem 0.75rem;border-radius:8px;border:1.5px solid #c8d3ec;background:none;font-family:inherit;font-size:0.88rem;font-weight:700;color:#1a3a8f;cursor:pointer;display:flex;align-items:center;gap:0.5rem;">
         🎯 Interactive Tour
       </button>
