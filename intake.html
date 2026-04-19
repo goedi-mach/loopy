@@ -1805,7 +1805,34 @@ if (savedToken) {
     document.getElementById('tourTooltip').style.display = 'none';
     cur = 0;
   };
-  document.getElementById('tourFab').onclick = () => { cur = 0; showStep(0); };
+  document.getElementById('tourFab').onclick = () => {
+    const existing = document.getElementById('helpDialog');
+    if (existing) { existing.remove(); return; }
+    const dialog = document.createElement('div');
+    dialog.id = 'helpDialog';
+    dialog.style.cssText = 'position:fixed;bottom:84px;right:24px;background:white;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,0.18);z-index:9999;padding:1rem;width:220px;font-family:inherit;';
+    dialog.innerHTML = `
+      <div style="font-size:0.82rem;font-weight:700;color:#5a6380;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">Need help?</div>
+      <button onclick="window.open('https://php-clinic.vercel.app/docs/PHP_Clinic_App_User_Guide.pdf','_blank');document.getElementById('helpDialog').remove();"
+        style="width:100%;text-align:left;padding:0.6rem 0.75rem;border-radius:8px;border:1.5px solid #c8d3ec;background:none;font-family:inherit;font-size:0.88rem;font-weight:700;color:#1a3a8f;cursor:pointer;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+        📖 User Manual
+      </button>
+      <button onclick="document.getElementById('helpDialog').remove();cur=0;showStep(0);"
+        style="width:100%;text-align:left;padding:0.6rem 0.75rem;border-radius:8px;border:1.5px solid #c8d3ec;background:none;font-family:inherit;font-size:0.88rem;font-weight:700;color:#1a3a8f;cursor:pointer;display:flex;align-items:center;gap:0.5rem;">
+        🎯 Interactive Tour
+      </button>
+    `;
+    // Close if clicking outside
+    setTimeout(() => {
+      document.addEventListener('click', function handler(e) {
+        if (!dialog.contains(e.target) && e.target.id !== 'tourFab') {
+          dialog.remove();
+          document.removeEventListener('click', handler);
+        }
+      });
+    }, 100);
+    document.body.appendChild(dialog);
+  };
 })();
 </script>
 </body>
