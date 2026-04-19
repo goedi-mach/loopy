@@ -1556,8 +1556,9 @@ async function markDischarged() {
     const vax = VACCINE_OPTIONS[species][idx];
 
     // Auto-fill lot from active inventory
-    if (activeLots[vax.inventoryKey]) {
-      lotField.value    = activeLots[vax.inventoryKey];
+    const activeLot = activeLots[vax.inventoryKey];
+    if (activeLot) {
+      lotField.value    = activeLot.lot_number;
       lotField.readOnly = true;
       lotField.style.background = '#f0f4ff';
       lotField.title    = 'Auto-filled from vaccine inventory. Contact staff to change.';
@@ -1602,6 +1603,13 @@ async function markDischarged() {
       document.getElementById('rabiesFields').style.display = 'block';
       document.getElementById('rabiesUSDA').value = dur.usdaDuration || '';
 
+      // Auto-fill manufacturer and product from active lot
+      const activeLot  = activeLots[vax.inventoryKey];
+      const mfr        = activeLot?.manufacturer?.toUpperCase() || '';
+      const productMap = { 'MER': 'IMRAB 3', 'ELA': 'RABVAC 3' };
+      document.getElementById('rabiesMan').value     = mfr;
+      document.getElementById('rabiesProduct').value = productMap[mfr] || '';
+
       const petColors   = selectedPetObj?.colors_markings || '';
       const colorsField = document.getElementById('rabiesColors');
       colorsField.value    = petColors;
@@ -1636,6 +1644,7 @@ const vaxIdx   = document.getElementById('vaxName').value;
       pet_id:          selectedPetId,
       vaccine_name,
       lot_number:      document.getElementById('vaxLot').value.trim() || null,
+      manufacturer:    activeLots[vaxObj.inventoryKey]?.manufacturer || null,
       date_given:      dateGiven,
       next_due:        document.getElementById('vaxNextDue').value || null,
       administered_by: document.getElementById('vaxAdmin').value || null,
@@ -2273,7 +2282,7 @@ function setRadio(fieldName, index) {
       );
       const rows = await res.json();
       activeLots = {};
-      rows.forEach(r => { activeLots[r.vaccine_type] = r.lot_number; });
+      rows.forEach(r => { activeLots[r.vaccine_type] = { lot_number: r.lot_number, manufacturer: r.manufacturer || null }; });
     } catch (err) {
       console.warn('Could not load active lots:', err);
     }

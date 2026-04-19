@@ -421,6 +421,10 @@
               <input type="text" id="newLotNumber" placeholder="e.g. A12345B" />
             </div>
           </div>
+          <div class="form-field">
+            <label>Manufacturer</label>
+            <input type="text" id="newLotManufacturer" placeholder="e.g. MER, ELA" style="text-transform:uppercase;" />
+          </div>
           <button class="btn btn-primary" id="addLotBtn" onclick="addLot()">Save Lot</button>
         </div>
       </div>
@@ -753,7 +757,7 @@
           <table class="user-table">
             <thead>
               <tr>
-                <th>Vaccine</th><th>Lot #</th><th>Status</th><th>Added</th><th>Deactivated</th><th></th>
+                <th>Vaccine</th><th>Lot #</th><th>Manufacturer</th><th>Status</th><th>Added</th><th>Deactivated</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -768,6 +772,7 @@
                 <tr style="${r.active ? '' : 'opacity:0.5;'}">
                   <td><strong>${VAX_LABELS[r.vaccine_type] || r.vaccine_type}</strong></td>
                   <td style="font-family:monospace;">${r.lot_number}</td>
+                  <td style="font-family:monospace;">${r.manufacturer || '—'}</td>
                   <td>${r.active ? '<span class="badge badge-staff">active</span>' : '<span class="badge badge-volunteer">inactive</span>'}</td>
                   <td style="color:var(--text-muted)">${fmtD(r.created_at)}</td>
                   <td style="color:var(--text-muted)">${fmtD(r.deactivated_at)}</td>
@@ -784,9 +789,10 @@
     }
 
     async function addLot() {
-      const type = document.getElementById('newLotType').value;
-      const lot  = document.getElementById('newLotNumber').value.trim();
-      const btn  = document.getElementById('addLotBtn');
+      const type         = document.getElementById('newLotType').value;
+      const lot          = document.getElementById('newLotNumber').value.trim();
+      const manufacturer = document.getElementById('newLotManufacturer').value.trim().toUpperCase() || null;
+      const btn          = document.getElementById('addLotBtn');
 
       if (!type) { showMsg('lotMsg', 'error', 'Please select a vaccine type.'); return; }
       if (!lot)  { showMsg('lotMsg', 'error', 'Please enter a lot number.'); return; }
@@ -802,12 +808,13 @@
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory`, {
           method:  'POST',
           headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-          body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, active: true })
+          body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, manufacturer, active: true })
         });
         if (!res.ok) throw new Error((await res.json()).message || 'Save failed');
         showMsg('lotMsg', 'success', `Lot saved for ${VAX_LABELS[type]}.`);
-        document.getElementById('newLotType').value   = '';
-        document.getElementById('newLotNumber').value = '';
+        document.getElementById('newLotType').value          = '';
+        document.getElementById('newLotNumber').value        = '';
+        document.getElementById('newLotManufacturer').value  = '';
         loadLots();
       } catch (err) {
         showMsg('lotMsg', 'error', err.message);
