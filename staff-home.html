@@ -410,16 +410,10 @@
               <label>Vaccine Type</label>
               <select id="newLotType">
                 <option value="">— Select —</option>
-                <option value="rv_1yr">Rabies 1-Year (RV 1yr)</option>
-                <option value="rv_3yr">Rabies 3-Year (RV 3yr)</option>
-                <option value="dapp_booster">DAPP Booster</option>
-                <option value="dapp_1yr">DAPP 1-Year</option>
-                <option value="dapp_3yr">DAPP 3-Year</option>
-                <option value="fvrcp_booster">FVRCP Booster</option>
-                <option value="fvrcp_1yr">FVRCP 1-Year</option>
-                <option value="fvrcp_3yr">FVRCP 3-Year</option>
-                <option value="lepto_booster">Lepto Booster</option>
-                <option value="lepto_1yr">Lepto 1-Year</option>
+                <option value="rabies">Rabies</option>
+                <option value="dapp">DAPP</option>
+                <option value="dapp_lepto">DAPP + Lepto</option>
+                <option value="fvrcp">FVRCP</option>
               </select>
             </div>
             <div class="form-field">
@@ -728,16 +722,10 @@
 
     // ── VACCINE LOT MANAGEMENT ────────────────────────────────────
     const VAX_LABELS = {
-      rv_1yr:        'Rabies 1-Year (RV 1yr)',
-      rv_3yr:        'Rabies 3-Year (RV 3yr)',
-      dapp_booster:  'DAPP Booster',
-      dapp_1yr:      'DAPP 1-Year',
-      dapp_3yr:      'DAPP 3-Year',
-      fvrcp_booster: 'FVRCP Booster',
-      fvrcp_1yr:     'FVRCP 1-Year',
-      fvrcp_3yr:     'FVRCP 3-Year',
-      lepto_booster: 'Lepto Booster',
-      lepto_1yr:     'Lepto 1-Year',
+      rabies:    'Rabies',
+      dapp:      'DAPP',
+      dapp_lepto: 'DAPP + Lepto',
+      fvrcp:     'FVRCP',
     };
 
     let showArchived = false;
