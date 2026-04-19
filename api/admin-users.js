@@ -72,7 +72,8 @@ export default async function handler(req, res) {
           method: 'POST',
           body: JSON.stringify({
             email,
-            data: { role }   // stored in raw_user_meta_data; we'll also set app_metadata below
+            data: { role },
+            redirectTo: 'https://php-clinic.vercel.app/set-password.html'   // stored in raw_user_meta_data; we'll also set app_metadata below
           })
         });
 
