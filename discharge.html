@@ -877,6 +877,12 @@
               <input type="text" id="vaxLot" placeholder="ABC123" />
             </div>
           </div>
+          <div class="form-field" id="durationField" style="display:none;">
+            <label>Duration *</label>
+            <select id="vaxDuration" onchange="onDurationChange()">
+              <option value="">— Select —</option>
+            </select>
+          </div>
           <div class="form-field" style="display:none;">
   <label>Vaccine Serial Number</label>
   <input type="text" id="vaxSerial" placeholder="e.g. 12345678" />
@@ -1469,22 +1475,37 @@ async function markDischarged() {
       showMsg(msg, 'error', err.message);
     }
   }
-// ─── VAX NAME CHANGE ───────────────────────────────────────────
-const VACCINE_OPTIONS = {
+// ─── VACCINE CONFIG ────────────────────────────────────────────
+  const VACCINE_OPTIONS = {
     dog: [
-      { label: 'RV 1 Year',     value: 'Rabies',        nextDue: { unit: 'years',  amount: 1  }, isRabies: true,  usdaDuration: '1yr', inventoryKey: 'rv_1yr'        },
-      { label: 'RV 3 Year',     value: 'Rabies',        nextDue: { unit: 'years',  amount: 3  }, isRabies: true,  usdaDuration: '3yr', inventoryKey: 'rv_3yr'        },
-      { label: 'DAPP Booster',  value: 'DAPP Booster',  nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false,                       inventoryKey: 'dapp_booster'  },
-      { label: 'DAPP 1YR',      value: 'DAPP 1YR',      nextDue: { unit: 'months', amount: 12 }, isRabies: false,                       inventoryKey: 'dapp_1yr'      },
-      { label: 'DAPP 3YR',      value: 'DAPP 3YR',      nextDue: { unit: 'months', amount: 36 }, isRabies: false,                       inventoryKey: 'dapp_3yr'      },
-      { label: 'Lepto Booster', value: 'Lepto Booster', nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false,                       inventoryKey: 'lepto_booster' },
-      { label: 'Lepto 1YR',     value: 'Lepto 1YR',     nextDue: { unit: 'months', amount: 12 }, isRabies: false,                       inventoryKey: 'lepto_1yr'     },
+      { label: 'Rabies',        inventoryKey: 'rabies',     isRabies: true  },
+      { label: 'DAPP',          inventoryKey: 'dapp',       isRabies: false },
+      { label: 'DAPP + Lepto',  inventoryKey: 'dapp_lepto', isRabies: false },
     ],
     cat: [
-      { label: 'RV 1 Year',     value: 'Rabies',        nextDue: { unit: 'years',  amount: 1  }, isRabies: true,  usdaDuration: '1yr', inventoryKey: 'rv_1yr'        },
-      { label: 'RV 3 Year',     value: 'Rabies',        nextDue: { unit: 'years',  amount: 3  }, isRabies: true,  usdaDuration: '3yr', inventoryKey: 'rv_3yr'        },
-      { label: 'FVRCP Booster', value: 'FVRCP Booster', nextDue: { unit: 'weeks',  amount: 4  }, isRabies: false,                       inventoryKey: 'fvrcp_booster' },
-      { label: 'FVRCP 1 YR',   value: 'FVRCP 1 YR',   nextDue: { unit: 'months', amount: 12 }, isRabies: false,                       inventoryKey: 'fvrcp_1yr'     },
+      { label: 'Rabies',        inventoryKey: 'rabies',     isRabies: true  },
+      { label: 'FVRCP',         inventoryKey: 'fvrcp',      isRabies: false },
+    ],
+  };
+
+  const DURATION_OPTIONS = {
+    rabies: [
+      { label: '1 Year',  nextDue: { unit: 'years',  amount: 1  }, usdaDuration: '1yr' },
+      { label: '3 Year',  nextDue: { unit: 'years',  amount: 3  }, usdaDuration: '3yr' },
+    ],
+    dapp: [
+      { label: '4 Weeks', nextDue: { unit: 'weeks',  amount: 4  } },
+      { label: '1 Year',  nextDue: { unit: 'months', amount: 12 } },
+      { label: '3 Year',  nextDue: { unit: 'months', amount: 36 } },
+    ],
+    dapp_lepto: [
+      { label: '4 Weeks', nextDue: { unit: 'weeks',  amount: 4  } },
+      { label: '1 Year',  nextDue: { unit: 'months', amount: 12 } },
+    ],
+    fvrcp: [
+      { label: '4 Weeks', nextDue: { unit: 'weeks',  amount: 4  } },
+      { label: '1 Year',  nextDue: { unit: 'months', amount: 12 } },
+      { label: '3 Year',  nextDue: { unit: 'months', amount: 36 } },
     ],
   };
 
@@ -1501,63 +1522,87 @@ const VACCINE_OPTIONS = {
     const species = selectedPetObj?.species;
 
     select.innerHTML = '<option value="">— Select —</option>';
-
     if (!species || !VACCINE_OPTIONS[species]) return;
 
     VACCINE_OPTIONS[species].forEach((vax, idx) => {
       const opt = document.createElement('option');
-      opt.value       = idx;          // store index so we can look up the full object
+      opt.value       = idx;
       opt.textContent = vax.label;
       select.appendChild(opt);
     });
   }
 
   function onVaxNameChange() {
-    const select  = document.getElementById('vaxName');
-    const idx     = select.value;
+    const idx     = document.getElementById('vaxName').value;
     const species = selectedPetObj?.species;
 
-    // Reset dependent fields
+    // Reset all dependent fields
+    document.getElementById('durationField').style.display   = 'none';
     document.getElementById('rabiesFields').style.display    = 'none';
     document.getElementById('downloadCertBtn').style.display = 'none';
     document.getElementById('emailCertBtn').style.display    = 'none';
     document.getElementById('vaxNextDue').value              = '';
+    document.getElementById('vaxDuration').innerHTML         = '<option value="">— Select —</option>';
+
+    // Reset lot field
+    const lotField = document.getElementById('vaxLot');
+    lotField.value    = '';
+    lotField.readOnly = false;
+    lotField.style.background = '';
+    lotField.title    = '';
 
     if (idx === '' || !species) return;
 
-    const vax      = VACCINE_OPTIONS[species][idx];
-    const dateGiven = document.getElementById('vaxDate').value;
+    const vax = VACCINE_OPTIONS[species][idx];
 
-    // Auto-fill next due date
-    if (dateGiven) {
-      document.getElementById('vaxNextDue').value = calcNextDue(dateGiven, vax.nextDue);
-    }
-
-    // Auto-fill lot number from active inventory
-    const lotField = document.getElementById('vaxLot');
+    // Auto-fill lot from active inventory
     if (activeLots[vax.inventoryKey]) {
       lotField.value    = activeLots[vax.inventoryKey];
       lotField.readOnly = true;
       lotField.style.background = '#f0f4ff';
       lotField.title    = 'Auto-filled from vaccine inventory. Contact staff to change.';
-    } else {
-      lotField.value    = '';
-      lotField.readOnly = false;
-      lotField.style.background = '';
-      lotField.title    = '';
+    }
+
+    // Build and show duration dropdown
+    const durations = DURATION_OPTIONS[vax.inventoryKey] || [];
+    const durationSelect = document.getElementById('vaxDuration');
+    durations.forEach((d, i) => {
+      const opt = document.createElement('option');
+      opt.value       = i;
+      opt.textContent = d.label;
+      durationSelect.appendChild(opt);
+    });
+    document.getElementById('durationField').style.display = 'block';
+
+    // If date is already set and duration already selected, recalculate
+    onDurationChange();
+  }
+
+  function onDurationChange() {
+    const vaxIdx      = document.getElementById('vaxName').value;
+    const durIdx      = document.getElementById('vaxDuration').value;
+    const species     = selectedPetObj?.species;
+    const dateGiven   = document.getElementById('vaxDate').value;
+
+    document.getElementById('vaxNextDue').value = '';
+    document.getElementById('rabiesFields').style.display = 'none';
+
+    if (vaxIdx === '' || durIdx === '' || !species) return;
+
+    const vax = VACCINE_OPTIONS[species][vaxIdx];
+    const dur = DURATION_OPTIONS[vax.inventoryKey][durIdx];
+
+    // Auto-calculate next due date
+    if (dateGiven) {
+      document.getElementById('vaxNextDue').value = calcNextDue(dateGiven, dur.nextDue);
     }
 
     // Show rabies fields if applicable
     if (vax.isRabies) {
       document.getElementById('rabiesFields').style.display = 'block';
+      document.getElementById('rabiesUSDA').value = dur.usdaDuration || '';
 
-      // Auto-set USDA duration
-      if (vax.usdaDuration) {
-        document.getElementById('rabiesUSDA').value = vax.usdaDuration;
-      }
-
-      // Pre-fill colors from pet record
-      const petColors  = selectedPetObj?.colors_markings || '';
+      const petColors   = selectedPetObj?.colors_markings || '';
       const colorsField = document.getElementById('rabiesColors');
       colorsField.value    = petColors;
       colorsField.readOnly = !!petColors;
@@ -1578,11 +1623,18 @@ async function logVaccine() {
     if (!dateGiven)     { showMsg(msg, 'error', 'Please enter the date given.'); return; }
 
 const vaxIdx   = document.getElementById('vaxName').value;
+    const durIdx   = document.getElementById('vaxDuration').value;
     const vaxObj   = VACCINE_OPTIONS[selectedPetObj.species][vaxIdx];
+    const durObj   = DURATION_OPTIONS[vaxObj.inventoryKey][durIdx];
+
+    if (!durIdx && durIdx !== 0) { showMsg(msg, 'error', 'Please select a duration.'); return; }
+
+    // Build the stored vaccine name: e.g. "Rabies 1 Year", "DAPP 4 Weeks", "DAPP + Lepto 1 Year"
+    const vaccine_name = `${vaxObj.label} ${durObj.label}`;
 
     const payload = {
       pet_id:          selectedPetId,
-      vaccine_name:    vaxObj.value,
+      vaccine_name,
       lot_number:      document.getElementById('vaxLot').value.trim() || null,
       date_given:      dateGiven,
       next_due:        document.getElementById('vaxNextDue').value || null,
@@ -1601,7 +1653,7 @@ const vaxIdx   = document.getElementById('vaxName').value;
     try {
       await sbPost('vaccinations', payload);
 
-showMsg(msg, 'success', `${vaxObj.label} logged for ${selectedPetObj.name}!`);
+showMsg(msg, 'success', `${vaccine_name} logged for ${selectedPetObj.name}!`);
       await markDischarged();
       
       if (vaxObj.isRabies) {
@@ -1610,14 +1662,22 @@ showMsg(msg, 'success', `${vaxObj.label} logged for ${selectedPetObj.name}!`);
         document.getElementById('emailCertBtn').style.display    = 'inline-block';
       }
 
-      document.getElementById('vaxName').value    = '';
-      document.getElementById('vaxLot').value     = '';
-      document.getElementById('vaxDate').value    = '';
-      document.getElementById('vaxNextDue').value = '';
-      document.getElementById('vaxAdmin').value   = '';
+      document.getElementById('vaxName').value     = '';
+      document.getElementById('vaxDuration').value = '';
+      document.getElementById('durationField').style.display = 'none';
+      document.getElementById('vaxLot').value      = '';
+      document.getElementById('vaxDate').value      = '';
+      document.getElementById('vaxNextDue').value   = '';
+      document.getElementById('vaxAdmin').value     = '';
       document.getElementById('rabiesFields').style.display = 'none';
       ['rabiesTagNum','rabiesColors','rabiesProduct','rabiesMan'].forEach(id => document.getElementById(id).value = '');
       ['rabiesUSDA','rabiesDose'].forEach(id => document.getElementById(id).value = '');
+
+      // Reset lot field styling
+      const lotField = document.getElementById('vaxLot');
+      lotField.readOnly = false;
+      lotField.style.background = '';
+      lotField.title = '';
 
       console.log('reloading history for:', selectedPetId, selectedPetObj?.name);
             await loadVaxHistory(selectedPetId, selectedPetObj.name);
