@@ -193,6 +193,7 @@
         if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
 
         localStorage.setItem('php_token', data.access_token);
+        localStorage.setItem('php_refresh_token', data.refresh_token);
         localStorage.setItem('php_email', email);
 
         redirectForRole(getRoleFromToken(data.access_token));
