@@ -135,7 +135,7 @@
   <script>
     // ── Auth guard ────────────────────────────────────────────────
     const token = localStorage.getItem('php_token');
-    if (!token) window.location.href = 'dashboard.html';
+    if (!token) window.location.href = 'login.html';
 
     // ── Show email if available ───────────────────────────────────
     const email = localStorage.getItem('php_email');
@@ -145,7 +145,7 @@
     function signOut() {
       localStorage.removeItem('php_token');
       localStorage.removeItem('php_email');
-      window.location.href = 'dashboard.html';
+      window.location.href = 'login.html';
     }
   </script>
 </body>

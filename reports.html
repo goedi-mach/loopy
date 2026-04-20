@@ -584,7 +584,7 @@
   // ─── ROLE GUARD ────────────────────────────────────────────────
 function requireStaff() {
   const token = localStorage.getItem('php_token');
-  if (!token) { window.location.href = 'dashboard.html'; return; }
+  if (!token) { window.location.href = 'login.html'; return; }
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const role = payload?.app_metadata?.role;
@@ -592,7 +592,7 @@ function requireStaff() {
     const s = document.getElementById('staffHomeLink');
     if (s) s.style.display = 'inline-block';
   } catch {
-    window.location.href = 'dashboard.html';
+    window.location.href = 'login.html';
   }
 }
 requireStaff();
@@ -653,7 +653,7 @@ requireStaff();
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       headers: { ...authHeaders(), 'Accept': 'application/json' }
     });
-if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.removeItem('php_email'); window.location.href = 'dashboard.html?expired=1'; return; }    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.removeItem('php_email'); window.location.href = 'login.html?expired=1'; return; }    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
     return res.json();
   }
 
