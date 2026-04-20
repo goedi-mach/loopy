@@ -313,7 +313,7 @@
 
     // ── Auth guard: admin only ────────────────────────────────────
     const token = localStorage.getItem('php_token');
-    if (!token) window.location.href = 'dashboard.html';
+    if (!token) window.location.href = 'login.html';
 
     function getRoleFromToken(t) {
       try {
@@ -336,7 +336,7 @@
     function signOut() {
       localStorage.removeItem('php_token');
       localStorage.removeItem('php_email');
-      window.location.href = 'dashboard.html';
+      window.location.href = 'login.html';
     }
 
     // ── Show message ──────────────────────────────────────────────

@@ -596,7 +596,7 @@ const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
       headers: { ...authHeaders(), 'Accept': 'application/json' }
     });
-if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.removeItem('php_email'); window.location.href = 'dashboard.html?expired=1'; return; }    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.removeItem('php_email'); window.location.href = 'login.html?expired=1'; return; }    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
     return res.json();
   }
 
@@ -606,7 +606,7 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
       headers: { ...authHeaders(), 'Prefer': 'return=representation' },
       body: JSON.stringify(data)
     });
-    if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.removeItem('php_email'); window.location.href = 'dashboard.html?expired=1'; return; }
+    if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.removeItem('php_email'); window.location.href = 'login.html?expired=1'; return; }
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
     return res.json();
   }

@@ -983,7 +983,7 @@ let clinicType     = null; // 'Vaccine Clinic' | 'Booster Clinic' | null
     if (res.status === 401) {
       localStorage.removeItem('php_token');
       localStorage.removeItem('php_email');
-      window.location.href = 'dashboard.html?expired=1';
+      window.location.href = 'login.html?expired=1';
       return true;
     }
     return false;
@@ -1052,7 +1052,7 @@ function logout() {
     accessToken = null;
     localStorage.removeItem('php_token');
     localStorage.removeItem('php_email');
-    window.location.href = 'dashboard.html';
+    window.location.href = 'login.html';
   }
 
   // Allow Enter key on password field
