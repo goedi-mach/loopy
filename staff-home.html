@@ -613,21 +613,36 @@
       }
     }
 
-    async function completeEvent(eventId) {
-      if (!confirm('Mark this event as complete? This will reset all active client statuses back to "In Queue".')) return;
+ async function completeEvent(eventId) {
+      if (!confirm('Mark this event as complete? This will reset all active client statuses back to \"In Queue\".')) return;
       try {
+        // Fetch the event to get its date
+        const evRes = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}&select=event_date`, {
+          headers: authHeaders()
+        });
+        if (!evRes.ok) throw new Error('Could not fetch event details.');
+        const [ev] = await evRes.json();
+        if (!ev) throw new Error('Event not found.');
+
         // Mark event complete
-        await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}`, {
+        const patchEv = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}`, {
           method:  'PATCH',
           headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
           body:    JSON.stringify({ completed: true, completed_at: new Date().toISOString() })
         });
-        // Reset client statuses
-        await fetch(`${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)`, {
-          method:  'PATCH',
-          headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-          body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
-        });
+        if (!patchEv.ok) throw new Error(`Failed to mark event complete (${patchEv.status}).`);
+
+        // Reset client statuses for that event's date only
+        const patchClients = await fetch(
+          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=eq.${ev.event_date}`,
+          {
+            method:  'PATCH',
+            headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+            body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
+          }
+        );
+        if (!patchClients.ok) throw new Error(`Failed to reset client statuses (${patchClients.status}).`);
+
         await loadEvents();
         document.getElementById('staleWarning').style.display = 'none';
       } catch (err) {
