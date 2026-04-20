@@ -874,6 +874,9 @@
             </div>
             <div class="form-field">
               <label>Lot / Serial #</label>
+              <select id="vaxLotSelect" style="display:none; margin-bottom:0.4rem;" onchange="onLotSelectChange()">
+                <option value="">— Select a lot —</option>
+              </select>
               <input type="text" id="vaxLot" placeholder="ABC123" />
             </div>
           </div>
@@ -1544,24 +1547,34 @@ async function markDischarged() {
     document.getElementById('vaxNextDue').value              = '';
     document.getElementById('vaxDuration').innerHTML         = '<option value="">— Select —</option>';
 
-    // Reset lot field
-    const lotField = document.getElementById('vaxLot');
+    // Reset lot field and dropdown
+    const lotField    = document.getElementById('vaxLot');
+    const lotSelect   = document.getElementById('vaxLotSelect');
     lotField.value    = '';
     lotField.readOnly = false;
     lotField.style.background = '';
     lotField.title    = '';
+    lotSelect.innerHTML = '<option value="">— Select a lot —</option>';
+    lotSelect.style.display = 'none';
 
     if (idx === '' || !species) return;
 
     const vax = VACCINE_OPTIONS[species][idx];
 
-    // Auto-fill lot from active inventory
-    const activeLot = activeLots[vax.inventoryKey];
-    if (activeLot) {
-      lotField.value    = activeLot.lot_number;
-      lotField.readOnly = true;
-      lotField.style.background = '#f0f4ff';
-      lotField.title    = 'Auto-filled from vaccine inventory. Contact staff to change.';
+    // Populate lot dropdown from active inventory
+    const lots = activeLots[vax.inventoryKey];
+    if (lots && lots.length > 0) {
+      lots.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value       = l.lot_number;
+        opt.textContent = l.lot_number;
+        lotSelect.appendChild(opt);
+      });
+      lotSelect.style.display = 'block';
+      if (lots.length === 1) {
+        lotSelect.value  = lots[0].lot_number;
+        lotField.value   = lots[0].lot_number;
+      }
     }
 
     // Build and show duration dropdown
@@ -1603,9 +1616,9 @@ async function markDischarged() {
       document.getElementById('rabiesFields').style.display = 'block';
       document.getElementById('rabiesUSDA').value = dur.usdaDuration || '';
 
-      // Auto-fill manufacturer and product from active lot
-      const activeLot  = activeLots[vax.inventoryKey];
-      const mfr        = activeLot?.manufacturer?.toUpperCase() || '';
+      // Auto-fill manufacturer from selected lot
+      const selectedLot = (activeLots[vax.inventoryKey] || []).find(l => l.lot_number === document.getElementById('vaxLot').value);
+      const mfr         = selectedLot?.manufacturer?.toUpperCase() || '';
       const productMap = { 'MER': 'IMRAB 3', 'ELA': 'RABVAC 3' };
       document.getElementById('rabiesMan').value     = mfr;
       document.getElementById('rabiesProduct').value = productMap[mfr] || '';
@@ -2277,14 +2290,25 @@ function setRadio(fieldName, index) {
   async function loadActiveLots() {
     try {
       const res  = await fetch(
-        `${SUPABASE_URL}/rest/v1/vaccine_inventory?active=eq.true`,
+        `${SUPABASE_URL}/rest/v1/vaccine_inventory?active=eq.true&order=lot_number.asc`,
         { headers: authHeaders() }
       );
       const rows = await res.json();
       activeLots = {};
-      rows.forEach(r => { activeLots[r.vaccine_type] = { lot_number: r.lot_number, manufacturer: r.manufacturer || null }; });
+      rows.forEach(r => {
+        if (!activeLots[r.vaccine_type]) activeLots[r.vaccine_type] = [];
+        activeLots[r.vaccine_type].push({ lot_number: r.lot_number, manufacturer: r.manufacturer || null });
+      });
     } catch (err) {
       console.warn('Could not load active lots:', err);
+    }
+  }
+
+  function onLotSelectChange() {
+    const select = document.getElementById('vaxLotSelect');
+    const lotField = document.getElementById('vaxLot');
+    if (select.value) {
+      lotField.value = select.value;
     }
   }
 
