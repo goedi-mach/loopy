@@ -596,7 +596,7 @@
       </div>
       <div style="display:flex; gap:0.75rem; align-items:flex-start;">
         <span style="font-size:1rem;">💉</span>
-        <div><strong>Log each vaccine</strong> with the lot and serial number. A rabies cert will be generated.</div>
+        <div><strong>Log each vaccine</strong> with the lot number. A rabies cert will be generated.</div>
       </div>
       <div style="display:flex; gap:0.75rem; align-items:flex-start;">
         <span style="font-size:1rem;">✅</span>
@@ -884,7 +884,7 @@
             </select>
           </div>
           <div class="form-field" style="display:none;">
-  <label>Vaccine Serial Number</label>
+  <label>Rabies Tag</label>
   <input type="text" id="vaxSerial" placeholder="e.g. 12345678" />
 </div>
           <div class="form-row">
@@ -2154,7 +2154,7 @@ function setRadio(fieldName, index) {
             <input id="editVaxLot" type="text" value="${record.lot_number || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
           </div>
           <div>
-            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Serial #</label>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.2rem;">Rabies Tag</label>
             <input id="editVaxSerial" type="text" value="${record.serial_number || ''}" style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.85rem;" />
           </div>
           <div>
@@ -2237,7 +2237,7 @@ function setRadio(fieldName, index) {
               <tr>
                 <th>Vaccine</th>
                 <th>Lot #</th>
-                <th>Serial #</th>
+                <th>Rabies Tag</th>
                 <th>Date Given</th>
                 <th>Next Due</th>
                 <th>Administered By</th>
