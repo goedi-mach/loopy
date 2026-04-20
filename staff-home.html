@@ -512,10 +512,21 @@
     }
 
     async function completeStaleClinic() {
-      if (!confirm('This will reset all active client statuses back to "In Queue". This cannot be undone.')) return;
+      if (!confirm('This will reset all active client statuses back to \"In Queue\". This cannot be undone.')) return;
       try {
         const today = new Date().toISOString().split('T')[0];
-        const res = await fetch(
+
+        // Find the stale event date first
+        const staleRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=lt.${today}&select=event_date&limit=1`,
+          { headers: authHeaders() }
+        );
+        if (!staleRes.ok) throw new Error('Could not fetch stale event date.');
+        const [staleRow] = await staleRes.json();
+        const staleDate = staleRow?.event_date;
+
+        // Reset client statuses
+        const patchClients = await fetch(
           `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=lt.${today}`,
           {
             method:  'PATCH',
@@ -523,8 +534,22 @@
             body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
           }
         );
-        if (!res.ok) throw new Error('Reset failed');
+        if (!patchClients.ok) throw new Error(`Failed to reset client statuses (${patchClients.status}).`);
+
+        // Mark the matching event as completed
+        if (staleDate) {
+          await fetch(
+            `${SUPABASE_URL}/rest/v1/events?event_date=eq.${staleDate}&completed=eq.false`,
+            {
+              method:  'PATCH',
+              headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+              body:    JSON.stringify({ completed: true, completed_at: new Date().toISOString() })
+            }
+          );
+        }
+
         document.getElementById('staleWarning').style.display = 'none';
+        await loadEvents();
       } catch (err) {
         alert('Error: ' + err.message);
       }
