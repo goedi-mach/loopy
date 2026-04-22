@@ -73,7 +73,7 @@ export default async function handler(req, res) {
           body: JSON.stringify({
             email,
             data: { role },
-            redirectTo: 'https://php-clinic.vercel.app/set-password.html'   // stored in raw_user_meta_data; we'll also set app_metadata below
+            redirectTo: 'https://clinic.phpchi.org/set-password.html'   // stored in raw_user_meta_data; we'll also set app_metadata below
           })
         });
 
