@@ -528,6 +528,18 @@
 </footer>
 
 <script>
+  // ── Supabase invite/recovery redirect handler ─────────────────
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const redirectTo = params.get('redirect_to');
+    const hash = window.location.hash;
+    if (redirectTo && hash) {
+      // Forward to the intended page, preserving the token in the hash
+      window.location.replace(redirectTo + hash);
+      return;
+    }
+  })();
+
   // Fade-in on scroll
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
