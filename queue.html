@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Queue Display — People Helping Pets</title>
+  <script src="config.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;800;900&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:       #1a3a8f;
+      --navy-dark:  #0f2460;
+      --navy-mid:   #4a6cc0;
+      --coral:      #f28b82;
+      --coral-dark: #d96b62;
+      --white:      #ffffff;
+      --off-white:  #f0f4ff;
+      --text-muted: rgba(255,255,255,0.55);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--navy-dark);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Background texture ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 0%, rgba(74,108,192,0.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(242,139,130,0.15) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 3rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-paw {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .brand-text {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 900;
+      font-size: 1.1rem;
+      line-height: 1.2;
+      color: var(--white);
+    }
+
+    .brand-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .clock {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.2rem;
+      letter-spacing: 0.04em;
+      color: var(--white);
+      opacity: 0.85;
+    }
+
+    .refresh-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--coral);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ── Main layout ── */
+    main {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 0;
+      padding: 2.5rem 3rem;
+      align-items: start;
+    }
+
+    .divider {
+      background: rgba(255,255,255,0.08);
+      margin: 0 2.5rem;
+      align-self: stretch;
+    }
+
+    /* ── Now Serving ── */
+    .now-serving {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    .now-serving-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.2em;
+      color: var(--coral);
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+    }
+
+    .now-serving-card {
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      overflow: hidden;
+      transition: opacity 0.4s ease;
+    }
+
+    .now-serving-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--coral), var(--coral-dark));
+      border-radius: 24px 24px 0 0;
+    }
+
+    .serving-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.5rem, 8vw, 6rem);
+      line-height: 1;
+      color: var(--white);
+      letter-spacing: 0.02em;
+      margin-bottom: 0.5rem;
+      animation: fadeSlideIn 0.5s ease;
+    }
+
+    .serving-pet {
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+      font-weight: 700;
+      color: var(--coral);
+      letter-spacing: 0.04em;
+      animation: fadeSlideIn 0.5s ease 0.1s both;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .empty-state-serving {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 2rem 0;
+    }
+
+    /* ── Up Next ── */
+    .up-next {
+      padding: 0 1rem;
+    }
+
+    .up-next-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+    }
+
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 1rem 1.5rem;
+      animation: fadeSlideIn 0.4s ease both;
+    }
+
+    .queue-item:nth-child(1) { animation-delay: 0.05s; }
+    .queue-item:nth-child(2) { animation-delay: 0.10s; }
+    .queue-item:nth-child(3) { animation-delay: 0.15s; }
+    .queue-item:nth-child(4) { animation-delay: 0.20s; }
+    .queue-item:nth-child(5) { animation-delay: 0.25s; }
+
+    .queue-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      color: rgba(255,255,255,0.2);
+      line-height: 1;
+      min-width: 2rem;
+      text-align: center;
+    }
+
+    .queue-info {
+      flex: 1;
+    }
+
+    .queue-name {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--white);
+      line-height: 1.2;
+    }
+
+    .queue-pet {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.5);
+      margin-top: 0.15rem;
+    }
+
+    .empty-state-queue {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 0.95rem;
+      padding: 1rem 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.2);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* ── No clinic today ── */
+    .no-clinic {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 1rem;
+      opacity: 0.5;
+    }
+
+    .no-clinic-icon { font-size: 4rem; }
+
+    .no-clinic-text {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+    }
+
+    .no-clinic-sub {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="brand">
+      <div class="brand-paw">🐾</div>
+      <div>
+        <div class="brand-text">People Helping Pets</div>
+        <div class="brand-sub">Vaccine Clinic — Chicago</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="refresh-indicator">
+        <div class="pulse-dot"></div>
+        <span>Live</span>
+      </div>
+      <div class="clock" id="clock">--:--</div>
+    </div>
+  </header>
+
+  <!-- ── Queue display (shown when clinic is active) ── -->
+  <main id="queueMain">
+    <!-- Now Serving -->
+    <div class="now-serving">
+      <div class="now-serving-label">Now Serving</div>
+      <div class="now-serving-card" id="nowServingCard">
+        <div class="empty-state-serving">Waiting for check-ins…</div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="divider"></div>
+
+    <!-- Up Next -->
+    <div class="up-next">
+      <div class="up-next-label">Up Next</div>
+      <div class="queue-list" id="queueList">
+        <div class="empty-state-queue">No one else in queue.</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── No clinic today (hidden by default) ── -->
+  <div class="no-clinic" id="noClinic" style="display:none;">
+    <div class="no-clinic-icon">📅</div>
+    <div class="no-clinic-text">No clinic scheduled today</div>
+    <div class="no-clinic-sub">Check back on the next clinic day</div>
+  </div>
+
+  <footer>
+    People Helping Pets &mdash; peoplehelpingpets.org &mdash; Auto-refreshes every 15 seconds
+  </footer>
+
+  <script>
+    const SUPABASE_URL      = CONFIG.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+
+    // ── Clock ─────────────────────────────────────────────────────
+    function updateClock() {
+      const now = new Date();
+      const h   = now.getHours();
+      const m   = String(now.getMinutes()).padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const h12  = h % 12 || 12;
+      document.getElementById('clock').textContent = `${h12}:${m} ${ampm}`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ── Supabase fetch helper ─────────────────────────────────────
+    async function sbGet(path) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        headers: {
+          'apikey':        SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Accept':        'application/json'
+        }
+      });
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      return res.json();
+    }
+
+    // ── Main refresh ──────────────────────────────────────────────
+    async function refresh() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+
+        // Fetch checked-in clients for today, ordered by check-in time
+        const clients = await sbGet(
+          `clients?status=eq.checked_in&event_date=eq.${today}&archived=eq.false&order=checked_in_at.asc&select=id,first_name,checked_in_at&limit=20`
+        );
+
+        if (!clients.length) {
+          showEmptyQueue();
+          return;
+        }
+
+        // Fetch pets for each client (one query, filter client_ids)
+        const clientIds = clients.map(c => c.id).join(',');
+        const pets = await sbGet(
+          `pets?client_id=in.(${clientIds})&archived=eq.false&select=client_id,name&order=created_at.asc`
+        );
+
+        // Map client_id → first pet name
+        const petMap = {};
+        for (const p of pets) {
+          if (!petMap[p.client_id]) petMap[p.client_id] = p.name;
+        }
+
+        renderQueue(clients, petMap);
+
+      } catch (err) {
+        console.error('Queue refresh error:', err);
+      }
+    }
+
+    function renderQueue(clients, petMap) {
+      document.getElementById('queueMain').style.display = 'grid';
+      document.getElementById('noClinic').style.display  = 'none';
+
+      const [first, ...rest] = clients;
+
+      // Now Serving
+      const card = document.getElementById('nowServingCard');
+      if (first) {
+        const petName = petMap[first.id] ? `🐾 ${petMap[first.id]}` : '';
+        card.innerHTML = `
+          <div class="serving-name">${first.first_name}</div>
+          ${petName ? `<div class="serving-pet">${petName}</div>` : ''}
+        `;
+      } else {
+        card.innerHTML = '<div class="empty-state-serving">Waiting for check-ins…</div>';
+      }
+
+      // Up Next (up to 5)
+      const list = document.getElementById('queueList');
+      if (rest.length === 0) {
+        list.innerHTML = '<div class="empty-state-queue">No one else in queue.</div>';
+      } else {
+        list.innerHTML = rest.slice(0, 5).map((c, i) => {
+          const petName = petMap[c.id] || '';
+          return `
+            <div class="queue-item">
+              <div class="queue-number">${i + 2}</div>
+              <div class="queue-info">
+                <div class="queue-name">${c.first_name}</div>
+                ${petName ? `<div class="queue-pet">🐾 ${petName}</div>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function showEmptyQueue() {
+      document.getElementById('queueMain').style.display = 'grid';
+      document.getElementById('noClinic').style.display  = 'none';
+      document.getElementById('nowServingCard').innerHTML =
+        '<div class="empty-state-serving">Waiting for check-ins…</div>';
+      document.getElementById('queueList').innerHTML =
+        '<div class="empty-state-queue">No one else in queue.</div>';
+    }
+
+    // ── Start ─────────────────────────────────────────────────────
+    refresh();
+    setInterval(refresh, 15000);
+  </script>
+</body>
+</html>
