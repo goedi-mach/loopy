@@ -290,6 +290,66 @@
       font-style: italic;
       font-size: 0.88rem;
     }
+
+    /* ── Waste modal ── */
+    .waste-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .waste-modal {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .waste-modal h2 {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: var(--navy);
+      margin-bottom: 0.25rem;
+    }
+    .waste-modal .subtitle {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+    .waste-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .waste-row select, .waste-row input {
+      padding: 0.45rem 0.7rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: #f8faff;
+    }
+    .waste-row input { width: 70px; }
+    .waste-row button {
+      background: none;
+      border: none;
+      color: var(--coral-dark);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0.2rem 0.4rem;
+    }
+    .waste-modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
   </style>
 </head>
 <body>
@@ -640,41 +700,121 @@
     }
 
  async function completeEvent(eventId) {
-      if (!confirm('Mark this event as complete? This will reset all active client statuses back to \"In Queue\".')) return;
-      try {
-        // Fetch the event to get its date
-        const evRes = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}&select=event_date`, {
-          headers: authHeaders()
-        });
-        if (!evRes.ok) throw new Error('Could not fetch event details.');
-        const [ev] = await evRes.json();
-        if (!ev) throw new Error('Event not found.');
-
-        // Mark event complete
-        const patchEv = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}`, {
-          method:  'PATCH',
-          headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-          body:    JSON.stringify({ completed: true, completed_at: new Date().toISOString() })
-        });
-        if (!patchEv.ok) throw new Error(`Failed to mark event complete (${patchEv.status}).`);
-
-        // Reset client statuses for that event's date only
-        const patchClients = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=eq.${ev.event_date}`,
-          {
-            method:  'PATCH',
-            headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-            body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
-          }
-        );
-        if (!patchClients.ok) throw new Error(`Failed to reset client statuses (${patchClients.status}).`);
-
-        await loadEvents();
-        document.getElementById('staleWarning').style.display = 'none';
-      } catch (err) {
-        alert('Error: ' + err.message);
-      }
+    // Fetch event details first
+    try {
+      const evRes = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}&select=event_date,location`, {
+        headers: authHeaders()
+      });
+      if (!evRes.ok) throw new Error('Could not fetch event details.');
+      const [ev] = await evRes.json();
+      if (!ev) throw new Error('Event not found.');
+      openWasteModal(eventId, ev.event_date, ev.location);
+    } catch (err) {
+      alert('Error: ' + err.message);
     }
+  }
+
+  function openWasteModal(eventId, eventDate, location) {
+    const existing = document.getElementById('wasteModalOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'wasteModalOverlay';
+    overlay.className = 'waste-modal-overlay';
+    overlay.innerHTML = `
+      <div class="waste-modal">
+        <h2>🗑️ Log Vaccine Waste</h2>
+        <div class="subtitle">${location} · ${fmt(eventDate)}</div>
+        <div id="wasteRows"></div>
+        <button onclick="addWasteRow()" style="font-family:'Nunito',sans-serif;font-weight:700;font-size:0.83rem;padding:0.35rem 0.9rem;border-radius:999px;border:1.5px dashed var(--border);background:none;color:var(--navy);cursor:pointer;margin-top:0.25rem;">+ Add vaccine</button>
+        <div id="wasteMsg" class="msg"></div>
+        <div class="waste-modal-actions">
+          <button onclick="submitWasteAndComplete('${eventId}', '${eventDate}')" class="btn btn-primary" style="flex:1;">Save &amp; Complete Event</button>
+          <button onclick="skipWasteAndComplete('${eventId}', '${eventDate}')" style="flex:1;padding:0.55rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--text-muted);font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;">No Waste — Complete</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    addWasteRow(); // start with one row
+  }
+
+  function addWasteRow() {
+    const container = document.getElementById('wasteRows');
+    const row = document.createElement('div');
+    row.className = 'waste-row';
+    row.innerHTML = `
+      <select>
+        <option value="">— Vaccine —</option>
+        <option value="Rabies">Rabies</option>
+        <option value="DAPP">DAPP</option>
+        <option value="DAPP + Lepto">DAPP + Lepto</option>
+        <option value="FVRCP">FVRCP</option>
+      </select>
+      <input type="number" min="1" max="99" placeholder="Doses" />
+      <button onclick="this.closest('.waste-row').remove()" title="Remove">✕</button>
+    `;
+    container.appendChild(row);
+  }
+
+  async function submitWasteAndComplete(eventId, eventDate) {
+    const rows = document.querySelectorAll('#wasteRows .waste-row');
+    const entries = [];
+
+    for (const row of rows) {
+      const vaccine = row.querySelector('select').value;
+      const doses   = parseInt(row.querySelector('input').value);
+      if (!vaccine && !row.querySelector('input').value) continue; // skip empty rows
+      if (!vaccine) { showMsg('wasteMsg', 'error', 'Please select a vaccine type for each row.'); return; }
+      if (!doses || doses < 1) { showMsg('wasteMsg', 'error', 'Please enter a valid dose count for each row.'); return; }
+      entries.push({ event_id: eventId, vaccine_name: vaccine, doses_wasted: doses });
+    }
+
+    try {
+      if (entries.length > 0) {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_waste`, {
+          method:  'POST',
+          headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+          body:    JSON.stringify(entries)
+        });
+        if (!res.ok) throw new Error('Failed to save waste entries.');
+      }
+      await finalizeEvent(eventId, eventDate);
+      document.getElementById('wasteModalOverlay').remove();
+    } catch (err) {
+      showMsg('wasteMsg', 'error', err.message);
+    }
+  }
+
+  async function skipWasteAndComplete(eventId, eventDate) {
+    try {
+      await finalizeEvent(eventId, eventDate);
+      document.getElementById('wasteModalOverlay').remove();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  async function finalizeEvent(eventId, eventDate) {
+    const patchEv = await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${eventId}`, {
+      method:  'PATCH',
+      headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+      body:    JSON.stringify({ completed: true, completed_at: new Date().toISOString() })
+    });
+    if (!patchEv.ok) throw new Error(`Failed to mark event complete (${patchEv.status}).`);
+
+    const patchClients = await fetch(
+      `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=eq.${eventDate}`,
+      {
+        method:  'PATCH',
+        headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+        body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
+      }
+    );
+    if (!patchClients.ok) throw new Error(`Failed to reset client statuses (${patchClients.status}).`);
+
+    await loadEvents();
+    document.getElementById('staleWarning').style.display = 'none';
+  }
 
     function openEditEvent(id, location, date, start, end, notes) {
       const existing = document.getElementById('editEventDialog');
