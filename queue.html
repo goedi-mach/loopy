@@ -414,7 +414,7 @@
         // Fetch pets for each client (one query, filter client_ids)
         const clientIds = clients.map(c => c.id).join(',');
         const pets = await sbGet(
-          `pets?client_id=in.(${clientIds})&select=client_id,name&order=created_at.asc`
+          `pets?client_id=in.(${clientIds})&select=client_id,name`
         );
 
         // Map client_id → first pet name
