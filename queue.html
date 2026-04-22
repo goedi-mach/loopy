@@ -403,7 +403,7 @@
 
         // Fetch checked-in clients for today, ordered by check-in time
         const clients = await sbGet(
-          `clients?status=eq.checked_in&event_date=eq.${today}&archived=eq.false&order=checked_in_at.asc&select=id,first_name,checked_in_at&limit=20`
+          `clients?status=eq.checked_in&event_date=eq.${today}&archived=eq.false&order=checked_in_at.asc&select=id,name,checked_in_at&limit=20`
         );
 
         if (!clients.length) {
@@ -441,7 +441,7 @@
       if (first) {
         const petName = petMap[first.id] ? `🐾 ${petMap[first.id]}` : '';
         card.innerHTML = `
-          <div class="serving-name">${first.first_name}</div>
+          <div class="serving-name">${first.name}</div>
           ${petName ? `<div class="serving-pet">${petName}</div>` : ''}
         `;
       } else {
@@ -459,7 +459,7 @@
             <div class="queue-item">
               <div class="queue-number">${i + 2}</div>
               <div class="queue-info">
-                <div class="queue-name">${c.first_name}</div>
+                <div class="queue-name">${c.name}</div>
                 ${petName ? `<div class="queue-pet">🐾 ${petName}</div>` : ''}
               </div>
             </div>
