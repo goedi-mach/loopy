@@ -1350,7 +1350,7 @@ function updateClinicBanner(event) {
     return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
-  text.textContent = `📅 Today's Clinic: ${event.location} · ${fmtTime(event.start_time)}${event.end_time ? ` – ${fmtTime(event.end_time)}` : ''}`;
+  text.textContent = `Today's Clinic: ${event.location} · ${fmtTime(event.start_time)}${event.end_time ? ` – ${fmtTime(event.end_time)}` : ''}`;
   banner.style.display = 'flex';
 }
 // ─── DELETE EVENT ──────────────────────────────────────────────
