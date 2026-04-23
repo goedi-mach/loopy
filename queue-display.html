@@ -77,7 +77,7 @@
     }
 
     .now-number {
-      font-size: clamp(18rem, 45vw, 36rem);
+      font-size: clamp(6rem, 15vw, 12rem);
       line-height: 0.85;
       color: #ffffff;
       letter-spacing: -0.02em;
@@ -157,7 +157,6 @@
   <div class="main">
     <div class="now-label">Now Serving</div>
     <div class="number-wrap">
-      <div class="hash">#</div>
       <div class="now-number" id="nowNumber">—</div>
     </div>
 
@@ -200,10 +199,10 @@
           lastNumber = n;
         }
 
-        document.getElementById('nowNumber').textContent = n;
+        document.getElementById('nowNumber').innerHTML =
+          `#${n} &nbsp; #${n+1} &nbsp; #${n+2}`;
         document.getElementById('nextNumbers').innerHTML =
-          [n + 1, n + 2, n + 3].map(x => `<div class="next-num">#${x}</div>`).join('');
-
+          [n + 3, n + 4, n + 5].map(x => `<div class="next-num">#${x}</div>`).join('');
       } catch (err) {
         console.error('Display refresh error:', err);
       }

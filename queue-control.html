@@ -251,11 +251,11 @@
     }
 
     function renderNumber(n) {
-      const el = document.getElementById('currentNumber');
+      document.getElementById('currentNumber').textContent = `#${n}–#${n+2}`;
       el.textContent = `#${n}`;
       el.classList.add('bump');
       setTimeout(() => el.classList.remove('bump'), 150);
-      document.getElementById('upNextPreview').textContent = `Up next: #${n+1}, #${n+2}, #${n+3}`;
+      document.getElementById('upNextPreview').textContent = `Up next: #${n+3}, #${n+4}, #${n+5}`;
       document.getElementById('nextBtn').disabled = false;
       document.getElementById('prevBtn').disabled = n <= 1;
     }
@@ -297,12 +297,12 @@
 
     function advance() {
       if (current === null) return;
-      update(current + 1);
+      update(current + 3);
     }
 
     function goBack() {
       if (current === null || current <= 1) return;
-      update(current - 1);
+      update(Math.max(1, current - 3));
     }
 
     async function resetQueue() {
