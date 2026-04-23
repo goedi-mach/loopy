@@ -1838,36 +1838,76 @@ if (savedToken) {
 })();
 </script>
 <!-- ── Floating Queue Widget ── -->
-  <div id="queueWidget" style="
+  <div id="queueBubble" style="
     position: fixed;
     bottom: 1.5rem;
     right: 1.5rem;
     z-index: 9999;
-    background: #1a3a8f;
-    color: white;
-    border-radius: 999px;
-    padding: 0.6rem 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
     cursor: grab;
     user-select: none;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 800;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    border: 2px solid rgba(255,255,255,0.15);
   ">
-    <span style="font-size:0.8rem; opacity:0.7; letter-spacing:0.05em;">NOW SERVING</span>
-    <span id="widgetNumber" style="font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:0.05em;">—</span>
-    <button onclick="widgetBack(event)" style="background:rgba(255,255,255,0.15); border:none; color:white; border-radius:999px; width:28px; height:28px; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;" title="Go back">‹</button>
-    <button onclick="widgetNext(event)" style="background:#f28b82; border:none; color:white; border-radius:999px; width:28px; height:28px; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;" title="Next">›</button>
+    <!-- Collapsed bubble -->
+    <div id="queueCollapsed" onclick="queueExpand()" style="
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #1a3a8f;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      border: 2px solid rgba(255,255,255,0.15);
+      transition: transform 0.15s ease;
+    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+      🎟️
+    </div>
+
+    <!-- Expanded pill -->
+    <div id="queueExpanded" style="
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      background: #1a3a8f;
+      color: white;
+      border-radius: 999px;
+      padding: 0.6rem 1rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      border: 2px solid rgba(255,255,255,0.15);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      white-space: nowrap;
+      animation: pillIn 0.2s ease;
+    ">
+      <button onclick="queueCollapse(event)" style="background:rgba(255,255,255,0.15); border:none; color:white; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:0.75rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;">✕</button>
+      <span style="font-size:0.75rem; opacity:0.7; letter-spacing:0.05em;">NOW SERVING</span>
+      <span id="widgetNumber" style="font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:0.05em;">—</span>
+      <button onclick="widgetBack(event)" style="background:rgba(255,255,255,0.15); border:none; color:white; border-radius:999px; width:28px; height:28px; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;" title="Go back">‹</button>
+      <button onclick="widgetNext(event)" style="background:#f28b82; border:none; color:white; border-radius:999px; width:28px; height:28px; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;" title="Next">›</button>
+    </div>
   </div>
+
+  <style>
+    @keyframes pillIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+  </style>
 
   <script>
     // ── Queue widget ───────────────────────────────────────────────
     let widgetCurrent = null;
+
+    function queueExpand() {
+      document.getElementById('queueCollapsed').style.display = 'none';
+      document.getElementById('queueExpanded').style.display  = 'flex';
+    }
+
+    function queueCollapse(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('queueCollapsed').style.display = 'flex';
+      document.getElementById('queueExpanded').style.display  = 'none';
+    }
 
     async function widgetLoad() {
       try {
@@ -1917,22 +1957,20 @@ if (savedToken) {
     }
 
     // ── Drag logic ────────────────────────────────────────────────
-    const widget = document.getElementById('queueWidget');
+    const widget = document.getElementById('queueBubble');
     let dragging = false, startX, startY, startLeft, startTop;
 
     widget.addEventListener('mousedown', e => {
-      if (e.target.tagName === 'BUTTON') return;
+      if (e.target.tagName === 'BUTTON' || e.target.id === 'queueCollapsed') return;
       dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
+      startX = e.clientX; startY = e.clientY;
       const rect = widget.getBoundingClientRect();
-      startLeft = rect.left;
-      startTop  = rect.top;
-      widget.style.cursor = 'grabbing';
-      widget.style.right  = 'auto';
-      widget.style.bottom = 'auto';
-      widget.style.left   = startLeft + 'px';
-      widget.style.top    = startTop  + 'px';
+      startLeft = rect.left; startTop = rect.top;
+      widget.style.cursor  = 'grabbing';
+      widget.style.right   = 'auto';
+      widget.style.bottom  = 'auto';
+      widget.style.left    = startLeft + 'px';
+      widget.style.top     = startTop  + 'px';
     });
 
     document.addEventListener('mousemove', e => {
