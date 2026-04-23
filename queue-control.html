@@ -311,6 +311,7 @@
       showMsg('success', 'Queue reset to #1.');
     }
 
+    console.log('CONFIG at script time:', typeof CONFIG, typeof CONFIG !== 'undefined' ? CONFIG.SUPABASE_URL : 'MISSING');
     window.addEventListener('load', load);
   </script>
 </body>

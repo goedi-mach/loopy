@@ -77,10 +77,10 @@
     }
 
     .now-number {
-      font-size: clamp(7rem, 18vw, 14rem);
-      line-height: 0.9;
+      font-size: clamp(6rem, 15vw, 12rem);
+      line-height: 0.85;
       color: #ffffff;
-      letter-spacing: 0.02em;
+      letter-spacing: -0.02em;
       animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
@@ -197,7 +197,8 @@
           lastNumber = n;
         }
 
-        document.getElementById('nowNumber').textContent = `#${n} – #${n+2}`;
+        document.getElementById('nowNumber').innerHTML =
+          `#${n} &nbsp; #${n+1} &nbsp; #${n+2}`;
         document.getElementById('nextNumbers').innerHTML =
           [n + 3, n + 4, n + 5].map(x => `<div class="next-num">#${x}</div>`).join('');
       } catch (err) {
