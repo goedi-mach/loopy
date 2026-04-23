@@ -773,19 +773,7 @@
               <div>
                 <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.3rem; color:var(--navy)" id="clientName"></div>
                 <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.3rem" id="clientContact"></div>
-                <!-- Notes pill -->
-                <div id="notesPill" style="margin-top:0.6rem;">
-                  <button onclick="toggleNotesPill()" style="display:flex; align-items:center; gap:0.4rem; background:#fffbea; border:1.5px solid #f0d97a; border-radius:999px; padding:0.3rem 0.85rem; cursor:pointer; font-family:'Nunito',sans-serif; font-weight:700; font-size:0.78rem; color:#92720a;">
-                    📝 <span id="notesPillLabel">Notes</span>
-                  </button>
-                  <div id="notesPillBody" style="display:none; margin-top:0.5rem; background:#fffbea; border:1.5px solid #f0d97a; border-radius:12px; padding:0.75rem; max-width:360px;">
-                    <textarea id="clientNotesField" placeholder="Permanent notes about this client…" style="width:100%; min-height:72px; border:none; background:transparent; font-family:'Nunito Sans',sans-serif; font-size:0.85rem; color:#5a4a00; resize:vertical; outline:none;"></textarea>
-                    <div style="display:flex; justify-content:flex-end; margin-top:0.35rem;">
-                      <button onclick="saveClientNotes()" style="font-size:0.75rem; padding:0.3rem 0.85rem; border-radius:999px; border:none; background:#f0d97a; color:#5a4a00; font-family:'Nunito',sans-serif; font-weight:800; cursor:pointer;">Save</button>
-                    </div>
-                    <div id="notesSaveMsg" class="msg" style="margin-top:0.3rem;"></div>
-                  </div>
-                </div>
+              
               </div>
              <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
   <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
@@ -794,8 +782,17 @@
   <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
   <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
   <button id="archiveClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit; display:none;" onclick="toggleArchiveClient()">Archive</button>
+              <button id="notesBtn" onclick="toggleNotesPill()" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid #f0d97a; background:#fffbea; color:#92720a; cursor:pointer; font-family:'Nunito',sans-serif; font-weight:700; display:none;">📝 <span id="notesPillLabel">Notes</span></button>
 </div>
             </div>
+          </div>
+          <!-- Notes expanded body -->
+          <div id="notesPillBody" style="display:none; margin-top:0.75rem; background:#fffbea; border:1.5px solid #f0d97a; border-radius:12px; padding:0.75rem;">
+            <textarea id="clientNotesField" placeholder="Permanent notes about this client…" style="width:100%; min-height:72px; border:none; background:transparent; font-family:'Nunito Sans',sans-serif; font-size:0.85rem; color:#5a4a00; resize:vertical; outline:none;"></textarea>
+            <div style="display:flex; justify-content:flex-end; margin-top:0.35rem;">
+              <button onclick="saveClientNotes()" style="font-size:0.75rem; padding:0.3rem 0.85rem; border-radius:999px; border:none; background:#f0d97a; color:#5a4a00; font-family:'Nunito',sans-serif; font-weight:800; cursor:pointer;">Save</button>
+            </div>
+            <div id="notesSaveMsg" class="msg" style="margin-top:0.3rem;"></div>
           </div>
         </div>
       </div>
@@ -1437,6 +1434,7 @@ profileBtn.style.display = 'inline-block';
 document.getElementById('archiveClientBtn').style.display = 'block';
 document.getElementById('archiveClientBtn').textContent   = client.archived ? 'Unarchive' : 'Archive';
 document.getElementById('petsCard').style.display         = 'block';
+document.getElementById('notesBtn').style.display         = 'block';
 document.getElementById('clientNotesField').value         = client.notes || '';
 document.getElementById('notesPillLabel').textContent     = client.notes ? 'Notes ✎' : 'Notes';
 document.getElementById('notesPillBody').style.display    = 'none';
