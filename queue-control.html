@@ -276,6 +276,7 @@
         current = row.now_serving;
         renderNumber(current);
       } catch (err) {
+        console.error('load error:', err);
         showMsg('error', err.message);
       }
     }
