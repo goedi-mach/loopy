@@ -197,8 +197,7 @@
           lastNumber = n;
         }
 
-        document.getElementById('nowNumber').innerHTML =
-          `#${n} &nbsp; #${n+1} &nbsp; #${n+2}`;
+        document.getElementById('nowNumber').textContent = `#${n}  #${n+1}  #${n+2}`;
         document.getElementById('nextNumbers').innerHTML =
           [n + 3, n + 4, n + 5].map(x => `<div class="next-num">#${x}</div>`).join('');
       } catch (err) {
