@@ -773,6 +773,19 @@
               <div>
                 <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.3rem; color:var(--navy)" id="clientName"></div>
                 <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.3rem" id="clientContact"></div>
+                <!-- Notes pill -->
+                <div id="notesPill" style="margin-top:0.6rem;">
+                  <button onclick="toggleNotesPill()" style="display:flex; align-items:center; gap:0.4rem; background:#fffbea; border:1.5px solid #f0d97a; border-radius:999px; padding:0.3rem 0.85rem; cursor:pointer; font-family:'Nunito',sans-serif; font-weight:700; font-size:0.78rem; color:#92720a;">
+                    📝 <span id="notesPillLabel">Notes</span>
+                  </button>
+                  <div id="notesPillBody" style="display:none; margin-top:0.5rem; background:#fffbea; border:1.5px solid #f0d97a; border-radius:12px; padding:0.75rem; max-width:360px;">
+                    <textarea id="clientNotesField" placeholder="Permanent notes about this client…" style="width:100%; min-height:72px; border:none; background:transparent; font-family:'Nunito Sans',sans-serif; font-size:0.85rem; color:#5a4a00; resize:vertical; outline:none;"></textarea>
+                    <div style="display:flex; justify-content:flex-end; margin-top:0.35rem;">
+                      <button onclick="saveClientNotes()" style="font-size:0.75rem; padding:0.3rem 0.85rem; border-radius:999px; border:none; background:#f0d97a; color:#5a4a00; font-family:'Nunito',sans-serif; font-weight:800; cursor:pointer;">Save</button>
+                    </div>
+                    <div id="notesSaveMsg" class="msg" style="margin-top:0.3rem;"></div>
+                  </div>
+                </div>
               </div>
              <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
   <div style="font-size:0.75rem; color:var(--text-muted)" id="clientSince"></div>
@@ -1423,7 +1436,10 @@ profileBtn.href = `client.html?id=${client.id}`;
 profileBtn.style.display = 'inline-block';
 document.getElementById('archiveClientBtn').style.display = 'block';
 document.getElementById('archiveClientBtn').textContent   = client.archived ? 'Unarchive' : 'Archive';
-document.getElementById('petsCard').style.display = 'block';
+document.getElementById('petsCard').style.display         = 'block';
+document.getElementById('clientNotesField').value         = client.notes || '';
+document.getElementById('notesPillLabel').textContent     = client.notes ? 'Notes ✎' : 'Notes';
+document.getElementById('notesPillBody').style.display    = 'none';
 
     // Reset vaccine section
     clearSelectedPet();
@@ -1499,6 +1515,31 @@ function clearSelectedPet() {
   }
 
   // ─── STATUS UPDATES ────────────────────────────────────────────
+  function toggleNotesPill() {
+  const body  = document.getElementById('notesPillBody');
+  const label = document.getElementById('notesPillLabel');
+  const open  = body.style.display === 'none';
+  body.style.display  = open ? 'block' : 'none';
+  label.textContent   = open ? 'Close Notes' : (currentClient?.notes ? 'Notes ✎' : 'Notes');
+}
+
+async function saveClientNotes() {
+  if (!currentClient) return;
+  const notes = document.getElementById('clientNotesField').value.trim() || null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
+      method:  'PATCH',
+      headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+      body:    JSON.stringify({ notes })
+    });
+    if (!res.ok) throw new Error('Save failed');
+    currentClient.notes = notes;
+    document.getElementById('notesPillLabel').textContent = notes ? 'Notes ✎' : 'Notes';
+    showMsg('notesSaveMsg', 'success', 'Saved.');
+  } catch (err) {
+    showMsg('notesSaveMsg', 'error', err.message);
+  }
+}
   async function checkInClient() {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
