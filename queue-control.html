@@ -251,8 +251,8 @@
     }
 
     function renderNumber(n) {
-      document.getElementById('currentNumber').textContent = `#${n}–#${n+2}`;
-      el.textContent = `#${n}`;
+      const el = document.getElementById('currentNumber');
+      el.textContent = `#${n} – #${n+2}`;
       el.classList.add('bump');
       setTimeout(() => el.classList.remove('bump'), 150);
       document.getElementById('upNextPreview').textContent = `Up next: #${n+3}, #${n+4}, #${n+5}`;
