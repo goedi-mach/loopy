@@ -1,4 +1,4 @@
-# People Helping Pets — PHP Clinic App
+# People Helping Pets — Pawkit
 
 Internal web tools for running free vaccine clinics. Built for [People Helping Pets](https://peoplehelpingpets.org), a Chicago-based nonprofit providing bilingual vaccine clinics for cats and dogs in underserved neighborhoods.
 
@@ -6,96 +6,114 @@ Internal web tools for running free vaccine clinics. Built for [People Helping P
 
 ## Pages
 
-| File                | Purpose                                                                                          |
-| ------------------- | ------------------------------------------------------------------------------------------------ |
-| `index.html`        | Landing / home page                                                                              |
-| `registration.html` | Bilingual client & pet registration form (English/Spanish) with waiver and drawn signature       |
-| `login.html`        | Role-selector landing page — routes staff to the appropriate tool                                |
-| `intake.html`       | Staff intake tool — client search, walk-in registration, check-in, pet records                   |
-| `discharge.html`    | Staff discharge tool — vaccine logging, microchip, certificate download, mark as seen            |
-| `records.html`      | Sortable, filterable table of all clients and pets; CSV export                                   |
-| `client.html`       | Client profile page — edit client/pet records, vaccination history, cert download, signed waiver |
+| File                  | Purpose                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `index.html`          | Landing / home page                                                                                            |
+| `intake.html`         | Staff intake tool — client search, walk-in registration, check-in, pet records, client notes                   |
+| `discharge.html`      | Staff discharge tool — vaccine logging, microchip, certificate download, mark as seen, client notes            |
+| `dashboard.html`      | Role-selector landing page — routes staff to the appropriate tool                                              |
+| `records.html`        | Sortable, filterable table of all clients and pets; CSV export                                                 |
+| `client.html`         | Client profile page — edit client/pet records, vaccination history, cert download, signed waiver, client notes |
+| `reports.html`        | Stats page with date/event filters, charts, per-event table, vaccine waste summary, CSV export                 |
+| `staff-home.html`     | Nav hub for staff — event management, user management, queue control tile                                      |
+| `volunteer-home.html` | Role picker (Intake/Discharge) for volunteers                                                                  |
+| `set-password.html`   | Password setup page for new invited users                                                                      |
+| `queue-display.html`  | Public-facing queue display — shows "Now Serving" numbers for the crowd; auto-refreshes every 10 seconds       |
+| `queue-control.html`  | Staff-only queue control panel — advance, go back, or reset the queue number                                   |
 
 ---
 
-## Certificate Generation
+## Key Features
 
-Rabies certificates (NASPHV Form 51) are generated entirely in the browser using [pdf-lib](https://pdf-lib.js.org/). The filled PDF is downloaded directly — no server required.
+### Client & Pet Management
 
-The template PDF (`RabiesVacCert.pdf`) and the veterinarian signature image (`ana_signature.png`) are hosted in Supabase Storage under the `templates` bucket and must be publicly accessible.
+- Walk-in client registration with duplicate detection and fuzzy name matching
+- Up to 3 pets per registration on the public intake form
+- Inline editing of client and pet records
+- Client archiving
+- **Permanent client notes** — free-text notes attached to a client record, visible and editable in intake, discharge, and the client profile
 
-A standalone Python script (`fill_cert.py`) also exists for local CLI-based certificate generation. It requires `pypdf`, `requests`, `python-dateutil`, and `reportlab`. Run it with:
+### Vaccine Clinics
 
-```bash
-python fill_cert.py <vaccination_id>
-```
+- Event creation and management in staff-home
+- Clinic banner on intake and discharge pages when an event is active today
+- **Event completion flow** — closing an event prompts staff to log vaccine waste before finalizing
+- **Vaccine waste tracking** — per-event log of drawn-but-unused doses by vaccine type; surfaced in reports
 
-Output is saved to `certificates/cert_<vaccination_id>.pdf`.
+### Queue Management
+
+- **Queue display screen** (`queue-display.html`) — large-format display showing current and upcoming ticket numbers, designed for a TV or tablet facing the waiting area; no login required
+- **Queue control panel** (`queue-control.html`) — staff advances the queue in batches of 3; accessible from staff-home
+- **Floating queue widget** on the intake page — collapsed emoji bubble that expands to show current numbers and next/back controls without leaving the page
+- Queue numbers are manually managed and independent of check-in status, suitable for outdoor waiting areas
+
+### Reporting
+
+- Stats filtered by date range or specific event
+- Charts for vaccines administered, species breakdown, new vs. returning clients
+- Per-event summary table
+- **Vaccine waste report** — total doses wasted per vaccine type for the selected period
+- CSV export
+
+### Certificates
+
+- Rabies certificates (NASPHV Form 51) generated entirely in the browser using [pdf-lib](https://pdf-lib.js.org/)
+- No server required; filled PDF downloaded directly
+
+### Auth & Roles
+
+- Role-based access via Supabase JWT `app_metadata.role`
+- Staff vs. volunteer routing at login
+- Admin user operations (invite, set role, list) via Vercel serverless function
+- Invite flow redirects to `set-password.html`
 
 ---
 
-## Waiver & Signature
+## Supabase Schema
 
-The public intake form (`intake.html`) includes a bilingual liability waiver (English/Spanish) that clients must sign before submitting. The signature is drawn on a canvas using [Signature Pad](https://github.com/szimek/signature_pad) and saved as a base64 PNG string.
-
-On submission, two fields are written to the `clients` table:
-
-- `waiver_signature` — base64 PNG of the drawn signature
-- `waiver_signed_at` — UTC timestamp of submission
-
-The signed waiver is viewable by staff on the client's profile page (`client.html`), which displays the signature image and the date/time it was signed.
-
----
-
-## Setup
-
-### 1. Supabase
-
-This project uses [Supabase](https://supabase.com) as its backend (Postgres via REST API, Supabase Auth for staff login).
-
-**`clients` table**
-
-| Column             | Type          | Notes                                                                               |
-| ------------------ | ------------- | ----------------------------------------------------------------------------------- |
-| `id`               | `uuid`        | Primary key, default `gen_random_uuid()`                                            |
-| `name`             | `text`        | Required                                                                            |
-| `email`            | `text`        | Optional                                                                            |
-| `phone`            | `text`        | Optional                                                                            |
-| `street`           | `text`        | Optional — replaces old single `address` field                                      |
-| `city`             | `text`        | Optional                                                                            |
-| `state`            | `text`        | Optional                                                                            |
-| `zip`              | `text`        | Optional                                                                            |
-| `address`          | `text`        | Legacy — kept for backward compatibility; use `street/city/state/zip` going forward |
-| `event_date`       | `date`        | Set automatically on submission                                                     |
-| `status`           | `text`        | `registered`, `checked_in`, or `seen`                                               |
-| `checked_in_at`    | `timestamptz` | Optional                                                                            |
-| `seen_at`          | `timestamptz` | Optional                                                                            |
-| `archived`         | `bool`        | Default `false`                                                                     |
-| `waiver_signature` | `text`        | Base64 PNG of drawn signature; set on intake form submission                        |
-| `waiver_signed_at` | `timestamptz` | UTC timestamp of waiver signature; set on intake form submission                    |
-| `created_at`       | `timestamptz` | Default `now()`                                                                     |
-
-**`pets` table**
+### `clients` table
 
 | Column             | Type          | Notes                                    |
 | ------------------ | ------------- | ---------------------------------------- |
 | `id`               | `uuid`        | Primary key, default `gen_random_uuid()` |
-| `client_id`        | `uuid`        | Foreign key → `clients.id`               |
 | `name`             | `text`        | Required                                 |
-| `species`          | `text`        | `dog`, `cat`, `ferret`, or `other`       |
-| `breed`            | `text`        | Optional                                 |
-| `age`              | `float8`      | Optional, in years                       |
-| `age_unit`         | `text`        | `years` or `months`                      |
-| `weight`           | `float8`      | Optional, in lbs                         |
-| `sex`              | `text`        | `male`, `female`, or `unknown`           |
-| `altered`          | `text`        | `yes`, `no`, or `unknown`                |
-| `microchipped`     | `text`        | `yes`, `no`, or `unknown`                |
-| `microchip_number` | `text`        | Optional                                 |
-| `colors_markings`  | `text`        | Optional                                 |
+| `email`            | `text`        | Optional                                 |
+| `phone`            | `text`        | Optional                                 |
+| `street`           | `text`        | Optional                                 |
+| `city`             | `text`        | Optional                                 |
+| `state`            | `text`        | Optional                                 |
+| `zip`              | `text`        | Optional                                 |
+| `address`          | `text`        | Legacy — kept for backward compatibility |
+| `event_date`       | `date`        | Set on registration                      |
+| `status`           | `text`        | `registered`, `checked_in`, or `seen`    |
+| `checked_in_at`    | `timestamptz` | Optional                                 |
+| `seen_at`          | `timestamptz` | Optional                                 |
+| `notes`            | `text`        | Permanent client notes                   |
 | `archived`         | `bool`        | Default `false`                          |
+| `waiver_signature` | `text`        | Base64 PNG of drawn signature            |
+| `waiver_signed_at` | `timestamptz` | UTC timestamp of waiver signature        |
 | `created_at`       | `timestamptz` | Default `now()`                          |
 
-**`vaccinations` table**
+### `pets` table
+
+| Column             | Type     | Notes                                       |
+| ------------------ | -------- | ------------------------------------------- |
+| `id`               | `uuid`   | Primary key, default `gen_random_uuid()`    |
+| `client_id`        | `uuid`   | Foreign key → `clients.id` (cascade delete) |
+| `name`             | `text`   | Required                                    |
+| `species`          | `text`   | `dog`, `cat`, `ferret`, or `other`          |
+| `breed`            | `text`   | Optional                                    |
+| `age`              | `float8` | Optional, in years                          |
+| `age_unit`         | `text`   | `years` or `months`                         |
+| `weight`           | `float8` | Optional, in lbs                            |
+| `sex`              | `text`   | `male`, `female`, or `unknown`              |
+| `altered`          | `text`   | `yes`, `no`, or `unknown`                   |
+| `microchipped`     | `text`   | `yes`, `no`, or `unknown`                   |
+| `microchip_number` | `text`   | Optional                                    |
+| `colors_markings`  | `text`   | Optional                                    |
+| `archived`         | `bool`   | Default `false`                             |
+
+### `vaccinations` table
 
 | Column              | Type          | Notes                                      |
 | ------------------- | ------------- | ------------------------------------------ |
@@ -117,33 +135,71 @@ This project uses [Supabase](https://supabase.com) as its backend (Postgres via 
 | `ac_license_type`   | `text`        | `1yr`, `3yr`, or `other`                   |
 | `created_at`        | `timestamptz` | Default `now()`                            |
 
-### 2. RLS Policies
+### `events` table
 
-Row Level Security is enabled on all tables. The following policies are required:
+| Column         | Type          | Notes                                    |
+| -------------- | ------------- | ---------------------------------------- |
+| `id`           | `uuid`        | Primary key, default `gen_random_uuid()` |
+| `location`     | `text`        | Required                                 |
+| `event_date`   | `date`        | Required                                 |
+| `start_time`   | `time`        | Required                                 |
+| `end_time`     | `time`        | Optional                                 |
+| `notes`        | `text`        | e.g. `Vaccine Clinic`, `Booster Clinic`  |
+| `completed`    | `bool`        | Default `false`                          |
+| `completed_at` | `timestamptz` | Set when event is closed                 |
 
-**`clients`**
+### `vaccine_waste` table
 
-- `anon`: INSERT, SELECT, UPDATE
-- `authenticated`: SELECT, UPDATE
+| Column         | Type          | Notes                                          |
+| -------------- | ------------- | ---------------------------------------------- |
+| `id`           | `uuid`        | Primary key, default `gen_random_uuid()`       |
+| `event_id`     | `uuid`        | Foreign key → `events.id` (cascade delete)     |
+| `vaccine_name` | `text`        | e.g. `Rabies`, `DAPP`, `DAPP + Lepto`, `FVRCP` |
+| `doses_wasted` | `int`         | Must be > 0                                    |
+| `created_at`   | `timestamptz` | Default `now()`                                |
+| `created_by`   | `uuid`        | Foreign key → `auth.users.id`                  |
 
-**`pets`**
+### `queue_state` table
 
-- `anon`: INSERT, SELECT, UPDATE
-- `authenticated`: SELECT, UPDATE
+| Column        | Type          | Notes                             |
+| ------------- | ------------- | --------------------------------- |
+| `id`          | `int`         | Always `1` — single row only      |
+| `now_serving` | `int`         | Current ticket number batch start |
+| `updated_at`  | `timestamptz` | Updated on each advance/reset     |
 
-**`vaccinations`**
+---
 
-- `anon`: SELECT
-- `authenticated`: INSERT, SELECT, UPDATE, DELETE
+## RLS Policies
 
-### 3. Supabase Storage
+Row Level Security is enabled on all tables.
+
+| Table           | Role            | Permissions                    |
+| --------------- | --------------- | ------------------------------ |
+| `clients`       | `anon`          | INSERT, SELECT, UPDATE         |
+| `clients`       | `authenticated` | SELECT, UPDATE, DELETE         |
+| `pets`          | `anon`          | INSERT, SELECT, UPDATE         |
+| `pets`          | `authenticated` | SELECT, UPDATE, DELETE         |
+| `vaccinations`  | `anon`          | SELECT                         |
+| `vaccinations`  | `authenticated` | INSERT, SELECT, UPDATE, DELETE |
+| `events`        | `authenticated` | INSERT, SELECT, UPDATE, DELETE |
+| `vaccine_waste` | `authenticated` | INSERT, SELECT                 |
+| `queue_state`   | `anon`          | SELECT                         |
+| `queue_state`   | `authenticated` | SELECT, UPDATE                 |
+
+---
+
+## Supabase Storage
 
 Create a storage bucket named `templates` and set it to **public**. Upload:
 
 - `RabiesVacCert.pdf` — the NASPHV Form 51 template
 - `ana_signature.png` — the veterinarian's signature image
 
-### 4. Configure credentials
+---
+
+## Setup
+
+### Credentials
 
 Credentials are managed via `config.js`, which is gitignored and generated at build time by `scripts/build-config.js` using Vercel environment variables.
 
@@ -158,26 +214,27 @@ const CONFIG = {
 
 Both values are found in your Supabase project under **Settings → API**.
 
-For `fill_cert.py`, set the same values near the top of the script:
-
-```python
-SUPABASE_URL = "https://your-project-id.supabase.co"
-SUPABASE_KEY = "your-anon-or-service-key"
-```
-
 > ⚠️ Never commit `config.js` or real credentials to the repository.
+
+### Running locally
+
+No build step required. Create `config.js` as described above, then open any `.html` file in a browser or use VS Code's **Live Preview** extension.
+
+Since most pages depend on Supabase for data, full functionality requires a live internet connection and valid credentials.
 
 ---
 
-## Running locally
+## Certificate Generation
 
-No build step required. Create `config.js` as described above, then open any `.html` file in a browser or use VS Code's **Live Preview** extension for a local dev server with auto-reload.
+Rabies certificates are generated entirely in the browser using [pdf-lib](https://pdf-lib.js.org/). The filled PDF is downloaded directly — no server required.
 
-For `fill_cert.py`, install dependencies first:
+A standalone Python script (`fill_cert.py`) also exists for local CLI-based certificate generation:
 
 ```bash
-pip install pypdf requests python-dateutil reportlab
+python fill_cert.py <vaccination_id>
 ```
+
+Requires: `pypdf`, `requests`, `python-dateutil`, `reportlab`
 
 ---
 
@@ -185,18 +242,17 @@ pip install pypdf requests python-dateutil reportlab
 
 - Plain HTML, CSS, and JavaScript — no frameworks, no npm
 - [Supabase](https://supabase.com) — Postgres database, REST API, Auth, and Storage
-- [pdf-lib](https://pdf-lib.js.org/) — in-browser PDF form filling for certificates
-- [Signature Pad](https://github.com/szimek/signature_pad) — drawn signature capture on the intake form
-- [pypdf](https://pypdf.readthedocs.io/) + [reportlab](https://www.reportlab.com/) — Python-based certificate generation (CLI)
+- [Vercel](https://vercel.com) — hosting + serverless functions (free tier)
+- [pdf-lib](https://pdf-lib.js.org/) — in-browser PDF form filling
+- [Signature Pad](https://github.com/szimek/signature_pad) — drawn signature capture
 - [Google Fonts](https://fonts.google.com) — Nunito + Nunito Sans
-- [Vercel](https://vercel.com) — hosting (free tier)
 
 ---
 
-## Known limitations
+## Known Limitations
 
 - Maximum of 3 pets per registration on the public intake form
 - Client upsert matches by email or phone — names alone are not deduplicated
 - No server-side validation; all validation is client-side
-- The `fill_cert.py` script is CLI-only and not wired into the app UI
-- Waiver signature is only captured via the public intake form — walk-in registrations through `intake.html` do not currently collect a signature
+- Waiver signature is only captured via the public intake form — walk-in registrations do not currently collect a signature
+- Queue numbers are manually managed; no automatic tie to check-in order
