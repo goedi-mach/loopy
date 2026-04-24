@@ -1421,8 +1421,6 @@ async function deleteEvent(eventId, location) {
     document.getElementById('clientName').textContent     = client.name;
     document.getElementById('clientContact').textContent  =
       [client.phone, client.email, client.address].filter(Boolean).join(' · ') || 'No contact info';
-    document.getElementById('clientSince').textContent    =
-      'Client since ' + new Date(client.created_at).toLocaleDateString('en-US', { month:'short', year:'numeric' });
 const statusLabel = { registered: 'Registered', checked_in: 'Checked In', discharged: 'Discharged' };
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
