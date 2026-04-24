@@ -193,6 +193,8 @@
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-primary { background: var(--navy); color: white; }
     .btn-primary:hover:not(:disabled) { background: var(--navy-dark); }
+    .btn-ghost { background: transparent; color: var(--navy); border: 1.5px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: var(--navy-light); border-color: var(--navy); }
     .btn-sm { font-size: 0.78rem; padding: 0.3rem 0.8rem; }
 
     .msg {
@@ -445,6 +447,7 @@
                           <option value="staff"     ${role === 'staff'     ? 'selected' : ''}>Staff</option>
                           <option value="admin"     ${role === 'admin'     ? 'selected' : ''}>Admin</option>
                         </select>
+                        <button class="btn btn-ghost btn-sm" style="margin-left:0.4rem;" onclick="resendInvite('${u.email}', this)">Resend invite</button>
                       ` : '<span style="font-size:0.78rem;color:var(--text-muted)">—</span>'}
                     </td>
                   </tr>
@@ -455,6 +458,33 @@
         `;
       } catch (err) {
         wrap.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
+      }
+    }
+
+    // ── Resend invite ─────────────────────────────────────────────
+    async function resendInvite(email, btn) {
+      if (!confirm(`Resend invite email to ${email}?`)) return;
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      try {
+        const res = await fetch('/api/admin-users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ action: 'resend_invite', email })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+        btn.textContent = '✓ Sent';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => { btn.textContent = orig; btn.style.color = ''; btn.disabled = false; }, 3000);
+      } catch (err) {
+        alert('Could not resend invite: ' + err.message);
+        btn.textContent = orig;
+        btn.disabled = false;
       }
     }
 
