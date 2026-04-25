@@ -1,4 +1,10 @@
 {
   "buildCommand": "node scripts/build-config.js",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "crons": [
+    {
+      "path": "/api/send-reminders",
+      "schedule": "0 10 * * *"
+    }
+  ]
 }
