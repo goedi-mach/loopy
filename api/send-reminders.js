@@ -81,7 +81,7 @@ async function processReminders(weeksOut, sentField) {
   const templateKey = weeksOut === 2 ? 'reminder_2w' : 'reminder_1w';
 
   const records = await sbFetch(
-    `vaccinations?select=id,vaccine_name,next_due,${sentField},pets(name,clients(first_name,email))` +
+    `vaccinations?select=id,vaccine_name,next_due,${sentField},pets(name,clients(name,email))` +
     `&next_due=gte.${start}&next_due=lte.${end}&${sentField}=eq.false`
   );
 
@@ -97,7 +97,7 @@ async function processReminders(weeksOut, sentField) {
     const client = pet?.clients;
     if (!client?.email) continue;
 
-    const ownerName = client.first_name || 'there';
+    const ownerName = client.name || 'there';
     const petName = pet.name;
     const vaccine = vax.vaccine_name;
     const dueDate = new Date(vax.next_due).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
