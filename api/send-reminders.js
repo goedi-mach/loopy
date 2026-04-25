@@ -85,6 +85,11 @@ async function processReminders(weeksOut, sentField) {
     `&next_due=gte.${start}&next_due=lte.${end}&${sentField}=eq.false`
   );
 
+  console.log(`[${templateKey}] Raw response:`, JSON.stringify(records));
+  if (!Array.isArray(records)) {
+    console.error(`[${templateKey}] Expected array, got:`, typeof records, records);
+    return;
+  }
   console.log(`[${templateKey}] Found ${records.length} reminders to send`);
 
   for (const vax of records) {
