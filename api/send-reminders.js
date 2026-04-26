@@ -5,23 +5,31 @@ const FROM_EMAIL = 'reminders@peoplehelpingpets.org';
 
 const templates = {
   reminder_2w: {
-    en: (ownerName, petName, vaccine, dueDate) => ({
-      subject: `Vaccine reminder for ${petName} — People Helping Pets`,
-      body: `Hi ${ownerName},\n\nThis is a friendly reminder that ${petName} is due for their ${vaccine} vaccine around ${dueDate}. We hope to see you at an upcoming People Helping Pets clinic!\n\nThank you,\nPeople Helping Pets`
+    en: (ownerName, petName, vaccine, dueDate, isBooster, clinicDate) => ({
+      subject: `Vaccine reminder for ${petName} from People Helping Pets`,
+      body: isBooster
+        ? `Hi ${ownerName},\n\nThis is a reminder that ${petName} is due for their ${vaccine} around ${dueDate}.${clinicDate ? ` We have a Booster Clinic scheduled on ${clinicDate} — we hope to see you there!` : ' Please keep an eye out for our upcoming Booster Clinic announcements.'}\n\nThank you,\nPeople Helping Pets`
+        : `Hi ${ownerName},\n\nThis is a friendly reminder that ${petName} is due for their ${vaccine} vaccine around ${dueDate}. Please visit our website and check out our upcoming clinics (https://peoplehelpingpets.org/events/). We hope to see you soon!\n\nThank you,\nPeople Helping Pets`
     }),
-    es: (ownerName, petName, vaccine, dueDate) => ({
+    es: (ownerName, petName, vaccine, dueDate, isBooster, clinicDate) => ({
       subject: `Recordatorio de vacuna para ${petName} — People Helping Pets`,
-      body: `Hola ${ownerName},\n\nLe recordamos que ${petName} tiene pendiente su vacuna de ${vaccine} alrededor del ${dueDate}. ¡Esperamos verlos en nuestra próxima clínica de People Helping Pets!\n\nGracias,\nPeople Helping Pets`
+      body: isBooster
+        ? `Hola ${ownerName},\n\nLe recordamos que ${petName} tiene pendiente su vacuna de ${vaccine} alrededor del ${dueDate}.${clinicDate ? ` Tenemos una Clínica de Refuerzo programada el ${clinicDate} — ¡esperamos verlos allí!` : ' Estén atentos a nuestros próximos anuncios de Clínica de Refuerzo.'}\n\nGracias,\nPeople Helping Pets`
+        : `Hola ${ownerName},\n\nLe recordamos que ${petName} tiene pendiente su vacuna de ${vaccine} alrededor del ${dueDate}. Porfavor visita nuestra página web y consulta nuestras próximas clínicas (https://peoplehelpingpets.org/events/). Esperamos verlos pronto!\n\nGracias,\nPeople Helping Pets`
     })
   },
   reminder_1w: {
-    en: (ownerName, petName, vaccine, dueDate) => ({
-      subject: `Upcoming vaccine for ${petName} — People Helping Pets`,
-      body: `Hi ${ownerName},\n\n${petName}'s ${vaccine} vaccine is coming up around ${dueDate} — just one week away! We hope to see you soon at a People Helping Pets clinic.\n\nThank you,\nPeople Helping Pets`
+    en: (ownerName, petName, vaccine, dueDate, isBooster, clinicDate) => ({
+      subject: `Upcoming vaccine for ${petName} from People Helping Pets`,
+      body: isBooster
+        ? `Hi ${ownerName},\n\n${petName}'s ${vaccine} is coming up around ${dueDate} — just one week away!${clinicDate ? ` Our Booster Clinic is scheduled on ${clinicDate} — we hope to see you there!` : ' Please keep an eye out for our upcoming Booster Clinic announcements.'}\n\nThank you,\nPeople Helping Pets`
+        : `Hi ${ownerName},\n\n${petName}'s ${vaccine} vaccine is coming up around ${dueDate} — just one week away! We hope to see you soon at a People Helping Pets clinic.\n\nThank you,\nPeople Helping Pets`
     }),
-    es: (ownerName, petName, vaccine, dueDate) => ({
+    es: (ownerName, petName, vaccine, dueDate, isBooster, clinicDate) => ({
       subject: `Vacuna próxima para ${petName} — People Helping Pets`,
-      body: `Hola ${ownerName},\n\nLa vacuna de ${vaccine} para ${petName} está próxima, alrededor del ${dueDate} — ¡solo falta una semana! Esperamos verlos pronto en una clínica de People Helping Pets.\n\nGracias,\nPeople Helping Pets`
+      body: isBooster
+        ? `Hola ${ownerName},\n\nLa vacuna de ${vaccine} para ${petName} está próxima, alrededor del ${dueDate} — ¡solo falta una semana!${clinicDate ? ` Nuestra Clínica de Refuerzo está programada el ${clinicDate} — ¡esperamos verlos allí!` : ' Estén atentos a nuestros próximos anuncios de Clínica de Refuerzo.'}\n\nGracias,\nPeople Helping Pets`
+        : `Hola ${ownerName},\n\nLa vacuna de ${vaccine} para ${petName} está próxima, alrededor del ${dueDate} — ¡solo falta una semana! Esperamos verlos pronto en una clínica de People Helping Pets.\n\nGracias,\nPeople Helping Pets`
     })
   }
 };
@@ -75,7 +83,13 @@ async function sendEmail(to, subject, body) {
     })
   });
 }
-
+async function getNextBoosterClinic(afterDate) {
+  const records = await sbFetch(
+    `events?clinic_type=eq.Booster Clinic&event_date=gte.${afterDate}&order=event_date.asc&limit=1`
+  );
+  if (!Array.isArray(records) || records.length === 0) return null;
+  return new Date(records[0].event_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
 async function processReminders(weeksOut, sentField) {
   const { start, end } = getDateWindow(weeksOut);
   const templateKey = weeksOut === 2 ? 'reminder_2w' : 'reminder_1w';
@@ -102,9 +116,12 @@ async function processReminders(weeksOut, sentField) {
     const vaccine = vax.vaccine_name;
     const dueDate = new Date(vax.next_due).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
+    const isBooster = vaccine.toLowerCase().includes('booster');
+    const boosterClinicDate = isBooster ? await getNextBoosterClinic(vax.next_due) : null;
+
     // Send bilingual — one email with both languages
-    const en = templates[templateKey].en(ownerName, petName, vaccine, dueDate);
-    const es = templates[templateKey].es(ownerName, petName, vaccine, dueDate);
+    const en = templates[templateKey].en(ownerName, petName, vaccine, dueDate, isBooster, boosterClinicDate);
+    const es = templates[templateKey].es(ownerName, petName, vaccine, dueDate, isBooster, boosterClinicDate);
 
     const subject = `${en.subject} / ${es.subject}`;
     const body = `${en.body}\n\n---\n\n${es.body}`;

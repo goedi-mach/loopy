@@ -658,11 +658,11 @@
                 <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
                   ${fmt(e.event_date)} · ${fmtTime(e.start_time)}${e.end_time ? ` – ${fmtTime(e.end_time)}` : ''}
                 </div>
-                ${e.notes ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; font-style:italic;">${e.notes}</div>` : ''}
+                ${e.clinic_type ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; font-style:italic;">${e.clinic_type}</div>` : ''}
               </div>
               <div style="display:flex; gap:0.4rem; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
                 ${!isCompleted ? `<button onclick="completeEvent('${e.id}')" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--green); background:none; color:var(--green); cursor:pointer; font-family:inherit; font-weight:700;">✓ Complete</button>` : ''}
-                <button onclick="openEditEvent('${e.id}', '${e.location.replace(/'/g,"\\'")}', '${e.event_date}', '${e.start_time}', '${(e.end_time||'').replace(/'/g,"\\'")}', '${(e.notes||'').replace(/'/g,"\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️ Edit</button>
+                <button onclick="openEditEvent('${e.id}', '${e.location.replace(/'/g,"\\'")}', '${e.event_date}', '${e.start_time}', '${(e.end_time||'').replace(/'/g,"\\'")}', '${(e.clinic_type||'').replace(/'/g,"\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️ Edit</button>
                 <button onclick="deleteEvent('${e.id}', '${e.location.replace(/'/g,"\\'")}' )" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit;">✕ Delete</button>
               </div>
             </div>
@@ -692,7 +692,7 @@
             event_date: date,
             start_time: start,
             end_time:   document.getElementById('newEventEnd').value   || null,
-            notes:      document.getElementById('newEventNotes').value.trim() || null
+            clinic_type: document.getElementById('newEventNotes').value.trim() || null
           })
         });
         if (!res.ok) throw new Error('Save failed');
@@ -821,7 +821,7 @@
     document.getElementById('staleWarning').style.display = 'none';
   }
 
-    function openEditEvent(id, location, date, start, end, notes) {
+    function openEditEvent(id, location, date, start, end, clinic_type) {
       const existing = document.getElementById('editEventDialog');
       if (existing) existing.remove();
 
@@ -853,9 +853,9 @@
             <div class="form-field">
               <label>Clinic Type</label>
               <select id="eeNotes">
-                <option value="" ${notes === '' ? 'selected' : ''}>— Select —</option>
-                <option value="Vaccine Clinic" ${notes === 'Vaccine Clinic' ? 'selected' : ''}>Vaccine Clinic</option>
-                <option value="Booster Clinic" ${notes === 'Booster Clinic' ? 'selected' : ''}>Booster Clinic</option>
+                <option value="" ${clinic_type === '' ? 'selected' : ''}>— Select —</option>
+<option value="Vaccine Clinic" ${clinic_type === 'Vaccine Clinic' ? 'selected' : ''}>Vaccine Clinic</option>
+<option value="Booster Clinic" ${clinic_type === 'Booster Clinic' ? 'selected' : ''}>Booster Clinic</option>
               </select>
             </div>
           </div>
@@ -885,7 +885,7 @@
             event_date: date,
             start_time: start,
             end_time:   document.getElementById('eeEnd').value   || null,
-            notes:      document.getElementById('eeNotes').value.trim() || null
+            clinic_type: document.getElementById('eeNotes').value.trim() || null
           })
         });
         if (!res.ok) throw new Error('Save failed');
