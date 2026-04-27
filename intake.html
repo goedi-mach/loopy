@@ -582,7 +582,10 @@
     <div id="detailPanel">
       <!-- Walk-in form-->
        <div class="card" id="walkinCard" style="display:none">
-  <div class="card-header">🚶 Walk-in Registration</div>
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>🚶 Walk-in Registration</span>
+    <button onclick="closeWalkin()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#666; line-height:1;" title="Close">✕</button>
+  </div>
   <div class="card-body">
     <div id="walkinMsg" class="msg"></div>
     <div id="duplicateWarning" style="display:none; background:#fef3c7; border:1.5px solid #d97706; border-radius:10px; padding:1rem; margin-bottom:1rem;">
