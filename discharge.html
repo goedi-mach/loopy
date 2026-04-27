@@ -1484,7 +1484,7 @@ async function markDischarged() {
     dog: [
       { label: 'Rabies',        inventoryKey: 'rabies',     isRabies: true  },
       { label: 'DAPP',          inventoryKey: 'dapp',       isRabies: false },
-      { label: 'DAPP + Lepto',  inventoryKey: 'dapp_lepto', isRabies: false },
+      { label: 'Lepto',  inventoryKey: 'dapp_lepto', isRabies: false },
     ],
     cat: [
       { label: 'Rabies',        inventoryKey: 'rabies',     isRabies: true  },
@@ -1651,7 +1651,7 @@ const vaxIdx   = document.getElementById('vaxName').value;
 
     if (!durIdx && durIdx !== 0) { showMsg(msg, 'error', 'Please select a duration.'); return; }
 
-    // Build the stored vaccine name: e.g. "Rabies 1 Year", "DAPP 4 Weeks", "DAPP + Lepto 1 Year"
+    // Build the stored vaccine name: e.g. "Rabies 1 Year", "DAPP 4 Weeks", "Lepto 1 Year"
     const vaccine_name = `${vaxObj.label} ${durObj.label}`;
 
     const payload = {
