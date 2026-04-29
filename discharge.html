@@ -368,7 +368,11 @@
     .badge.cat { background: var(--coral-light); color: var(--coral-dark); }
     .badge.sn-yes { background: var(--green-light); color: var(--green); }
     .badge.sn-no { background: var(--amber-light); color: var(--amber); }
-
+.doc-item { display:flex; align-items:center; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--border); font-size:0.85rem; }
+    .doc-item:last-child { border-bottom:none; }
+    .doc-item a { color:var(--navy); text-decoration:none; font-weight:600; }
+    .doc-item a:hover { text-decoration:underline; }
+    .doc-delete { background:none; border:none; color:var(--coral); cursor:pointer; font-size:0.8rem; padding:0 0.25rem; }
     /* Forms inside cards */
     .form-field { margin-bottom: 0.9rem; }
 
@@ -983,12 +987,141 @@
           </div>
         </div>
       </div>
+<!-- Documents -->
+      <div class="card" id="docsCard" style="display:none">
+        <div class="card-header">
+          <button class="section-toggle" onclick="toggleSection('docsSection', 'docsToggleIcon')">
+            <span>📎 Documents</span>
+            <span class="toggle-icon open" id="docsToggleIcon">▼</span>
+          </button>
+        </div>
+        <div class="card-body collapsible open" id="docsSection">
+          <div id="dischargeDocsList"><div class="empty-state">No documents</div></div>
+          <div style="margin-top:0.75rem;">
+            <label class="btn btn-sm btn-outline" style="cursor:pointer;">
+              + Upload
+              <input type="file" id="dischargeDocInput" style="display:none;" onchange="uploadDischargeDoc(this)" />
+            </label>
+            <span id="dischargeDocMsg" style="font-size:0.82rem; margin-left:0.75rem;"></span>
+          </div>
+        </div>
+      </div>
 
+    </div><!-- /detailPanel -->
     </div><!-- /detailPanel -->
   </div><!-- /dash-body -->
 </div><!-- /dashScreen -->
 
 <script>
+  // ─── DOCUMENTS ────────────────────────────────────────────────
+
+  let dischargeClientId = null;
+
+  async function loadDischargeDocuments(clientId) {
+    dischargeClientId = clientId;
+    const docs = await sbGet(`attachments?client_id=eq.${clientId}&pet_id=is.null&order=uploaded_at.desc`);
+    renderDischargeDocList(docs);
+  }
+
+  function renderDischargeDocList(docs) {
+    const el = document.getElementById('dischargeDocsList');
+    if (!docs || docs.length === 0) {
+      el.innerHTML = '<div class="empty-state">No documents</div>';
+      return;
+    }
+    el.innerHTML = docs.map(d => `
+      <div class="doc-item" id="dischargeDocItem_${d.id}">
+        <a href="#" onclick="openDischargeDoc('${d.storage_path}'); return false;">📄 ${d.display_name}</a>
+        <button class="doc-delete" onclick="deleteDischargeDoc('${d.id}', '${d.storage_path}')" title="Delete">✕</button>
+      </div>
+    `).join('');
+  }
+
+  async function openDischargeDoc(storagePath) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${storagePath}`, {
+        method: 'POST',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expiresIn: 300 })
+      });
+      if (!res.ok) throw new Error('Could not generate link');
+      const { signedURL } = await res.json();
+      window.open(`${SUPABASE_URL}/storage/v1${signedURL}`, '_blank');
+    } catch (err) {
+      alert('Could not open file: ' + err.message);
+    }
+  }
+
+  async function uploadDischargeDoc(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const msg = document.getElementById('dischargeDocMsg');
+    msg.textContent = 'Uploading…';
+    try {
+      const timestamp = Date.now();
+      const safeName  = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const path      = `clients/${dischargeClientId}/${timestamp}_${safeName}`;
+      const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/attachments/${path}`, {
+        method:  'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('php_token')}`,
+          'Content-Type':  file.type || 'application/octet-stream'
+        },
+        body: file
+      });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.message || 'Upload failed');
+      }
+      await sbPost('attachments', {
+        client_id:    dischargeClientId,
+        pet_id:       null,
+        storage_path: `attachments/${path}`,
+        display_name: file.name,
+        uploaded_by:  getDischargeUserId()
+      });
+      msg.textContent = '✓ Uploaded';
+      input.value = '';
+      setTimeout(() => { msg.textContent = ''; }, 3000);
+      const docs = await sbGet(`attachments?client_id=eq.${dischargeClientId}&pet_id=is.null&order=uploaded_at.desc`);
+      renderDischargeDocList(docs);
+    } catch (err) {
+      msg.textContent = '✗ ' + err.message;
+    }
+  }
+
+  async function deleteDischargeDoc(attachmentId, storagePath) {
+    if (!confirm('Delete this document? This cannot be undone.')) return;
+    try {
+      const storageRes = await fetch(`${SUPABASE_URL}/storage/v1/object/${storagePath}`, {
+        method:  'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('php_token')}` }
+      });
+      if (!storageRes.ok && storageRes.status !== 404) throw new Error('Storage delete failed');
+
+      const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/attachments?id=eq.${attachmentId}`, {
+        method:  'DELETE',
+        headers: authHeaders()
+      });
+      if (!dbRes.ok) throw new Error('Record delete failed');
+
+      document.getElementById(`dischargeDocItem_${attachmentId}`)?.remove();
+      const el = document.getElementById('dischargeDocsList');
+      if (el && !el.querySelector('.doc-item')) {
+        el.innerHTML = '<div class="empty-state">No documents</div>';
+      }
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
+  }
+
+  function getDischargeUserId() {
+    try {
+      const token = localStorage.getItem('php_token');
+      if (!token) return null;
+      return JSON.parse(atob(token.split('.')[1])).sub;
+    } catch { return null; }
+  }
   // ─── STAFF NAV LINK ────────────────────────────────────────────
 function showStaffHomeLink() {
   try {
@@ -1327,7 +1460,7 @@ profileBtn.style.display = 'inline-block';
 document.getElementById('archiveClientBtn').style.display = 'block';
 document.getElementById('archiveClientBtn').textContent   = client.archived ? 'Unarchive' : 'Archive';
     // Show cards
-    ['petsCard','vaxCard','historyCard','microchipCard'].forEach(id => document.getElementById(id).style.display = 'block');
+    ['petsCard','vaxCard','historyCard','microchipCard','docsCard'].forEach(id => document.getElementById(id).style.display = 'block');
     document.getElementById('printMemoBtn').style.display = 'inline-block';
     todayMicrochip = null;
 
@@ -1337,6 +1470,7 @@ document.getElementById('archiveClientBtn').textContent   = client.archived ? 'U
 
     // Load pets
     await loadPets(client.id);
+    loadDischargeDocuments(client.id);
   }
 
   async function loadPets(clientId) {
@@ -2478,7 +2612,7 @@ function setRadio(fieldName, index) {
   function resetDetailPanel() {
     document.getElementById('detailEmpty').style.display = 'block';
     document.getElementById('clientInfo').style.display  = 'none';
-    ['petsCard','vaxCard','historyCard','microchipCard'].forEach(id => document.getElementById(id).style.display = 'none');
+    ['petsCard','vaxCard','historyCard','microchipCard','docsCard'].forEach(id => document.getElementById(id).style.display = 'none');
   }
 
   function showMsg(el, type, text) {
