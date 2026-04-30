@@ -1041,6 +1041,7 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
             <div class="btn-group">
               <button class="btn btn-sm btn-outline" onclick="openEditPet('${p.id}', '${id}')">✏️ Edit Pet</button>
               <button class="btn btn-sm btn-danger" onclick="${p.archived ? `toggleArchive('${p.id}', true)` : `openArchiveDialog('${p.id}')`}">${p.archived ? 'Unarchive' : 'Archive'}</button>
+              <button class="btn btn-sm btn-outline" onclick="openPrintRecordDialog(${JSON.stringify(p).replace(/"/g,'&quot;')})">🖨 Print Record</button>
             </div>
           </div>
 
@@ -1713,6 +1714,183 @@ if (accessToken) {
     document.getElementById('loginOverlay').classList.add('hidden');
     showStaffHomeLink();
     init();
+  }
+  // ── PRINT PET RECORD ─────────────────────────────────────────────
+  function openPrintRecordDialog(pet) {
+    const existing = document.getElementById('printRecordDialog');
+    if (existing) existing.remove();
+    const dialog = document.createElement('div');
+    dialog.id = 'printRecordDialog';
+    dialog.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      display:flex; align-items:center; justify-content:center; z-index:9999;
+    `;
+    dialog.innerHTML = `
+      <div style="background:white; border-radius:16px; padding:2rem; max-width:360px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.2); font-family:'Nunito',sans-serif;">
+        <div style="font-size:1.1rem; font-weight:800; color:#1a3a8f; margin-bottom:0.5rem;">🖨 Print Pet Record</div>
+        <div style="font-size:0.85rem; color:#5a6380; margin-bottom:1.5rem;">Select the language for <strong>${pet.name}</strong>'s record:</div>
+        <div style="display:flex; gap:0.75rem; justify-content:center; margin-bottom:1.5rem;">
+          <button onclick="printPetRecord(${JSON.stringify(pet).replace(/"/g,'&quot;')}, 'en')" style="flex:1; padding:0.75rem; border-radius:999px; border:none; background:#1a3a8f; color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem; cursor:pointer;">🇺🇸 English</button>
+          <button onclick="printPetRecord(${JSON.stringify(pet).replace(/"/g,'&quot;')}, 'es')" style="flex:1; padding:0.75rem; border-radius:999px; border:none; background:#d96b62; color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem; cursor:pointer;">🇲🇽 Español</button>
+        </div>
+        <button onclick="document.getElementById('printRecordDialog').remove()" style="width:100%; padding:0.5rem; border-radius:999px; border:1.5px solid #c8d3ec; background:none; color:#5a6380; font-family:'Nunito',sans-serif; font-weight:700; cursor:pointer;">Cancel</button>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+  }
+
+  async function printPetRecord(pet, lang) {
+    document.getElementById('printRecordDialog')?.remove();
+    const en = lang === 'en';
+
+    // Fetch vaccinations for this pet
+    let vax = [];
+    try { vax = await sbGet(`vaccinations?pet_id=eq.${pet.id}&order=date_given.desc`); } catch (_) {}
+
+    // Pull colors_markings from most recent vax record that has it
+    const colors = vax.find(v => v.colors_markings)?.colors_markings || '';
+
+    const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString(en ? 'en-US' : 'es-MX', { month:'long', day:'numeric', year:'numeric' }) : '—';
+    const today = new Date().toLocaleDateString(en ? 'en-US' : 'es-MX', { month:'long', day:'numeric', year:'numeric' });
+
+    // Vaccines with a next_due date
+    const upcoming = vax.filter(v => v.next_due);
+    // Deduplicate by vaccine base name — keep only the most recent per vaccine
+    const seen = new Set();
+    const nextDueList = [];
+    for (const v of upcoming) {
+      const base = v.vaccine_name.split(' ').slice(0, 1).join(' ');
+      if (!seen.has(base)) { seen.add(base); nextDueList.push(v); }
+    }
+
+    const t = {
+      title:        en ? 'Vaccination History'             : 'Historial de Vacunación',
+      printed:      en ? `Printed: ${today}`               : `Impreso: ${today}`,
+      owner:        en ? 'Owner'                           : 'Dueño/a',
+      phone:        en ? 'Phone'                           : 'Teléfono',
+      email:        en ? 'Email'                           : 'Correo',
+      address:      en ? 'Address'                         : 'Dirección',
+      petInfo:      en ? 'Pet Information'                 : 'Información de la Mascota',
+      species:      en ? 'Species'                         : 'Especie',
+      breed:        en ? 'Breed'                           : 'Raza',
+      color:        en ? 'Color'                           : 'Color',
+      sex:          en ? 'Sex'                             : 'Sexo',
+      age:          en ? 'Age'                             : 'Edad',
+      altered:      en ? 'Spayed/Neutered'                 : 'Esterilizado/a',
+      microchip:    en ? 'Microchip #'                     : '# de Microchip',
+      nextDue:      en ? 'Vaccinations Next Due'           : 'Próximas Vacunas',
+      history:      en ? 'Vaccination History'             : 'Historial de Vacunas',
+      lotNum:       en ? 'Lot #'                           : '# de Lote',
+      dateGiven:    en ? 'Date Given'                      : 'Fecha de Aplicación',
+      nextDueCol:   en ? 'Next Due'                        : 'Próxima Dosis',
+      adminBy:      en ? 'Administered By'                 : 'Administrado Por',
+      noHistory:    en ? 'No vaccinations on record.'      : 'Sin vacunas registradas.',
+      noNextDue:    en ? 'No upcoming vaccinations.'       : 'Sin próximas vacunas.',
+      footer:       en ? 'Thank you for keeping your pet healthy! Questions? peoplehelpingpets.org'
+                       : '¡Gracias por cuidar la salud de tu mascota! ¿Preguntas? peoplehelpingpets.org',
+      yrs:          en ? 'yrs'                             : 'años',
+    };
+
+    const c = clientData;
+    const addrParts = [
+      [c.street, c.address].find(Boolean) || '',
+      c.city || '', c.state || '', c.zip || ''
+    ].filter(Boolean).join(', ');
+
+    const html = `<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8"/>
+  <title>${t.title} — ${pet.name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Nunito Sans',sans-serif; color:#1a1a2e; padding:2rem; max-width:720px; margin:0 auto; font-size:0.9rem; }
+    .top-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:2px solid #1a3a8f; gap:2rem; }
+    .org { font-family:'Nunito',sans-serif; font-weight:800; font-size:1.2rem; color:#1a3a8f; }
+    .owner-block { text-align:right; font-size:0.85rem; line-height:1.6; }
+    .owner-block strong { font-family:'Nunito',sans-serif; font-size:1rem; color:#1a3a8f; display:block; }
+    h1 { font-family:'Nunito',sans-serif; font-weight:800; font-size:1.3rem; color:#1a3a8f; margin-bottom:0.25rem; }
+    .printed { font-size:0.78rem; color:#9ca3af; margin-bottom:1.5rem; }
+    .section-title { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.82rem; color:#1a3a8f; text-transform:uppercase; letter-spacing:0.05em; margin:1.25rem 0 0.6rem; padding-bottom:0.3rem; border-bottom:1.5px solid #dce6f9; }
+    .pet-name { font-family:'Nunito',sans-serif; font-weight:800; font-size:1.1rem; color:#1a1a2e; margin-bottom:0.6rem; }
+    .info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.4rem 1rem; margin-bottom:0.5rem; }
+    .info-item label { font-size:0.72rem; font-weight:700; color:#5a6380; text-transform:uppercase; letter-spacing:0.04em; display:block; }
+    .info-item span { font-size:0.88rem; color:#1a1a2e; }
+    .next-due-list { display:flex; flex-direction:column; gap:0.5rem; }
+    .next-due-item { background:#f4f7fe; border-left:3px solid #1a3a8f; border-radius:4px; padding:0.5rem 0.75rem; }
+    .next-due-item .vax-name { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.9rem; }
+    .next-due-item .due-date { font-size:0.82rem; color:#5a6380; margin-top:0.1rem; }
+    .vax-record { background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:0.6rem 0.85rem; margin-bottom:0.5rem; }
+    .vax-record-name { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.92rem; }
+    .vax-record-meta { display:grid; grid-template-columns:1fr 1fr; gap:0.2rem 1rem; margin-top:0.4rem; }
+    .vax-record-meta label { font-size:0.72rem; font-weight:700; color:#5a6380; text-transform:uppercase; letter-spacing:0.04em; display:block; }
+    .vax-record-meta span { font-size:0.85rem; color:#1a1a2e; }
+    .empty { color:#9ca3af; font-style:italic; font-size:0.83rem; padding:0.4rem 0; }
+    .footer { margin-top:2rem; padding-top:1rem; border-top:1px solid #e5e7eb; text-align:center; font-size:0.78rem; color:#9ca3af; }
+    @media print { body { padding:0.5rem; } }
+  </style>
+</head>
+<body>
+
+  <div class="top-header">
+    <div>
+      <div class="org">🐾 People Helping Pets</div>
+    </div>
+    <div class="owner-block">
+      <strong>${c.name || '—'}</strong>
+      ${addrParts ? `<span>${addrParts}</span><br>` : ''}
+      ${c.phone  ? `<span>${c.phone}</span><br>` : ''}
+      ${c.email  ? `<span>${c.email}</span>` : ''}
+    </div>
+  </div>
+
+  <h1>📋 ${t.title}</h1>
+  <div class="printed">${t.printed}</div>
+
+  <div class="pet-name">${pet.name}</div>
+
+  <div class="section-title">${t.petInfo}</div>
+  <div class="info-grid">
+    <div class="info-item"><label>${t.species}</label><span>${pet.species || '—'}</span></div>
+    <div class="info-item"><label>${t.breed}</label><span>${pet.breed || '—'}</span></div>
+    <div class="info-item"><label>${t.color}</label><span>${colors || '—'}</span></div>
+    <div class="info-item"><label>${t.sex}</label><span>${pet.sex || '—'}</span></div>
+    <div class="info-item"><label>${t.age}</label><span>${pet.age != null ? pet.age + ' ' + t.yrs : '—'}</span></div>
+    <div class="info-item"><label>${t.altered}</label><span>${pet.altered === 'yes' ? (en ? 'Yes' : 'Sí') : pet.altered === 'no' ? 'No' : '—'}</span></div>
+    <div class="info-item"><label>${t.microchip}</label><span>${pet.microchip_number || '—'}</span></div>
+  </div>
+
+  <div class="section-title">${t.nextDue}</div>
+  ${nextDueList.length ? `
+    <div class="next-due-list">
+      ${nextDueList.map(v => `
+        <div class="next-due-item">
+          <div class="vax-name">${v.vaccine_name}</div>
+          <div class="due-date">${fmt(v.next_due)}</div>
+        </div>`).join('')}
+    </div>` : `<div class="empty">${t.noNextDue}</div>`}
+
+  <div class="section-title">${t.history}</div>
+  ${vax.length ? vax.map(v => `
+    <div class="vax-record">
+      <div class="vax-record-name">${v.vaccine_name}</div>
+      <div class="vax-record-meta">
+        <div><label>${t.dateGiven}</label><span>${fmt(v.date_given)}</span></div>
+        <div><label>${t.lotNum}</label><span>${v.lot_number || '—'}</span></div>
+        <div><label>${t.nextDueCol}</label><span>${fmt(v.next_due)}</span></div>
+        <div><label>${t.adminBy}</label><span>${v.administered_by || '—'}</span></div>
+      </div>
+    </div>`).join('') : `<div class="empty">${t.noHistory}</div>`}
+
+  <div class="footer">${t.footer}</div>
+  <script>window.print();<\/script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
   }
 </script>
 </body>
