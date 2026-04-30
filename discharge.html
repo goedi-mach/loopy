@@ -521,16 +521,6 @@
     });
   }
 </script>
-<script>
-  if (window.location.hostname.includes('sandbox')) {
-    document.addEventListener('DOMContentLoaded', function() {
-      const banner = document.createElement('div');
-      banner.style.cssText = 'background:#f28b82;color:#fff;text-align:center;padding:0.5rem;font-family:Nunito,sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.03em;position:sticky;top:0;z-index:9999;';
-      banner.innerHTML = '🧪 SANDBOX — This is a test environment. No real data will be affected. <a href="https://php-clinic.vercel.app" style="color:white;font-weight:800;text-decoration:underline;">Go to production →</a>';
-      document.body.prepend(banner);
-    });
-  }
-</script>
 </head>
 <body>
 
@@ -670,7 +660,6 @@
   <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
   <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
   <button id="archiveClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit; display:none;" onclick="toggleArchiveClient()">Archive</button>
-  <button id="printMemoBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--green); background:none; color:var(--green); cursor:pointer; font-family:inherit; font-weight:700; display:none;" onclick="openMemoDialog()">📄 Print Memo</button>
 <button id="deleteClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--coral); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit; display:none;" onclick="deleteClient()">Delete</button>
 </div>
             </div>
@@ -1481,7 +1470,6 @@ document.getElementById('archiveClientBtn').style.display = 'block';
 document.getElementById('archiveClientBtn').textContent   = client.archived ? 'Unarchive' : 'Archive';
     // Show cards
     ['petsCard','vaxCard','historyCard','microchipCard','docsCard'].forEach(id => document.getElementById(id).style.display = 'block');
-    document.getElementById('printMemoBtn').style.display = 'inline-block';
     todayMicrochip = null;
 
     // Reset vaccine section
@@ -2467,28 +2455,6 @@ function setRadio(fieldName, index) {
     }
   }
 
-  // ─── PRINT MEMO ────────────────────────────────────────────────
-  function openMemoDialog() {
-    if (!currentClient) return;
-    const dialog = document.createElement('div');
-    dialog.id = 'memoDialog';
-    dialog.style.cssText = `
-      position:fixed; inset:0; background:rgba(0,0,0,0.5);
-      display:flex; align-items:center; justify-content:center; z-index:9999;
-    `;
-    dialog.innerHTML = `
-      <div style="background:white; border-radius:16px; padding:2rem; max-width:360px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.2); font-family:'Nunito',sans-serif;">
-        <div style="font-size:1.1rem; font-weight:800; color:var(--navy); margin-bottom:0.5rem;">📄 Print Take-Home Memo</div>
-        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">Select the language for the memo:</div>
-        <div style="display:flex; gap:0.75rem; justify-content:center; margin-bottom:1.5rem;">
-          <button onclick="printMemo('en')" style="flex:1; padding:0.75rem; border-radius:999px; border:none; background:var(--navy); color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem; cursor:pointer;">🇺🇸 English</button>
-          <button onclick="printMemo('es')" style="flex:1; padding:0.75rem; border-radius:999px; border:none; background:var(--coral-dark); color:white; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem; cursor:pointer;">🇲🇽 Español</button>
-        </div>
-        <button onclick="document.getElementById('memoDialog').remove()" style="width:100%; padding:0.5rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); font-family:'Nunito',sans-serif; font-weight:700; cursor:pointer;">Cancel</button>
-      </div>
-    `;
-    document.body.appendChild(dialog);
-  }
 
   async function printMemo(lang) {
     document.getElementById('memoDialog')?.remove();
