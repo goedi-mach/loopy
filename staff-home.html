@@ -501,6 +501,10 @@
             <label>Manufacturer</label>
             <input type="text" id="newLotManufacturer" placeholder="e.g. MER, ELA" style="text-transform:uppercase;" />
           </div>
+          <div class="form-field">
+            <label>Expiration Date *</label>
+            <input type="date" id="newLotExpDate" />
+          </div>
           <button class="btn btn-primary" id="addLotBtn" onclick="addLot()">Save Lot</button>
         </div>
       </div>
@@ -969,6 +973,7 @@
                   <td><strong>${VAX_LABELS[r.vaccine_type] || r.vaccine_type}</strong></td>
                   <td style="font-family:monospace;">${r.lot_number}</td>
                   <td style="font-family:monospace;">${r.manufacturer || '—'}</td>
+                  <td>${r.exp_date ? (() => { const today = new Date().toISOString().split('T')[0]; const expired = r.exp_date < today; return `<span style="font-weight:700;color:${expired ? '#b91c1c' : '#2d8a5e'}">${expired ? '⚠️ ' : '✓ '}${r.exp_date}</span>`; })() : '—'}</td>
                   <td>${r.active ? '<span class="badge badge-staff">active</span>' : '<span class="badge badge-volunteer">inactive</span>'}</td>
                   <td style="color:var(--text-muted)">${fmtD(r.created_at)}</td>
                   <td style="color:var(--text-muted)">${fmtD(r.deactivated_at)}</td>
@@ -988,10 +993,13 @@
       const type         = document.getElementById('newLotType').value;
       const lot          = document.getElementById('newLotNumber').value.trim();
       const manufacturer = document.getElementById('newLotManufacturer').value.trim().toUpperCase() || null;
+      const expDate      = document.getElementById('newLotExpDate').value || null;
       const btn          = document.getElementById('addLotBtn');
 
-      if (!type) { showMsg('lotMsg', 'error', 'Please select a vaccine type.'); return; }
-      if (!lot)  { showMsg('lotMsg', 'error', 'Please enter a lot number.'); return; }
+      if (!type)    { showMsg('lotMsg', 'error', 'Please select a vaccine type.'); return; }
+      if (!lot)     { showMsg('lotMsg', 'error', 'Please enter a lot number.'); return; }
+      if (!expDate) { showMsg('lotMsg', 'error', 'Please enter an expiration date.'); return; }
+      if (expDate < new Date().toISOString().split('T')[0]) { showMsg('lotMsg', 'error', 'This lot is already expired.'); return; }
 
       btn.disabled = true;
       btn.textContent = 'Saving…';
@@ -1004,13 +1012,13 @@
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory`, {
           method:  'POST',
           headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-          body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, manufacturer, active: true })
-        });
+body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, manufacturer, exp_date: expDate, active: true })        });
         if (!res.ok) throw new Error((await res.json()).message || 'Save failed');
         showMsg('lotMsg', 'success', `Lot saved for ${VAX_LABELS[type]}.`);
         document.getElementById('newLotType').value          = '';
         document.getElementById('newLotNumber').value        = '';
         document.getElementById('newLotManufacturer').value  = '';
+        document.getElementById('newLotExpDate').value       = '';
         loadLots();
       } catch (err) {
         showMsg('lotMsg', 'error', err.message);
