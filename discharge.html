@@ -1718,6 +1718,7 @@ async function markDischarged() {
         lotSelect.value  = lots[0].lot_number;
         lotField.value   = lots[0].lot_number;
       }
+      showLotExpDate(vax.inventoryKey);
     }
 
     // Build and show duration dropdown
@@ -1792,6 +1793,15 @@ const vaxIdx   = document.getElementById('vaxName').value;
     const durObj   = DURATION_OPTIONS[vaxObj.inventoryKey][durIdx];
 
     if (!durIdx && durIdx !== 0) { showMsg(msg, 'error', 'Please select a duration.'); return; }
+    // Block if lot is expired
+    const selectedLot = (activeLots[vaxObj.inventoryKey] || []).find(l => l.lot_number === document.getElementById('vaxLot').value);
+    if (selectedLot?.exp_date) {
+      const today = new Date().toISOString().split('T')[0];
+      if (selectedLot.exp_date < today) {
+        showMsg(msg, 'error', `This lot expired on ${selectedLot.exp_date}. Please use a different lot.`);
+        return;
+      }
+    }
 
     // Build the stored vaccine name: e.g. "Rabies 1 Year", "DAPP 4 Weeks", "Lepto 1 Year"
     const vaccine_name = `${vaxObj.label} ${durObj.label}`;
@@ -1804,6 +1814,7 @@ const vaxIdx   = document.getElementById('vaxName').value;
       date_given:      dateGiven,
       next_due:        document.getElementById('vaxNextDue').value || null,
       administered_by: document.getElementById('vaxAdmin').value || null,
+      exp_date:        selectedLot?.exp_date || null,
     };
 
     if (vaxObj.isRabies) {
@@ -2440,8 +2451,7 @@ function setRadio(fieldName, index) {
       activeLots = {};
       rows.forEach(r => {
         if (!activeLots[r.vaccine_type]) activeLots[r.vaccine_type] = [];
-        activeLots[r.vaccine_type].push({ lot_number: r.lot_number, manufacturer: r.manufacturer || null });
-      });
+activeLots[r.vaccine_type].push({ lot_number: r.lot_number, manufacturer: r.manufacturer || null, exp_date: r.exp_date || null });      });
     } catch (err) {
       console.warn('Could not load active lots:', err);
     }
@@ -2453,6 +2463,32 @@ function setRadio(fieldName, index) {
     if (select.value) {
       lotField.value = select.value;
     }
+    // Find which vaccine type is selected and update exp date display
+    const vaxIdx = document.getElementById('vaxName').value;
+    const species = selectedPetObj?.species;
+    if (vaxIdx !== '' && species) {
+      const vax = VACCINE_OPTIONS[species][vaxIdx];
+      showLotExpDate(vax.inventoryKey);
+    }
+  }
+
+  function showLotExpDate(inventoryKey) {
+    let el = document.getElementById('lotExpDisplay');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'lotExpDisplay';
+      el.style.cssText = 'font-size:0.82rem; margin-top:0.4rem;';
+      document.getElementById('vaxLot').parentNode.appendChild(el);
+    }
+    const selectedLotNum = document.getElementById('vaxLot').value;
+    const lot = (activeLots[inventoryKey] || []).find(l => l.lot_number === selectedLotNum);
+    if (!lot || !lot.exp_date) { el.textContent = ''; return; }
+    const today = new Date().toISOString().split('T')[0];
+    const expired = lot.exp_date < today;
+    const fmtExp = new Date(lot.exp_date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    el.innerHTML = expired
+      ? `<span style="color:#b91c1c; font-weight:700;">⚠️ Lot expired ${fmtExp} — cannot log this vaccine</span>`
+      : `<span style="color:#2d8a5e; font-weight:700;">✓ Exp: ${fmtExp}</span>`;
   }
 
   function resetDetailPanel() {
