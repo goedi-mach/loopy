@@ -2416,7 +2416,7 @@ function setRadio(fieldName, index) {
                 <tr>
                   <td><strong>${r.vaccine_name}</strong></td>
                   <td>${r.lot_number || '—'}</td>
-                  <td>${r.serial_number || '—'}</td>
+                  <td>${r.rabies_tag_number || r.serial_number || '—'}</td>
                   <td>${fmt(r.date_given)}</td>
                   <td>${fmt(r.next_due)}</td>
                   <td>${r.administered_by || '—'}</td>
