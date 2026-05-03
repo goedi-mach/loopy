@@ -2263,7 +2263,11 @@ function setRadio(fieldName, index) {
     setText('Rabies Tag #',          r.rabies_tag_number  || '', 9);
     setText('Product Name',          r.product_name       || '', 9);
     setText('Vaccine Serial Number', r.lot_number         || '', 9);
-    setText('License Number',        r.ac_license_number  || '', 9);
+    const licenseMap = {
+      'Dr. Ana Valbuena':      '[LICENSE-REDACTED]',
+      'Dr. Alexandra Friedman': '[LICENSE-REDACTED]',
+    };
+    setText('License Number', r.ac_license_number || licenseMap[r.administered_by] || '', 9);
 
     const man = (r.manufacturer || '').toUpperCase().padEnd(3, ' ');
     setText('Manufacturer', man[0]);
@@ -2276,9 +2280,10 @@ function setRadio(fieldName, index) {
     if (r.dose_type === 'initial') setRadio('Dose', 0);
     if (r.dose_type === 'booster') setRadio('Dose', 1);
 
-    if (r.ac_license_type === '1yr')   setCheck('AC 1 year', true);
-    if (r.ac_license_type === '3yr')   setCheck('AC 3 year', true);
-    if (r.ac_license_type === 'other') setCheck('AC other',  true);
+    const acType = r.ac_license_type || r.usda_duration || null;
+    if (acType === '1yr')   setCheck('AC 1 year', true);
+    if (acType === '3yr')   setCheck('AC 3 year', true);
+    if (acType === 'other') setCheck('AC other',  true);
 
     // ── Dates ──────────────────────────────────────────────────
     const fmtDate = iso => {
@@ -2298,12 +2303,16 @@ function setRadio(fieldName, index) {
       const sigFile = r.administered_by === 'Dr. Alexandra Friedman'
         ? 'alex_signature.png'
         : 'ana_signature.png';
-      const sigBytes = await fetch(
+      const sigRes   = await fetch(
         `https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/${sigFile}`
-      ).then(res => res.arrayBuffer());
-      const sigImg = await pdfDoc.embedPng(sigBytes);
+      );
+      const sigBytes = await sigRes.arrayBuffer();
+      const contentType = sigRes.headers.get('content-type') || '';
+      const sigImg = contentType.includes('jpeg') || contentType.includes('jpg')
+        ? await pdfDoc.embedJpg(sigBytes)
+        : await pdfDoc.embedPng(sigBytes);
       page.drawImage(sigImg, { x: 370, y: 452, width: 175, height: 28 });
-    } catch (_) {}
+    } catch (sigErr) { console.warn('Signature embed failed:', sigErr.message); }
 
     form.flatten();
     const pdfBytes = await pdfDoc.save();
