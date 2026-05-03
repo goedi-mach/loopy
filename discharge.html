@@ -1454,7 +1454,7 @@ async function deleteEvent(eventId, location) {
     document.getElementById('clientInfo').style.display   = 'block';
     document.getElementById('clientName').textContent     = client.name;
     document.getElementById('clientContact').textContent  =
-      [client.phone, client.email, client.address].filter(Boolean).join(' · ') || 'No contact info';
+      [client.phone, client.email, [client.street, client.city, client.state, client.zip].filter(Boolean).join(', ')].filter(Boolean).join(' · ') || 'No contact info';
     document.getElementById('clientSince').textContent    =
       'Client since ' + new Date(client.created_at).toLocaleDateString('en-US', { month:'short', year:'numeric' });
 const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 'Seen', discharged: 'Discharged' };
@@ -1907,8 +1907,7 @@ function openEditClient() {
   document.getElementById('editClientName').value    = currentClient.name || '';
   document.getElementById('editClientPhone').value   = currentClient.phone || '';
   document.getElementById('editClientEmail').value   = currentClient.email || '';
-  document.getElementById('editClientAddress').value = currentClient.address || '';
-  document.getElementById('clientInfo').style.display     = 'none';
+document.getElementById('editClientAddress').value = [currentClient.street, currentClient.city, currentClient.state, currentClient.zip].filter(Boolean).join(', ') || '';  document.getElementById('clientInfo').style.display     = 'none';
   document.getElementById('clientEditForm').style.display = 'block';
 }
 
@@ -1926,19 +1925,27 @@ async function saveEditClient() {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
       method:  'PATCH',
       headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-      body:    JSON.stringify({
-        name,
-        phone:   document.getElementById('editClientPhone').value.trim() || null,
-        email:   document.getElementById('editClientEmail').value.trim() || null,
-        address: document.getElementById('editClientAddress').value.trim() || null,
-      })
+      body:    JSON.stringify((() => {
+        const addrRaw = document.getElementById('editClientAddress').value.trim();
+        const parts   = addrRaw.split(',').map(s => s.trim());
+        const sz      = (parts[2] || '').trim().split(' ');
+        return {
+          name,
+          phone:  document.getElementById('editClientPhone').value.trim() || null,
+          email:  document.getElementById('editClientEmail').value.trim() || null,
+          street: parts[0] || null,
+          city:   parts[1] || null,
+          state:  sz[0]    || null,
+          zip:    sz[1]    || null,
+        };
+      })())
     });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
     const [updated] = await res.json();
     currentClient = { ...currentClient, ...updated };
     document.getElementById('clientName').textContent    = updated.name;
     document.getElementById('clientContact').textContent =
-      [updated.phone, updated.email, updated.address].filter(Boolean).join(' · ') || 'No contact info';
+      [updated.phone, updated.email, [updated.street, updated.city, updated.state, updated.zip].filter(Boolean).join(', ')].filter(Boolean).join(' · ') || 'No contact info';
     closeEditClient();
     await loadRecentClients();
   } catch (err) {
@@ -2200,22 +2207,30 @@ function setRadio(fieldName, index) {
     setText('Last Name',  nameParts.slice(1).join(' ') || '');
     setText('Telephone #', client.phone || '', 9);
 
-    const addr = (client.address || '').trim();
-    if (addr) {
-      const m = addr.match(/^(.*?),\s*(.*?),\s*([A-Z]{2})\s+(\d[\d-]*)$/);
-      if (m) {
-        setText('Street',   m[1].trim());
-        setText('City',     m[2].trim());
-        setText('State',    m[3].trim());
-        setText('Zip Code', m[4].trim());
-      } else {
-        const parts = addr.split(',').map(s => s.trim());
-        if (parts[0]) setText('Street', parts[0]);
-        if (parts[1]) setText('City',   parts[1]);
-        if (parts[2]) {
-          const sz = parts[2].trim().split(' ');
-          setText('State',    sz[0] || '');
-          setText('Zip Code', sz[1] || '');
+    if (client.street || client.city || client.state || client.zip) {
+      if (client.street) setText('Street',   client.street);
+      if (client.city)   setText('City',     client.city);
+      if (client.state)  setText('State',    client.state);
+      if (client.zip)    setText('Zip Code', client.zip);
+    } else {
+      const addr = (client.address || '').trim();
+      if (addr) {
+        const m = addr.match(/^(.*?),\s*(.*?),\s*([A-Z]{2})\s+(\d[\d-]*)$/);
+        if (m) {
+          setText('Street',   m[1].trim());
+          setText('City',     m[2].trim());
+          setText('State',    m[3].trim());
+          setText('Zip Code', m[4].trim());
+        } else {
+          const parts = addr.split(',').map(s => s.trim());
+          if (parts[0]) setText('Street', parts[0]);
+          if (parts[1]) setText('City',   parts[1]);
+          if (parts[2]) {
+            const sz = parts[2].trim().split(' ');
+            setText('State',    sz[0] || '');
+            setText('Zip Code', sz[1] || '');
+          }
+
         }
       }
     }
