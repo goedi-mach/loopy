@@ -1058,7 +1058,10 @@ body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_numbe
           headers: authHeaders(),
           body:    JSON.stringify({ active: true, archived: false, deactivated_at: null })
         });
-        if (!res.ok) throw new Error('Reactivate failed');
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(`Reactivate failed (${res.status}): ${errBody.message || errBody.hint || JSON.stringify(errBody)}`);
+        }
         showMsg('lotMsg', 'success', 'Lot reactivated.');
         loadLots();
       } catch (err) {
