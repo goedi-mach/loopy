@@ -2264,8 +2264,8 @@ function setRadio(fieldName, index) {
     setText('Product Name',          r.product_name       || '', 9);
     setText('Vaccine Serial Number', r.lot_number         || '', 9);
     const licenseMap = {
-      'Dr. Ana Valbuena':      '[LICENSE-REDACTED]',
-      'Dr. Alexandra Friedman': '[LICENSE-REDACTED]',
+      'Dr. Ana Valbuena':       CONFIG.VET_LICENSE_ANA,
+      'Dr. Alexandra Friedman': CONFIG.VET_LICENSE_FRIEDMAN,
     };
     setText('License Number', r.ac_license_number || licenseMap[r.administered_by] || '', 9);
 
