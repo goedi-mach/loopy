@@ -942,6 +942,11 @@
 
     let showArchived = false;
 
+    function toggleArchived() {
+      showArchived = !showArchived;
+      loadLots();
+    }
+
     async function loadLots() {
       const wrap = document.getElementById('lotTableWrap');
       try {
@@ -952,8 +957,7 @@
         const rows = await res.json();
 
         const toggleLabel = showArchived ? 'Hide archived' : 'Show archived';
-        const toggleLink  = `<a href="#" onclick="showArchived=!showArchived;loadLots();return false;" style="font-size:0.78rem;color:var(--text-muted);text-decoration:underline;">${toggleLabel}</a>`;
-
+        const toggleLink  = `<a href="#" onclick="toggleArchived();return false;" style="font-size:0.78rem;color:var(--text-muted);text-decoration:underline;">${toggleLabel}</a>`;
         if (!rows.length) {
           wrap.innerHTML = `<div class="empty-state">No lots configured yet.</div><div style="text-align:center;margin-top:0.5rem;">${toggleLink}</div>`;
           return;
