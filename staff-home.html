@@ -1050,18 +1050,15 @@ body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_numbe
       }
     }
 
-    async function reactivateLot(id) {
-      if (!confirm('Reactivate this lot? It will become the active lot for its vaccine type.')) return;
+  async function reactivateLot(id) {
+      if (!confirm('Reactivate this lot? It will become active again.')) return;
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${id}`, {
           method:  'PATCH',
           headers: authHeaders(),
           body:    JSON.stringify({ active: true, archived: false, deactivated_at: null })
         });
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(`Reactivate failed (${res.status}): ${errBody.message || errBody.hint || JSON.stringify(errBody)}`);
-        }
+        if (!res.ok) throw new Error('Reactivate failed.');
         showMsg('lotMsg', 'success', 'Lot reactivated.');
         loadLots();
       } catch (err) {
