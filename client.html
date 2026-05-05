@@ -483,6 +483,22 @@
 
     </div>
   </div>
+  <!-- ── NOTES ── -->
+  <div class="card" style="border: 1.5px solid #f0d97a; background: #fffef5;">
+    <div class="card-header" style="background: #fffbea; border-bottom: 1.5px solid #f0d97a; cursor: pointer; user-select: none;" onclick="toggleClientNotes()">
+      <span style="color: #92720a;">📝 Client Notes</span>
+      <span id="notesChevron" style="font-size: 0.8rem; color: #92720a;">▼</span>
+    </div>
+    <div class="card-body" id="notesBody" style="display: none; background: #fffbea;">
+      <textarea id="clientNotesField" placeholder="Permanent notes about this client…" style="width: 100%; min-height: 88px; border: 1.5px solid #f0d97a; border-radius: 8px; background: #fffef5; font-family: 'Nunito Sans', sans-serif; font-size: 0.88rem; color: #5a4a00; resize: vertical; outline: none; padding: 0.5rem 0.65rem;"></textarea>
+      <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+        <button onclick="saveClientNotes()" style="font-size: 0.8rem; padding: 0.35rem 1rem; border-radius: 999px; border: none; background: #f0d97a; color: #5a4a00; font-family: 'Nunito', sans-serif; font-weight: 800; cursor: pointer;">Save</button>
+      </div>
+      <div id="notesSaveMsg" class="msg" style="margin-top: 0.4rem;"></div>
+    </div>
+  </div>
+<!-- ── ATTENDANCE ── -->
+  <div class="card">
 <!-- ── ATTENDANCE ── -->
   <div class="card">
     <div class="card-header">
@@ -862,6 +878,7 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
     const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
     document.title = `${c.name} — People Helping Pets`;
     document.getElementById('clientCardTitle').textContent = c.name;
+    document.getElementById('clientNotesField').value = c.notes || '';
     document.getElementById('viewName').textContent   = c.name   || '—';
     document.getElementById('viewPhone').textContent  = c.phone  || '—';
     document.getElementById('viewEmail').textContent  = c.email  || '—';
@@ -915,7 +932,37 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
     }
   }
   // ── ATTENDANCE TOGGLE ─────────────────────────────────────────────
-  function toggleAttendance() {
+function toggleClientNotes() {
+    const body    = document.getElementById('notesBody');
+    const chevron = document.getElementById('notesChevron');
+    const open    = body.style.display === 'none';
+    body.style.display    = open ? 'block' : 'none';
+    chevron.textContent   = open ? '▲' : '▼';
+  }
+
+  async function saveClientNotes() {
+    if (!clientData) return;
+    const notes   = document.getElementById('clientNotesField').value.trim() || null;
+    const msg     = document.getElementById('notesSaveMsg');
+    msg.className = 'msg';
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}`, {
+        method:  'PATCH',
+        headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+        body:    JSON.stringify({ notes })
+      });
+      if (!res.ok) throw new Error('Save failed');
+      clientData.notes  = notes;
+      msg.className     = 'msg success';
+      msg.textContent   = 'Saved.';
+      setTimeout(() => { msg.className = 'msg'; msg.textContent = ''; }, 2500);
+    } catch (err) {
+      msg.className   = 'msg error';
+      msg.textContent = err.message;
+    }
+  }
+
+  function toggleAttendance() {  
     const body    = document.getElementById('attendanceBody');
     const chevron = document.getElementById('attendanceChevron');
     const opening = body.style.display === 'none';
