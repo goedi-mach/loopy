@@ -1163,13 +1163,24 @@ const statusLabel = { registered: 'In Queue', checked_in: 'Checked In', discharg
 function openWalkin() {
   document.getElementById('walkinCard').style.display = 'block';
   document.getElementById('detailEmpty').style.display = 'none';
+  // Hide any currently loaded client profile
+  document.getElementById('clientInfo').style.display = 'none';
+  document.getElementById('petsCard').style.display = 'none';
+  ['checkinBtn','editClientBtn','viewProfileBtn','archiveClientBtn','notesBtn'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
   // Init after the canvas is visible so dimensions are correct
   setTimeout(initWalkinSigPad, 50);
 }
 
 function closeWalkin() {
   document.getElementById('walkinCard').style.display = 'none';
-  document.getElementById('detailEmpty').style.display = 'block';
+  // If a client was loaded before walk-in was opened, restore their profile
+  if (currentClient) {
+    selectClient(currentClient);
+  } else {
+    document.getElementById('detailEmpty').style.display = 'block';
+  }
   ['walkinName','walkinPhone','walkinEmail','walkinStreet','walkinCity','walkinState','walkinZip','walkinPetName','walkinPetBreed','walkinPetAge','walkinPetWeight','walkinPetColors'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('walkinPetSpecies').value     = '';
   document.getElementById('walkinPetAgeUnit').value     = 'years';
