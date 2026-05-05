@@ -969,7 +969,7 @@
           <table class="user-table">
             <thead>
               <tr>
-                <th>Vaccine</th><th>Lot #</th><th>Manufacturer</th><th>Status</th><th>Added</th><th>Deactivated</th><th></th>
+                <th>Vaccine</th><th>Lot #</th><th>Manufacturer</th><th>Status</th><th>Expires</th><th>Added</th><th>Deactivated</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -987,6 +987,7 @@
                   <td style="font-family:monospace;">${r.manufacturer || '—'}</td>
                   <td>${r.exp_date ? (() => { const today = new Date().toISOString().split('T')[0]; const expired = r.exp_date < today; return `<span style="font-weight:700;color:${expired ? '#b91c1c' : '#2d8a5e'}">${expired ? '⚠️ ' : '✓ '}${r.exp_date}</span>`; })() : '—'}</td>
                   <td>${r.active ? '<span class="badge badge-staff">active</span>' : '<span class="badge badge-volunteer">inactive</span>'}</td>
+                  <td style="color:var(--text-muted)">${r.exp_date ? new Date(r.exp_date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—'}</td>
                   <td style="color:var(--text-muted)">${fmtD(r.created_at)}</td>
                   <td style="color:var(--text-muted)">${fmtD(r.deactivated_at)}</td>
                   <td>${actions}</td>
@@ -1020,7 +1021,7 @@
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory`, {
           method:  'POST',
           headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, manufacturer, exp_date: expDate, active: true })        });
+body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, manufacturer, active: true, exp_date: document.getElementById('newLotExpDate').value || null })       });
         if (!res.ok) throw new Error((await res.json()).message || 'Save failed');
         showMsg('lotMsg', 'success', `Lot saved for ${VAX_LABELS[type]}.`);
         document.getElementById('newLotType').value          = '';
