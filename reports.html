@@ -1029,6 +1029,51 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
         `;
       }
 
+    // ── VACCINE WASTE ──
+      const wasteRaw = await sbGet(
+        `vaccine_waste?select=vaccine_name,doses_wasted,event_id${eventsInRange.length ? `&event_id=in.(${eventsInRange.map(e=>e.id).join(',')})` : '&event_id=eq.null'}&order=vaccine_name.asc&limit=1000`
+      );
+
+      const wasteWrap = document.getElementById('wasteWrap');
+      if (wasteRaw.length === 0) {
+        wasteWrap.innerHTML = '<div class="empty">No vaccine waste recorded in this range.</div>';
+      } else {
+        // Aggregate by vaccine name
+        const wasteTotals = {};
+        wasteRaw.forEach(w => {
+          wasteTotals[w.vaccine_name] = (wasteTotals[w.vaccine_name] || 0) + w.doses_wasted;
+        });
+        const wasteSorted = Object.entries(wasteTotals).sort((a,b) => b[1]-a[1]);
+        const totalWasted = wasteSorted.reduce((s,[,n]) => s+n, 0);
+
+        wasteWrap.innerHTML = `
+          <div style="margin-bottom:1rem;">
+            <span style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.5rem; color:var(--coral-dark);">${totalWasted}</span>
+            <span style="font-size:0.85rem; color:var(--text-muted); margin-left:0.4rem;">total doses wasted</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Vaccine</th>
+                <th style="text-align:right">Doses Wasted</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${wasteSorted.map(([name, count]) => `
+                <tr>
+                  <td>${name}</td>
+                  <td class="num">${count}</td>
+                </tr>
+              `).join('')}
+              <tr style="background:#f8faff;">
+                <td style="font-weight:700; color:var(--navy); font-family:'Nunito',sans-serif;">Total</td>
+                <td class="num" style="color:var(--navy);">${totalWasted}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+      }
+
     } catch (err) {
       console.error(err);
       alert('Error running report: ' + err.message);
