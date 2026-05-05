@@ -926,7 +926,7 @@
   <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.82rem; color:var(--navy); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.75rem;">
     📋 NASPHV Form 51 — Rabies Certificate Fields
   </div>
-  <div class="form-row">
+ <div class="form-row">
     <div class="form-field">
       <label>Rabies Tag #</label>
       <input type="text" id="rabiesTagNum" placeholder="e.g. 2025-00123" />
@@ -934,6 +934,14 @@
     <div class="form-field">
       <label>Colors / Markings</label>
       <input type="text" id="rabiesColors" placeholder="e.g. Black & white, tabby" />
+      <div id="rabiesColorsStatus" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem; min-height:1rem;"></div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-field">
+      <label>Breed (for certificate)</label>
+      <input type="text" id="rabiesBreed" placeholder="e.g. Labrador Mix" />
+      <div id="rabiesBreedStatus" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem; min-height:1rem;"></div>
     </div>
   </div>
   <div class="form-row">
@@ -1737,7 +1745,39 @@ async function markDischarged() {
     // If date is already set and duration already selected, recalculate
     onDurationChange();
   }
+async function translateField(text, fieldId, statusId) {
+    const field  = document.getElementById(fieldId);
+    const status = document.getElementById(statusId);
 
+    // Skip if it's already ASCII-safe (unlikely to need translation)
+    if (/^[\x00-\x7F]*$/.test(text)) {
+      status.textContent = '';
+      return;
+    }
+
+    status.textContent = '⏳ Translating…';
+    try {
+      const res  = await fetch('/api/translate', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ text }),
+      });
+      const data = await res.json();
+      if (data.translated && data.translated !== text) {
+        field.value    = data.translated;
+        field.readOnly = false;
+        field.style.background = '#f0fff4';
+        field.title    = `Translated from: "${text}" — edit if needed.`;
+        status.textContent = `✓ Translated from Spanish`;
+        status.style.color = 'var(--green)';
+      } else {
+        status.textContent = '';
+      }
+    } catch (err) {
+      status.textContent = '⚠ Translation unavailable — please review';
+      status.style.color = 'var(--amber)';
+    }
+  }
   function onDurationChange() {
     const vaxIdx      = document.getElementById('vaxName').value;
     const durIdx      = document.getElementById('vaxDuration').value;
@@ -1770,11 +1810,25 @@ async function markDischarged() {
       document.getElementById('rabiesProduct').value = productMap[mfr] || '';
 
       const petColors   = selectedPetObj?.colors_markings || '';
+      const petBreed    = selectedPetObj?.breed || '';
       const colorsField = document.getElementById('rabiesColors');
+      const breedField  = document.getElementById('rabiesBreed');
+
+      // Pre-fill colors
       colorsField.value    = petColors;
       colorsField.readOnly = !!petColors;
       colorsField.style.background = petColors ? '#f0f4ff' : '';
       colorsField.title = petColors ? 'Pre-filled from intake form. Clear to override.' : '';
+
+      // Pre-fill breed
+      breedField.value    = petBreed;
+      breedField.readOnly = !!petBreed;
+      breedField.style.background = petBreed ? '#f0f4ff' : '';
+      breedField.title = petBreed ? 'Pre-filled from pet record. Clear to override.' : '';
+
+      // Translate both fields if they have values
+      if (petColors) translateField(petColors, 'rabiesColors', 'rabiesColorsStatus');
+      if (petBreed)  translateField(petBreed,  'rabiesBreed',  'rabiesBreedStatus');
     }
   }
 
@@ -1823,6 +1877,7 @@ const vaxIdx   = document.getElementById('vaxName').value;
     if (vaxObj.isRabies) {
       payload.rabies_tag_number = document.getElementById('rabiesTagNum').value.trim()  || null;
       payload.colors_markings   = document.getElementById('rabiesColors').value.trim()  || selectedPetObj?.colors_markings || null;
+      payload.breed_en          = document.getElementById('rabiesBreed').value.trim()   || selectedPetObj?.breed || null;
       payload.product_name      = document.getElementById('rabiesProduct').value.trim() || null;
       payload.manufacturer      = document.getElementById('rabiesMan').value.trim().toUpperCase() || null;
       payload.usda_duration     = document.getElementById('rabiesUSDA').value           || null;
@@ -2241,7 +2296,7 @@ function setRadio(fieldName, index) {
     // ── Pet ────────────────────────────────────────────────────
     setText('Animal Name',             pet.name              || '');
     setText('Microchip #',             pet.microchip_number  || '', 8);
-    setText('Predominent Breed',       pet.breed             || '', 9);
+    setText('Predominent Breed',         r.breed_en || pet.breed || '', 9);
     setText('Predominemt Colors/Markings', r.colors_markings || '', 8);
 
     const ageNum = parseFloat(pet.age);
