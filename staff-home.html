@@ -1010,10 +1010,6 @@
       btn.textContent = 'Saving…';
 
       try {
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/vaccine_inventory?vaccine_type=eq.${type}&active=eq.true`,
-          { method: 'PATCH', headers: authHeaders(), body: JSON.stringify({ active: false, deactivated_at: new Date().toISOString() }) }
-        );
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory`, {
           method:  'POST',
           headers: { ...authHeaders(), 'Prefer': 'return=representation' },
@@ -1050,7 +1046,7 @@ body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_numbe
     }
 
     async function reactivateLot(id) {
-      if (!confirm('Reactivate this lot? It will become the active lot for its vaccine type.')) return;
+      if (!confirm('Reactivate this lot? It will become active and appear in the discharge lot dropdown.')) return;
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${id}`, {
           method:  'PATCH',
