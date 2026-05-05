@@ -449,6 +449,68 @@
       border-bottom: 2.5px solid var(--navy-light);
     }
     .section-header .section-title { margin: 0; padding: 0; border: none; }
+
+    /* ── LOOKUP TABS ── */
+    .tab-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .tab-btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.4rem 1.1rem;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+    }
+    .tab-btn:hover:not(.active) { border-color: var(--navy); color: var(--navy); }
+    .lookup-panel { display: none; }
+    .lookup-panel.active { display: block; }
+    .lookup-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .lookup-row input[type="text"],
+    .lookup-row select {
+      padding: 0.4rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Nunito Sans', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--white);
+      min-width: 220px;
+    }
+    .lookup-row input[type="text"]:focus,
+    .lookup-row select:focus { outline: none; border-color: var(--navy); }
+    .lookup-result-meta {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .lookup-badge {
+      background: var(--navy-light);
+      color: var(--navy);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 0.3rem 0.85rem;
+      border-radius: 999px;
+    }
   </style>
   <script src="config.js"></script>
   <script src="auth.js"></script>
@@ -594,6 +656,40 @@
     <div id="wasteWrap">
       <div class="empty">Run a report to see results.</div>
     </div>
+  </div>
+
+  <!-- VACCINE LOOKUP -->
+  <div class="section-card">
+    <div class="section-header">
+      <div class="section-title">🔍 Vaccine Lookup</div>
+      <button class="btn-export" id="lookupExportBtn" onclick="exportLookupCSV()" style="display:none;">⬇ Export CSV</button>
+    </div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" id="tabLot" onclick="switchTab('lot')">By Lot Number</button>
+      <button class="tab-btn" id="tabStaff" onclick="switchTab('staff')">By Staff Member</button>
+    </div>
+
+    <!-- LOT NUMBER PANEL -->
+    <div class="lookup-panel active" id="panelLot">
+      <div class="lookup-row">
+        <input type="text" id="lotInput" placeholder="Enter lot number…" />
+        <button class="btn-run" onclick="runLotLookup()">Search</button>
+      </div>
+      <div id="lotResults"><div class="empty">Enter a lot number to search.</div></div>
+    </div>
+
+    <!-- STAFF PANEL -->
+    <div class="lookup-panel" id="panelStaff">
+      <div class="lookup-row">
+        <select id="staffSelect">
+          <option value="">— Select staff member —</option>
+        </select>
+        <button class="btn-run" onclick="runStaffLookup()">Search</button>
+      </div>
+      <div id="staffResults"><div class="empty">Select a staff member to search.</div></div>
+    </div>
+
   </div>
 
 </div><!-- /main -->
@@ -1016,7 +1112,260 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
   async function initPage() {
     setDefaultDates();
     await loadEventDropdown();
+    await loadStaffDropdown();
     await runReport();
+  }
+
+  // ── VACCINE LOOKUP ─────────────────────────────────────────────
+  let lastLookupRows = [];
+  let currentTab = 'lot';
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabLot').classList.toggle('active', tab === 'lot');
+    document.getElementById('tabStaff').classList.toggle('active', tab === 'staff');
+    document.getElementById('panelLot').classList.toggle('active', tab === 'lot');
+    document.getElementById('panelStaff').classList.toggle('active', tab === 'staff');
+    document.getElementById('lookupExportBtn').style.display = 'none';
+    lastLookupRows = [];
+  }
+
+  async function loadStaffDropdown() {
+    try {
+      const rows = await sbGet('vaccinations?select=administered_by&administered_by=not.is.null&limit=5000');
+      const names = [...new Set(rows.map(r => r.administered_by).filter(Boolean))].sort();
+      const sel = document.getElementById('staffSelect');
+      names.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+    } catch (e) {
+      console.warn('Could not load staff list:', e.message);
+    }
+  }
+
+  async function runLotLookup() {
+    const lot = document.getElementById('lotInput').value.trim();
+    const resultsEl = document.getElementById('lotResults');
+    if (!lot) { resultsEl.innerHTML = '<div class="empty">Please enter a lot number.</div>'; return; }
+
+    resultsEl.innerHTML = '<div class="empty"><span class="loading-spinner"></span>Searching…</div>';
+    document.getElementById('lookupExportBtn').style.display = 'none';
+    lastLookupRows = [];
+
+    try {
+      const vax = await sbGet(
+        `vaccinations?lot_number=eq.${encodeURIComponent(lot)}&select=id,vaccine_name,date_given,lot_number,administered_by,pet_id&order=date_given.asc&limit=1000`
+      );
+
+      if (vax.length === 0) {
+        resultsEl.innerHTML = '<div class="empty">No vaccinations found for that lot number.</div>';
+        return;
+      }
+
+      // Fetch pet + client info for each unique pet_id
+      const petIds = [...new Set(vax.map(v => v.pet_id).filter(Boolean))];
+      const petsRaw = petIds.length
+        ? await sbGet(`pets?id=in.(${petIds.join(',')})&select=id,name,species,client_id&limit=1000`)
+        : [];
+      const petMap = {};
+      petsRaw.forEach(p => { petMap[p.id] = p; });
+
+      const clientIds = [...new Set(petsRaw.map(p => p.client_id).filter(Boolean))];
+      const clientsRaw = clientIds.length
+        ? await sbGet(`clients?id=in.(${clientIds.join(',')})&select=id,first_name,last_name&limit=1000`)
+        : [];
+      const clientMap = {};
+      clientsRaw.forEach(c => { clientMap[c.id] = c; });
+
+      // Vaccine name and dose count
+      const vaccineName = vax[0].vaccine_name || 'Unknown';
+      const doseCount = vax.length;
+
+      // Build rows
+      lastLookupRows = vax.map(v => {
+        const pet    = petMap[v.pet_id] || {};
+        const client = clientMap[pet.client_id] || {};
+        return {
+          date:          v.date_given || '—',
+          pet_name:      pet.name || '—',
+          species:       pet.species || '—',
+          owner:         (client.first_name || client.last_name)
+                           ? `${client.first_name || ''} ${client.last_name || ''}`.trim()
+                           : '—',
+          client_id:     pet.client_id || null,
+          vaccine:       v.vaccine_name || '—',
+          lot:           v.lot_number || '—',
+          administered:  v.administered_by || '—',
+        };
+      });
+
+      resultsEl.innerHTML = `
+        <div class="lookup-result-meta">
+          <span class="lookup-badge">💉 ${vaccineName}</span>
+          <span class="lookup-badge">📦 Lot: ${lot}</span>
+          <span class="lookup-badge">${doseCount} dose${doseCount !== 1 ? 's' : ''} given</span>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Pet</th>
+              <th>Species</th>
+              <th>Owner</th>
+              <th>Administered By</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lastLookupRows.map(r => `
+              <tr>
+                <td>${r.date}</td>
+                <td>${r.client_id
+                  ? `<a href="client.html?id=${r.client_id}" style="color:var(--navy);font-weight:700;">${r.pet_name}</a>`
+                  : r.pet_name}</td>
+                <td>${r.species}</td>
+                <td>${r.owner}</td>
+                <td>${r.administered}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      document.getElementById('lookupExportBtn').style.display = 'inline-block';
+
+    } catch (err) {
+      resultsEl.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
+    }
+  }
+
+  async function runStaffLookup() {
+    const staff = document.getElementById('staffSelect').value;
+    const resultsEl = document.getElementById('staffResults');
+    if (!staff) { resultsEl.innerHTML = '<div class="empty">Please select a staff member.</div>'; return; }
+
+    resultsEl.innerHTML = '<div class="empty"><span class="loading-spinner"></span>Searching…</div>';
+    document.getElementById('lookupExportBtn').style.display = 'none';
+    lastLookupRows = [];
+
+    try {
+      const vax = await sbGet(
+        `vaccinations?administered_by=eq.${encodeURIComponent(staff)}&select=id,vaccine_name,date_given,lot_number,administered_by,pet_id&order=date_given.asc&limit=5000`
+      );
+
+      if (vax.length === 0) {
+        resultsEl.innerHTML = '<div class="empty">No vaccinations found for this staff member.</div>';
+        return;
+      }
+
+      // Fetch pet + client info
+      const petIds = [...new Set(vax.map(v => v.pet_id).filter(Boolean))];
+      const petsRaw = petIds.length
+        ? await sbGet(`pets?id=in.(${petIds.join(',')})&select=id,name,species,client_id&limit=1000`)
+        : [];
+      const petMap = {};
+      petsRaw.forEach(p => { petMap[p.id] = p; });
+
+      const clientIds = [...new Set(petsRaw.map(p => p.client_id).filter(Boolean))];
+      const clientsRaw = clientIds.length
+        ? await sbGet(`clients?id=in.(${clientIds.join(',')})&select=id,first_name,last_name&limit=1000`)
+        : [];
+      const clientMap = {};
+      clientsRaw.forEach(c => { clientMap[c.id] = c; });
+
+      // Vaccine type breakdown
+      const vaxCounts = {};
+      vax.forEach(v => {
+        const name = v.vaccine_name || 'Unknown';
+        vaxCounts[name] = (vaxCounts[name] || 0) + 1;
+      });
+      const vaxSorted = Object.entries(vaxCounts).sort((a,b) => b[1]-a[1]);
+      const maxCount  = vaxSorted[0]?.[1] || 1;
+      const barColors = ['#1a3a8f','#f28b82','#2d8a5e','#d97706','#7c3aed'];
+
+      // Build rows for export
+      lastLookupRows = vax.map(v => {
+        const pet    = petMap[v.pet_id] || {};
+        const client = clientMap[pet.client_id] || {};
+        return {
+          date:         v.date_given || '—',
+          pet_name:     pet.name || '—',
+          species:      pet.species || '—',
+          owner:        (client.first_name || client.last_name)
+                          ? `${client.first_name || ''} ${client.last_name || ''}`.trim()
+                          : '—',
+          client_id:    pet.client_id || null,
+          vaccine:      v.vaccine_name || '—',
+          lot:          v.lot_number || '—',
+          administered: v.administered_by || '—',
+        };
+      });
+
+      resultsEl.innerHTML = `
+        <div class="lookup-result-meta">
+          <span class="lookup-badge">👤 ${staff}</span>
+          <span class="lookup-badge">${vax.length} total dose${vax.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="bar-list" style="margin-bottom:1.25rem; max-width:500px;">
+          ${vaxSorted.map(([name, count], i) => `
+            <div class="bar-row">
+              <div class="bar-label" title="${name}">${name}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${(count/maxCount*100).toFixed(1)}%; background:${barColors[i % barColors.length]};"></div>
+              </div>
+              <div class="bar-count">${count}</div>
+            </div>
+          `).join('')}
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Pet</th>
+              <th>Species</th>
+              <th>Owner</th>
+              <th>Vaccine</th>
+              <th>Lot #</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lastLookupRows.map(r => `
+              <tr>
+                <td>${r.date}</td>
+                <td>${r.client_id
+                  ? `<a href="client.html?id=${r.client_id}" style="color:var(--navy);font-weight:700;">${r.pet_name}</a>`
+                  : r.pet_name}</td>
+                <td>${r.species}</td>
+                <td>${r.owner}</td>
+                <td>${r.vaccine}</td>
+                <td style="font-family:monospace;">${r.lot}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      document.getElementById('lookupExportBtn').style.display = 'inline-block';
+
+    } catch (err) {
+      resultsEl.innerHTML = `<div class="empty">Error: ${err.message}</div>`;
+    }
+  }
+
+  function exportLookupCSV() {
+    if (!lastLookupRows.length) { alert('Run a lookup first.'); return; }
+    const header = 'Date,Pet,Species,Owner,Vaccine,Lot #,Administered By';
+    const rows = lastLookupRows.map(r =>
+      `${r.date},"${r.pet_name}","${r.species}","${r.owner}","${r.vaccine}","${r.lot}","${r.administered}"`
+    );
+    const csv  = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `php-lookup-${currentTab}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   if (accessToken) {
