@@ -1029,7 +1029,8 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
         `;
       }
 
-    // ── VACCINE WASTE ──
+   // ── VACCINE WASTE ──
+      console.log('eventsInRange:', eventsInRange);
       const wasteRaw = await sbGet(
         `vaccine_waste?select=vaccine_name,doses_wasted,event_id${eventsInRange.length ? `&event_id=in.(${eventsInRange.map(e=>e.id).join(',')})` : '&event_id=eq.null'}&order=vaccine_name.asc&limit=1000`
       );
