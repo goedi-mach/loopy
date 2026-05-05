@@ -1036,13 +1036,13 @@ body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_numbe
       }
     }
 
-    async function deactivateLot(id) {
+   async function deactivateLot(id) {
       if (!confirm('Deactivate this lot? Discharge volunteers will no longer see it.')) return;
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${id}`, {
           method:  'PATCH',
           headers: authHeaders(),
-          body:    JSON.stringify({ active: false, deactivated_at: new Date().toISOString() })
+          body:    JSON.stringify({ active: false, archived: true, deactivated_at: new Date().toISOString() })
         });
         if (!res.ok) throw new Error('Deactivate failed');
         showMsg('lotMsg', 'success', 'Lot deactivated.');
