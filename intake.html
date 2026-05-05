@@ -1210,9 +1210,8 @@ async function checkDuplicates() {
   if (!tokens.length) return;
 
   try {
-    const encoded = encodeURIComponent(`%${tokens[0]}%`);
     const results = await sbGet(
-      `clients?name=ilike.${encoded}&archived=eq.false&order=name.asc&limit=5`
+      `rpc/search_clients_unaccent?search_term=${encodeURIComponent(tokens[0])}`
     );
 
     // Filter further: at least one other token must also appear in the name
@@ -1401,10 +1400,9 @@ async function deleteEvent(eventId, location) {
     list.innerHTML = '<li class="empty-state">Searching…</li>';
 
     try {
-      // Search across name, email, and phone using ilike (case-insensitive)
-      const encoded = encodeURIComponent(`%${q}%`);
+      // Search using unaccent-aware RPC for accent-insensitive matching
       const clients = await sbGet(
-        `clients?or=(name.ilike.${encoded},email.ilike.${encoded},phone.ilike.${encoded})&order=name.asc&limit=5`
+        `rpc/search_clients_unaccent?search_term=${encodeURIComponent(q)}`
       );
 
       if (!clients.length) {
