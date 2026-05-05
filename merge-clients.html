@@ -844,11 +844,11 @@
           </div>
           <div class="result-actions">
             <button class="btn btn-outline" style="font-size:0.78rem; padding:0.3rem 0.7rem; ${isA ? 'opacity:0.4;' : ''}"
-              onclick="selectClient('a', ${c.id})" ${isA ? 'disabled' : ''}>
+              onclick="selectClient('a', '${c.id}')" ${isA ? 'disabled' : ''}>
               ${isA ? '✓ Client A' : 'Set as A'}
             </button>
             <button class="btn btn-outline" style="font-size:0.78rem; padding:0.3rem 0.7rem; border-color:var(--coral-dark); color:var(--coral-dark); ${isB ? 'opacity:0.4;' : ''}"
-              onclick="selectClient('b', ${c.id})" ${isB ? 'disabled' : ''}>
+              onclick="selectClient('b', '${c.id}')" ${isB ? 'disabled' : ''}>
               ${isB ? '✓ Client B' : 'Set as B'}
             </button>
           </div>
