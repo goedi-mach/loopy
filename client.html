@@ -484,13 +484,13 @@
     </div>
   </div>
   <!-- ── NOTES ── -->
-  <div class="card" style="border: 1.5px solid #f0d97a; background: #fffef5;">
-    <div class="card-header" style="background: #fffbea; border-bottom: 1.5px solid #f0d97a; cursor: pointer; user-select: none;" onclick="toggleClientNotes()">
-      <span style="color: #92720a;">📝 Client Notes</span>
-      <span id="notesChevron" style="font-size: 0.8rem; color: #92720a;">▼</span>
+  <div class="card">
+    <div class="card-header" style="cursor: pointer; user-select: none;" onclick="toggleClientNotes()">
+      <span>📝 Client Notes</span>
+      <span id="notesChevron" style="font-size: 0.8rem; color: var(--text-muted);">▼</span>
     </div>
-    <div class="card-body" id="notesBody" style="display: none; background: #fffbea;">
-      <textarea id="clientNotesField" placeholder="Permanent notes about this client…" style="width: 100%; min-height: 88px; border: 1.5px solid #f0d97a; border-radius: 8px; background: #fffef5; font-family: 'Nunito Sans', sans-serif; font-size: 0.88rem; color: #5a4a00; resize: vertical; outline: none; padding: 0.5rem 0.65rem;"></textarea>
+    <div class="card-body" id="notesBody" style="display: none;">
+      <textarea id="clientNotesField" placeholder="Permanent notes about this client…" style="width: 100%; min-height: 88px; border: 1.5px solid #f0d97a; border-radius: 8px; background: #fffbea; font-family: 'Nunito Sans', sans-serif; font-size: 0.88rem; color: #5a4a00; resize: vertical; outline: none; padding: 0.5rem 0.65rem;"></textarea>
       <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
         <button onclick="saveClientNotes()" style="font-size: 0.8rem; padding: 0.35rem 1rem; border-radius: 999px; border: none; background: #f0d97a; color: #5a4a00; font-family: 'Nunito', sans-serif; font-weight: 800; cursor: pointer;">Save</button>
       </div>
