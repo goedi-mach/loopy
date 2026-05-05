@@ -1699,6 +1699,7 @@ async function markDischarged() {
     lotField.title    = '';
     lotSelect.innerHTML = '<option value="">— Select a lot —</option>';
     lotSelect.style.display = 'none';
+    lotField.style.display  = '';
 
     if (idx === '' || !species) return;
 
@@ -1714,6 +1715,7 @@ async function markDischarged() {
         lotSelect.appendChild(opt);
       });
       lotSelect.style.display = 'block';
+      lotField.style.display  = 'none';
       if (lots.length === 1) {
         lotSelect.value  = lots[0].lot_number;
         lotField.value   = lots[0].lot_number;
@@ -1793,6 +1795,7 @@ const vaxIdx   = document.getElementById('vaxName').value;
     const durObj   = DURATION_OPTIONS[vaxObj.inventoryKey][durIdx];
 
     if (!durIdx && durIdx !== 0) { showMsg(msg, 'error', 'Please select a duration.'); return; }
+    if (!document.getElementById('vaxLot').value.trim()) { showMsg(msg, 'error', 'Please select a lot number.'); return; }
     // Block if lot is expired
     const selectedLot = (activeLots[vaxObj.inventoryKey] || []).find(l => l.lot_number === document.getElementById('vaxLot').value);
     if (selectedLot?.exp_date) {
