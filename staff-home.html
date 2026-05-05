@@ -621,16 +621,19 @@
         );
         if (!patchClients.ok) throw new Error(`Failed to reset client statuses (${patchClients.status}).`);
 
-        // Mark the matching event as completed
+       // Mark the matching event as completed, then prompt for waste
         if (staleDate) {
-          await fetch(
-            `${SUPABASE_URL}/rest/v1/events?event_date=eq.${staleDate}&completed=eq.false`,
-            {
-              method:  'PATCH',
-              headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-              body:    JSON.stringify({ completed: true, completed_at: new Date().toISOString() })
-            }
+          const evLookup = await fetch(
+            `${SUPABASE_URL}/rest/v1/events?event_date=eq.${staleDate}&completed=eq.false&select=id,event_date,location`,
+            { headers: authHeaders() }
           );
+          const [staleEvent] = await evLookup.json();
+          if (staleEvent) {
+            document.getElementById('staleWarning').style.display = 'none';
+            await loadEvents();
+            openWasteModal(staleEvent.id, staleEvent.event_date, staleEvent.location);
+            return;
+          }
         }
 
         document.getElementById('staleWarning').style.display = 'none';
