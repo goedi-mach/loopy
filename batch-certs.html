@@ -696,7 +696,7 @@
         document.getElementById('overlayLabel').textContent = `Generating ${i + 1} of ${total}: ${r.pet?.name || ''}…`;
         document.getElementById('overlayFill').style.width  = `${Math.round((i / total) * 100)}%`;
 
-        const blob       = await generateRabiesCertPDF(r, templateBytes.slice(0));        
+        const blob       = await generateRabiesCertPDF(r);        
         const arrayBuf   = await blob.arrayBuffer();
         zip.file(filename, arrayBuf);
       }
