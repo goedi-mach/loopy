@@ -522,6 +522,14 @@
   const SUPABASE_URL      = CONFIG.SUPABASE_URL;
 const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
 
+  // ─── AUTO-CAPITALIZE PET NAME FIELDS ──────────────────────────
+  function titleCaseInput(e) {
+    const input = e.target;
+    const pos = input.selectionStart;
+    input.value = input.value.replace(/\b\w/g, c => c.toUpperCase());
+    input.setSelectionRange(pos, pos);
+  }
+
   async function supabaseInsert(table, data) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
       method: 'POST',
@@ -598,7 +606,7 @@ async function supabaseSelect(table, query) {
       <div class="field-row">
         <div class="field">
           <label>Pet Name / <span class="es">Nombre</span> ${i === 0 ? '<span class="required">*</span>' : ''}</label>
-          <input type="text" name="pet_name_${i}" placeholder="${['Fido','Luna','Mochi'][i]}" />
+         <input type="text" name="pet_name_${i}" placeholder="${['Fido','Luna','Mochi'][i]}" autocapitalize="words" oninput="titleCaseInput(event)" />
         </div>
         <div class="field">
           <label>Species / <span class="es">Especie</span> ${i === 0 ? '<span class="required">*</span>' : ''}</label>
