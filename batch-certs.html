@@ -256,6 +256,14 @@
 </head>
 <body>
 
+<!-- Progress overlay -->
+<div id="progressOverlay" style="display:none; position:fixed; top:0; left:0; right:0; z-index:200; background:var(--navy); color:white; padding:0.6rem 1.5rem; font-size:0.85rem; font-weight:700; font-family:'Nunito',sans-serif; box-shadow:0 2px 12px rgba(0,0,0,0.2);">
+  <div id="overlayLabel" style="margin-bottom:0.35rem;">Generating PDFs…</div>
+  <div style="height:6px; background:rgba(255,255,255,0.25); border-radius:999px; overflow:hidden;">
+    <div id="overlayFill" style="height:100%; background:white; border-radius:999px; width:0%; transition:width 0.2s;"></div>
+  </div>
+</div>
+
 <nav class="topnav">
   <a href="staff-home.html" class="topnav-brand">🐾 Pawkit</a>
   <div style="font-size:0.8rem; opacity:0.8;" id="loggedInUser"></div>
@@ -540,14 +548,16 @@
 
     const addr = (client.address || '').trim();
     if (addr) {
-      const stateAbbr = { illinois: 'IL', indiana: 'IN', wisconsin: 'WI', michigan: 'MI', iowa: 'IA', missouri: 'MO' };
       // Normalize spelled-out state names to abbreviations
+      const stateAbbr = { illinois:'IL', indiana:'IN', wisconsin:'WI', michigan:'MI', iowa:'IA', missouri:'MO' };
       const normalized = addr.replace(
         /\b(illinois|indiana|wisconsin|michigan|iowa|missouri)\b/gi,
         w => stateAbbr[w.toLowerCase()]
       );
-      // Try: anything, City ST ZIP (comma optional before city)
-      const m = normalized.match(/^(.*?),?\s+([A-Za-z\s]+?)\s+([A-Z]{2})\s+(\d[\d-]*)$/);
+      // Match: <street>, <city> <ST> <ZIP>  (comma before city is optional)
+      // Works for: "1052 N Lawndale Ave., Chicago IL 60651"
+      //            "4137 W Wellington St., Chicago IL 60641"
+      const m = normalized.match(/^(.+?),\s*([A-Za-z ]+?)\s+([A-Z]{2})\s+(\d[\d-]*)$/);
       if (m) {
         setText('Street',   m[1].trim());
         setText('City',     m[2].trim());
@@ -650,7 +660,8 @@
 
     btn.disabled = true;
     msgEl.className = 'msg';
-    progress.style.display = 'block';
+    progress.style.display = 'none';
+    document.getElementById('progressOverlay').style.display = 'block';
 
     try {
       // Load JSZip dynamically
@@ -672,16 +683,16 @@
         const ownerLast  = (r.client?.name || 'UnknownOwner').trim().split(' ').pop().replace(/[^a-zA-Z0-9]/g, '_');
         const filename   = `RabiesCert_${petName}_${ownerLast}_${r.date_given}.pdf`;
 
-        label.textContent = `Generating ${i + 1} of ${total}: ${r.pet?.name || ''}…`;
-        fill.style.width  = `${Math.round(((i) / total) * 100)}%`;
+        document.getElementById('overlayLabel').textContent = `Generating ${i + 1} of ${total}: ${r.pet?.name || ''}…`;
+        document.getElementById('overlayFill').style.width  = `${Math.round((i / total) * 100)}%`;
 
         const blob       = await generateRabiesCertPDF(r);
         const arrayBuf   = await blob.arrayBuffer();
         zip.file(filename, arrayBuf);
       }
 
-      fill.style.width  = '100%';
-      label.textContent = 'Creating zip file…';
+      document.getElementById('overlayFill').style.width  = '100%';
+      document.getElementById('overlayLabel').textContent = 'Creating zip file…';
 
       const date    = document.getElementById('clinicDate').value;
       const zipBlob = await zip.generateAsync({ type: 'blob' });
@@ -692,11 +703,11 @@
       a.click();
       URL.revokeObjectURL(url);
 
-      progress.style.display = 'none';
+      document.getElementById('progressOverlay').style.display = 'none';
       showMsg(msgEl, 'success', `✓ Downloaded ${total} certificate${total !== 1 ? 's' : ''} as a zip file.`);
 
     } catch (err) {
-      progress.style.display = 'none';
+      document.getElementById('progressOverlay').style.display = 'none';
       showMsg(msgEl, 'error', 'Error generating zip: ' + err.message);
       console.error(err);
     } finally {
