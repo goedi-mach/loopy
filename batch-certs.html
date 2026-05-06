@@ -487,9 +487,17 @@
     const form   = pdfDoc.getForm();
     const page   = pdfDoc.getPages()[0];
 
+    function toWinAnsi(str) {
+      return String(str)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')  // strip combining diacritics
+        .replace(/[^\x00-\xFF]/g, '?');   // replace anything outside latin-1 with ?
+    }
+
     function setText(fieldName, value, fontSize) {
       try {
         if (!value) return;
+        value = toWinAnsi(value);
         const field = form.getTextField(fieldName);
         const v  = PDFString.of(String(value));
         const da = `0 0 0 rg /Helv ${fontSize || 10} Tf`;
@@ -654,7 +662,7 @@
         const r = rabiesRecords[i];
         const petName    = (r.pet?.name    || 'UnknownPet').replace(/[^a-zA-Z0-9]/g, '_');
         const ownerLast  = (r.client?.name || 'UnknownOwner').trim().split(' ').pop().replace(/[^a-zA-Z0-9]/g, '_');
-        const filename   = `RabiesCert_${ownerLast}_${petName}_${r.date_given}.pdf`;
+        const filename   = `RabiesCert_${petName}_${ownerLast}_${r.date_given}.pdf`;
 
         label.textContent = `Generating ${i + 1} of ${total}: ${r.pet?.name || ''}…`;
         fill.style.width  = `${Math.round(((i) / total) * 100)}%`;
