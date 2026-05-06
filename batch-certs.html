@@ -397,7 +397,7 @@
     try {
       // Fetch all rabies vaccinations for the date
       const vaxRows = await sbGet(
-        `vaccinations?date_given=eq.${date}&vaccine_name=ilike.*Rabies*&order=created_at.asc`
+        `vaccinations?date_given=eq.${date}&vaccine_name=ilike.*Rabies*&order=date_given.asc`
       );
 
       if (!vaxRows.length) {
