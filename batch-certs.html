@@ -506,6 +506,7 @@
       try {
         if (!value) return;
         value = toWinAnsi(value);
+        console.log(`setText "${fieldName}" = "${value}"`);
         const field = form.getTextField(fieldName);
         const v  = PDFString.of(String(value));
         const da = `0 0 0 rg /Helv ${fontSize || 10} Tf`;
