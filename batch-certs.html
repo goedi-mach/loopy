@@ -484,12 +484,9 @@
     });
   }
 
-  async function generateRabiesCertPDF(r) {
+  async function generateRabiesCertPDF(r, templateBytes) {
     await ensurePDFLib();
     const { PDFDocument, PDFName, PDFString } = window.PDFLib;
-
-    const templateUrl   = `${SUPABASE_URL}/storage/v1/object/public/templates/RabiesVacCert.pdf`;
-    const templateBytes = await fetch(templateUrl).then(res => res.arrayBuffer());
 
     const pdfDoc = await PDFDocument.load(templateBytes);
     const form   = pdfDoc.getForm();
@@ -682,6 +679,10 @@
       const zip   = new window.JSZip();
       const total = rabiesRecords.length;
 
+      // Fetch template once, copy ArrayBuffer for each cert
+      const templateUrl   = `${SUPABASE_URL}/storage/v1/object/public/templates/RabiesVacCert.pdf`;
+      const templateBytes = await fetch(templateUrl).then(res => res.arrayBuffer());
+
       for (let i = 0; i < total; i++) {
         const r = rabiesRecords[i];
         const petName    = (r.pet?.name    || 'UnknownPet').replace(/[^a-zA-Z0-9]/g, '_');
@@ -691,7 +692,7 @@
         document.getElementById('overlayLabel').textContent = `Generating ${i + 1} of ${total}: ${r.pet?.name || ''}…`;
         document.getElementById('overlayFill').style.width  = `${Math.round((i / total) * 100)}%`;
 
-        const blob       = await generateRabiesCertPDF(r);
+        const blob       = await generateRabiesCertPDF(r, templateBytes.slice(0));        
         const arrayBuf   = await blob.arrayBuffer();
         zip.file(filename, arrayBuf);
       }
