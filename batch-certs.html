@@ -484,9 +484,12 @@
     });
   }
 
-  async function generateRabiesCertPDF(r, templateBytes) {
+  async function generateRabiesCertPDF(r) {
     await ensurePDFLib();
     const { PDFDocument, PDFName, PDFString } = window.PDFLib;
+
+    const templateUrl   = `${SUPABASE_URL}/storage/v1/object/public/templates/RabiesVacCert.pdf`;
+    const templateBytes = await fetch(templateUrl).then(res => res.arrayBuffer());
 
     const pdfDoc = await PDFDocument.load(templateBytes);
     const form   = pdfDoc.getForm();
@@ -678,10 +681,6 @@
 
       const zip   = new window.JSZip();
       const total = rabiesRecords.length;
-
-      // Fetch template once, copy ArrayBuffer for each cert
-      const templateUrl   = `${SUPABASE_URL}/storage/v1/object/public/templates/RabiesVacCert.pdf`;
-      const templateBytes = await fetch(templateUrl).then(res => res.arrayBuffer());
 
       for (let i = 0; i < total; i++) {
         const r = rabiesRecords[i];
