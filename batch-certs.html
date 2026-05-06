@@ -540,18 +540,26 @@
 
     const addr = (client.address || '').trim();
     if (addr) {
-      const m = addr.match(/^(.*?),\s*(.*?),\s*([A-Z]{2})\s+(\d[\d-]*)$/);
+      const stateAbbr = { illinois: 'IL', indiana: 'IN', wisconsin: 'WI', michigan: 'MI', iowa: 'IA', missouri: 'MO' };
+      // Normalize spelled-out state names to abbreviations
+      const normalized = addr.replace(
+        /\b(illinois|indiana|wisconsin|michigan|iowa|missouri)\b/gi,
+        w => stateAbbr[w.toLowerCase()]
+      );
+      // Try: anything, City ST ZIP (comma optional before city)
+      const m = normalized.match(/^(.*?),?\s+([A-Za-z\s]+?)\s+([A-Z]{2})\s+(\d[\d-]*)$/);
       if (m) {
         setText('Street',   m[1].trim());
         setText('City',     m[2].trim());
         setText('State',    m[3].trim());
         setText('Zip Code', m[4].trim());
       } else {
+        // Last resort: split on commas
         const parts = addr.split(',').map(s => s.trim());
         if (parts[0]) setText('Street', parts[0]);
         if (parts[1]) setText('City',   parts[1]);
         if (parts[2]) {
-          const sz = parts[2].trim().split(' ');
+          const sz = parts[2].trim().split(/\s+/);
           setText('State',    sz[0] || '');
           setText('Zip Code', sz[1] || '');
         }
