@@ -639,7 +639,7 @@
     <div class="form-row">
       <div class="form-field">
         <label>Pet Name *</label>
-        <input type="text" id="walkinPetName" placeholder="Fido" />
+        <input type="text" id="walkinPetName" placeholder="Fido" autocapitalize="words" />
       </div>
       <div class="form-field">
         <label>Species *</label>
@@ -828,7 +828,7 @@
             <div class="form-row">
               <div class="form-field">
                 <label>Pet Name *</label>
-                <input type="text" id="editPetName" />
+                <input type="text" id="editPetName" autocapitalize="words" />
               </div>
               <div class="form-field">
                 <label>Species *</label>
@@ -898,7 +898,7 @@
             <div class="form-row">
               <div class="form-field">
                 <label>Pet Name *</label>
-                <input type="text" id="newPetName" placeholder="Fido" />
+                <input type="text" id="newPetName" placeholder="Fido" autocapitalize="words" />
               </div>
               <div class="form-field">
                 <label>Species *</label>
@@ -985,6 +985,18 @@ function showStaffHomeLink() {
   // ─── CONFIG ────────────────────────────────────────────────────
   const SUPABASE_URL      = CONFIG.SUPABASE_URL;
 const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+
+  // ─── AUTO-CAPITALIZE PET NAME FIELDS ──────────────────────────
+  function titleCaseInput(e) {
+    const input = e.target;
+    const pos = input.selectionStart;
+    input.value = input.value.replace(/\b\w/g, c => c.toUpperCase());
+    input.setSelectionRange(pos, pos);
+  }
+  ['walkinPetName', 'newPetName', 'editPetName'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', titleCaseInput);
+  });
 
   // ─── STATE ─────────────────────────────────────────────────────
 let accessToken    = null;
@@ -1089,7 +1101,7 @@ function logout() {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
   }
-// ─── FILTER ────────────────────────────────────────────────────
+  // ─── FILTER ────────────────────────────────────────────────────
 function setFilter(filter) {
   currentFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
