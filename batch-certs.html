@@ -557,6 +557,7 @@
       // Match: <street>, <city> <ST> <ZIP>  (comma before city is optional)
       // Works for: "1052 N Lawndale Ave., Chicago IL 60651"
       //            "4137 W Wellington St., Chicago IL 60641"
+      console.log('CLIENT object:', JSON.stringify(client));
       console.log('RAW addr:', addr);
       console.log('NORMALIZED:', normalized);
       const m = normalized.match(/^(.+?),\s*([A-Za-z ]+?)\s+([A-Z]{2})\s+(\d[\d-]*)$/);
