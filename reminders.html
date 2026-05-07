@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reminder Manager — PHP Clinic App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --navy:        #1a3a8f;
+      --navy-dark:   #122a6e;
+      --navy-light:  #dce6f9;
+      --navy-mid:    #4a6cc0;
+      --coral:       #f28b82;
+      --coral-light: #fde8e6;
+      --coral-dark:  #d96b62;
+      --green:       #2d8a5e;
+      --green-light: #d4f0e4;
+      --amber:       #d97706;
+      --amber-light: #fef3c7;
+      --purple:      #7c3aed;
+      --purple-light:#ede9fe;
+      --text:        #1a1a2e;
+      --text-muted:  #5a6380;
+      --border:      #c8d3ec;
+      --bg:          #f4f7fe;
+      --white:       #ffffff;
+      --radius:      12px;
+      --shadow:      0 2px 16px rgba(26,58,143,0.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    .topnav {
+      background: var(--navy);
+      color: white;
+      padding: 0 1.5rem;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topnav-brand {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: white;
+      text-decoration: none;
+      margin-right: auto;
+    }
+    .nav-link {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      font-size: 0.83rem;
+      font-weight: 700;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.15); color: white; }
+
+    /* ── LAYOUT ── */
+    .main {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1.25rem 3rem;
+    }
+
+    .page-header {
+      margin-bottom: 1.5rem;
+    }
+    .page-title {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--navy);
+    }
+    .page-sub {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 0;
+    }
+    .tab-btn {
+      padding: 0.55rem 1.1rem;
+      border: none;
+      background: none;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn.active {
+      color: var(--navy);
+      border-bottom-color: var(--navy);
+    }
+    .tab-btn:hover { color: var(--navy); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1.5px solid var(--border);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .card-body { padding: 1.25rem; }
+
+    /* ── TEMPLATE EDITOR ── */
+    .template-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 640px) { .template-grid { grid-template-columns: 1fr; } }
+
+    .template-block { display: flex; flex-direction: column; gap: 0.6rem; }
+    .template-block label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .template-block input[type="text"],
+    .template-block textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      color: var(--text);
+      background: var(--bg);
+      resize: vertical;
+    }
+    .template-block input:focus,
+    .template-block textarea:focus {
+      outline: none;
+      border-color: var(--navy);
+    }
+    .template-block textarea { min-height: 160px; }
+
+    .placeholder-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--navy-light);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      line-height: 1.6;
+    }
+    .placeholder-hint code {
+      background: rgba(26,58,143,0.12);
+      border-radius: 3px;
+      padding: 0 3px;
+      font-size: 0.78rem;
+    }
+
+    /* ── TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.83rem;
+    }
+    .data-table th {
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1.5px solid var(--border);
+      background: var(--bg);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--navy-light); }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      padding: 2rem;
+    }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .badge-sent   { background: var(--green-light);  color: var(--green); }
+    .badge-unsent { background: var(--amber-light);  color: var(--amber); }
+    .badge-none   { background: var(--border);       color: var(--text-muted); }
+    .badge-2w     { background: var(--purple-light); color: var(--purple); }
+    .badge-1w     { background: var(--navy-light);   color: var(--navy); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.35rem 0.9rem;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary  { background: var(--navy);  color: white; }
+    .btn-primary:hover:not(:disabled)  { background: var(--navy-dark); }
+    .btn-green    { background: var(--green); color: white; }
+    .btn-green:hover:not(:disabled)    { background: #236b48; }
+    .btn-amber    { background: var(--amber); color: white; }
+    .btn-amber:hover:not(:disabled)    { background: #b45309; }
+    .btn-sm { padding: 0.25rem 0.7rem; font-size: 0.75rem; }
+
+    /* ── MSG ── */
+    .msg {
+      padding: 0.6rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      display: none;
+    }
+    .msg.error   { background: var(--coral-light);  color: var(--coral-dark); display: block; }
+    .msg.success { background: var(--green-light);  color: var(--green);      display: block; }
+    .msg.info    { background: var(--navy-light);   color: var(--navy);       display: block; }
+
+    /* ── TEMPLATE SELECTOR ── */
+    .template-selector {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .tpl-btn {
+      padding: 0.4rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      background: var(--white);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tpl-btn.active {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="staff-home.html" class="topnav-brand">🐾 Pawkit</a>
+  <div style="font-size:0.8rem; opacity:0.8;" id="loggedInUser"></div>
+  <a href="reports.html"    class="nav-link">📊 Reports</a>
+  <a href="records.html"    class="nav-link">📋 Records</a>
+  <a href="staff-home.html" class="nav-link">🏠 Staff Home</a>
+</nav>
+
+<div class="main">
+  <div class="page-header">
+    <div class="page-title">🔔 Reminder Manager</div>
+    <div class="page-sub">Edit email templates, monitor upcoming reminders, and send manually.</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('templates')">✏️ Templates</button>
+    <button class="tab-btn" onclick="switchTab('upcoming')">📅 Upcoming</button>
+    <button class="tab-btn" onclick="switchTab('sent')">✅ Sent Log</button>
+    <button class="tab-btn" onclick="switchTab('manual')">📨 Manual Send</button>
+  </div>
+
+  <!-- ── TEMPLATES TAB ── -->
+  <div class="tab-panel active" id="tab-templates">
+
+    <div class="placeholder-hint" style="margin-bottom:1.25rem;">
+      Available placeholders: <code>{{owner_name}}</code> <code>{{pet_name}}</code> <code>{{vaccine}}</code> <code>{{due_date}}</code> — For booster templates only: <code>{{clinic_date_line}}</code> (inserts the clinic date sentence, or a "stay tuned" fallback).
+    </div>
+
+    <div class="template-selector">
+      <button class="tpl-btn active" onclick="loadTemplate('reminder_2w')">2-Week Reminder</button>
+      <button class="tpl-btn" onclick="loadTemplate('reminder_1w')">1-Week Reminder</button>
+    </div>
+
+    <!-- 2w English -->
+    <div class="card" id="tpl-reminder_2w" style="display:block;">
+      <div class="card-header">
+        2-Week Reminder
+        <button class="btn btn-green" onclick="saveTemplates('reminder_2w')">Save Changes</button>
+      </div>
+      <div class="card-body">
+        <div class="template-grid">
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇺🇸 English — Standard</div>
+            <div class="template-block">
+              <label>Subject</label>
+              <input type="text" id="reminder_2w_en_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="reminder_2w_en_body"></textarea>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇺🇸 English — Booster</div>
+            <div class="template-block">
+              <label>Subject</label>
+              <input type="text" id="reminder_2w_en_booster_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="reminder_2w_en_booster_body"></textarea>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇲🇽 Spanish — Standard</div>
+            <div class="template-block">
+              <label>Subject</label>
+              <input type="text" id="reminder_2w_es_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="reminder_2w_es_body"></textarea>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇲🇽 Spanish — Booster</div>
+            <div class="template-block">
+              <label>Subject</label>
+              <input type="text" id="reminder_2w_es_booster_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="reminder_2w_es_booster_body"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="msg" id="msg-reminder_2w"></div>
+      </div>
+    </div>
+
+    <!-- 1w -->
+    <div class="card" id="tpl-reminder_1w" style="display:none;">
+      <div class="card-header">
+        1-Week Reminder
+        <button class="btn btn-green" onclick="saveTemplates('reminder_1w')">Save Changes</button>
+      </div>
+      <div class="card-body">
+        <div class="template-grid">
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇺🇸 English — Standard</div>
+            <div class="template-block">
+              <label>Subject</label>
+              <input type="text" id="reminder_1w_en_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="reminder_1w_en_body"></textarea>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇺🇸 English — Booster</div>
+            <div class="template-block">
+              <label>Subject</label>
+              <input type="text" id="reminder_1w_en_booster_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="reminder_1w_en_booster_body"></textarea>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇲🇽 Spanish — Standard</div>
+            <div class="template-block">
+              <label>Subject</label>
+              <input type="text" id="reminder_1w_es_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="reminder_1w_es_body"></textarea>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇲🇽 Spanish — Booster</div>
+            <div class="template-block">
+              <label>Subject</label>
+              <input type="text" id="reminder_1w_es_booster_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="reminder_1w_es_booster_body"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="msg" id="msg-reminder_1w"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── UPCOMING TAB ── -->
+  <div class="tab-panel" id="tab-upcoming">
+    <div class="card">
+      <div class="card-header">
+        <span>Upcoming Reminders — Next 30 Days</span>
+        <button class="btn btn-primary" onclick="loadUpcoming()">Refresh</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Pet</th>
+              <th>Owner</th>
+              <th>Email</th>
+              <th>Vaccine</th>
+              <th>Due Date</th>
+              <th>2-Week</th>
+              <th>1-Week</th>
+            </tr>
+          </thead>
+          <tbody id="upcomingBody">
+            <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SENT LOG TAB ── -->
+  <div class="tab-panel" id="tab-sent">
+    <div class="card">
+      <div class="card-header">
+        <span>Sent Reminder Log</span>
+        <button class="btn btn-primary" onclick="loadSent()">Refresh</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Pet</th>
+              <th>Owner</th>
+              <th>Email</th>
+              <th>Vaccine</th>
+              <th>Due Date</th>
+              <th>2-Week Sent</th>
+              <th>1-Week Sent</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sentBody">
+            <tr><td colspan="8" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MANUAL SEND TAB ── -->
+  <div class="tab-panel" id="tab-manual">
+    <div class="card">
+      <div class="card-header">Search for a Vaccination Record</div>
+      <div class="card-body">
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">
+          <div style="display:flex;flex-direction:column;gap:0.3rem;flex:1;min-width:180px;">
+            <label style="font-size:0.78rem;font-weight:700;color:var(--text-muted);">Owner or Pet Name</label>
+            <input type="text" id="manualSearch" placeholder="Search…" style="padding:0.45rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;" oninput="searchManual()" />
+          </div>
+        </div>
+        <div style="overflow-x:auto;margin-top:1rem;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Pet</th>
+                <th>Owner</th>
+                <th>Email</th>
+                <th>Vaccine</th>
+                <th>Due Date</th>
+                <th>2-Week</th>
+                <th>1-Week</th>
+                <th>Send</th>
+              </tr>
+            </thead>
+            <tbody id="manualBody">
+              <tr><td colspan="8" class="empty-state">Search for a client or pet above.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="msg" id="manualMsg"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL      = CONFIG.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
+  let accessToken = null;
+
+  function authHeaders(useService = false) {
+    return {
+      'Content-Type':  'application/json',
+      'apikey':        SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`
+    };
+  }
+
+  async function sbGet(path) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: authHeaders() });
+    if (res.status === 401) { window.location.href = 'login.html?expired=1'; throw new Error('expired'); }
+    return res.json();
+  }
+
+  async function sbPatch(path, body) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method: 'PATCH',
+      headers: { ...authHeaders(), Prefer: 'return=minimal' },
+      body: JSON.stringify(body)
+    });
+    return res;
+  }
+
+  function showMsg(id, type, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = `msg ${type}`;
+    el.textContent = text;
+    setTimeout(() => { el.className = 'msg'; }, 4000);
+  }
+
+  // ── AUTH GUARD ──────────────────────────────────────────────────
+  (function() {
+    const token = localStorage.getItem('php_token');
+    if (!token) { window.location.href = 'login.html'; return; }
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const role = payload?.app_metadata?.role;
+      if (!['staff', 'admin'].includes(role)) { window.location.href = 'volunteer-home.html'; return; }
+      accessToken = token;
+      const email = localStorage.getItem('php_email');
+      if (email) document.getElementById('loggedInUser').textContent = `👋 ${email}`;
+    } catch { window.location.href = 'login.html'; }
+  })();
+
+  // ── TABS ────────────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'upcoming') loadUpcoming();
+    if (name === 'sent')     loadSent();
+  }
+
+  // ── TEMPLATE SELECTOR ───────────────────────────────────────────
+  function loadTemplate(key) {
+    document.querySelectorAll('.tpl-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('[id^="tpl-"]').forEach(el => el.style.display = 'none');
+    document.getElementById(`tpl-${key}`).style.display = 'block';
+  }
+
+  // ── LOAD TEMPLATES FROM DB ──────────────────────────────────────
+  async function loadTemplates() {
+    const rows = await sbGet('email_templates?select=id,subject,body');
+    rows.forEach(r => {
+      const subEl  = document.getElementById(`${r.id}_subject`);
+      const bodyEl = document.getElementById(`${r.id}_body`);
+      if (subEl)  subEl.value  = r.subject;
+      if (bodyEl) bodyEl.value = r.body;
+    });
+  }
+
+  // ── SAVE TEMPLATES ──────────────────────────────────────────────
+  async function saveTemplates(prefix) {
+    const ids = [`${prefix}_en`, `${prefix}_en_booster`, `${prefix}_es`, `${prefix}_es_booster`];
+    try {
+      for (const id of ids) {
+        const subject = document.getElementById(`${id}_subject`)?.value?.trim();
+        const body    = document.getElementById(`${id}_body`)?.value?.trim();
+        if (!subject || !body) continue;
+        await sbPatch(`email_templates?id=eq.${id}`, { subject, body, updated_at: new Date().toISOString() });
+      }
+      showMsg(`msg-${prefix}`, 'success', '✓ Templates saved.');
+    } catch(e) {
+      showMsg(`msg-${prefix}`, 'error', 'Error saving: ' + e.message);
+    }
+  }
+
+  // ── UPCOMING ────────────────────────────────────────────────────
+  async function loadUpcoming() {
+    const tbody = document.getElementById('upcomingBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading…</td></tr>';
+    const today = new Date().toISOString().split('T')[0];
+    const in30  = new Date(Date.now() + 30 * 864e5).toISOString().split('T')[0];
+    try {
+      const rows = await sbGet(
+        `vaccinations?select=id,vaccine_name,next_due,reminder_2w_sent,reminder_1w_sent,pets(name,clients(name,email))` +
+        `&next_due=gte.${today}&next_due=lte.${in30}&order=next_due.asc`
+      );
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No upcoming reminders in the next 30 days.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => {
+        const pet    = r.pets    || {};
+        const client = pet.clients || {};
+        return `<tr>
+          <td><strong>${pet.name || '—'}</strong></td>
+          <td>${client.name || '—'}</td>
+          <td style="font-size:0.78rem;">${client.email || '<span style="color:var(--coral-dark)">No email</span>'}</td>
+          <td style="font-size:0.78rem;">${r.vaccine_name || '—'}</td>
+          <td>${fmtDate(r.next_due)}</td>
+          <td>${r.reminder_2w_sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Pending</span>'}</td>
+          <td>${r.reminder_1w_sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Pending</span>'}</td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  // ── SENT LOG ────────────────────────────────────────────────────
+  async function loadSent() {
+    const tbody = document.getElementById('sentBody');
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Loading…</td></tr>';
+    try {
+      const rows = await sbGet(
+        `vaccinations?select=id,vaccine_name,next_due,reminder_2w_sent,reminder_1w_sent,pets(name,clients(name,email))` +
+        `&or=(reminder_2w_sent.eq.true,reminder_1w_sent.eq.true)&order=next_due.desc&limit=200`
+      );
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No reminders sent yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => {
+        const pet    = r.pets      || {};
+        const client = pet.clients || {};
+        return `<tr>
+          <td><strong>${pet.name || '—'}</strong></td>
+          <td>${client.name || '—'}</td>
+          <td style="font-size:0.78rem;">${client.email || '—'}</td>
+          <td style="font-size:0.78rem;">${r.vaccine_name || '—'}</td>
+          <td>${fmtDate(r.next_due)}</td>
+          <td>${r.reminder_2w_sent ? '<span class="badge badge-sent">✓ Sent</span>' : '<span class="badge badge-none">—</span>'}</td>
+          <td>${r.reminder_1w_sent ? '<span class="badge badge-sent">✓ Sent</span>' : '<span class="badge badge-none">—</span>'}</td>
+          <td>
+            <button class="btn btn-amber btn-sm" onclick="resetFlags('${r.id}')">Reset Flags</button>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  async function resetFlags(id) {
+    if (!confirm('Reset reminder flags? The cron job will re-send reminders for this record on its next run.')) return;
+    await sbPatch(`vaccinations?id=eq.${id}`, { reminder_2w_sent: false, reminder_1w_sent: false });
+    loadSent();
+  }
+
+  // ── MANUAL SEARCH ───────────────────────────────────────────────
+  let manualSearchTimeout;
+  function searchManual() {
+    clearTimeout(manualSearchTimeout);
+    manualSearchTimeout = setTimeout(async () => {
+      const q = document.getElementById('manualSearch').value.trim();
+      const tbody = document.getElementById('manualBody');
+      if (q.length < 2) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Search for a client or pet above.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Searching…</td></tr>';
+      try {
+        // Search by pet name or client name via vaccinations join
+        const rows = await sbGet(
+          `vaccinations?select=id,vaccine_name,next_due,reminder_2w_sent,reminder_1w_sent,pets(name,clients(name,email))` +
+          `&next_due=not.is.null&order=next_due.asc&limit=200`
+        );
+        const lower = q.toLowerCase();
+        const filtered = rows.filter(r => {
+          const petName    = r.pets?.name?.toLowerCase() || '';
+          const clientName = r.pets?.clients?.name?.toLowerCase() || '';
+          return petName.includes(lower) || clientName.includes(lower);
+        });
+        if (!filtered.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No results found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = filtered.map(r => {
+          const pet    = r.pets      || {};
+          const client = pet.clients || {};
+          const hasEmail = !!client.email;
+          return `<tr>
+            <td><strong>${pet.name || '—'}</strong></td>
+            <td>${client.name || '—'}</td>
+            <td style="font-size:0.78rem;">${client.email || '<span style="color:var(--coral-dark)">No email</span>'}</td>
+            <td style="font-size:0.78rem;">${r.vaccine_name || '—'}</td>
+            <td>${fmtDate(r.next_due)}</td>
+            <td>${r.reminder_2w_sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-none">—</span>'}</td>
+            <td>${r.reminder_1w_sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-none">—</span>'}</td>
+            <td style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" ${!hasEmail ? 'disabled title="No email on file"' : ''} onclick="manualSend('${r.id}','2w','${pet.name}')">2-Week</button>
+              <button class="btn btn-primary btn-sm" ${!hasEmail ? 'disabled title="No email on file"' : ''} onclick="manualSend('${r.id}','1w','${pet.name}')">1-Week</button>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Error: ${e.message}</td></tr>`;
+      }
+    }, 350);
+  }
+
+  // ── MANUAL SEND ─────────────────────────────────────────────────
+  async function manualSend(vaccinationId, type, petName) {
+    const msgEl = document.getElementById('manualMsg');
+    msgEl.className = 'msg info';
+    msgEl.textContent = `Sending ${type} reminder for ${petName}…`;
+    try {
+      const res = await fetch(`/api/send-reminder-manual`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ vaccinationId, type })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      showMsg('manualMsg', 'success', `✓ ${type} reminder sent for ${petName}.`);
+      searchManual();
+    } catch(e) {
+      showMsg('manualMsg', 'error', 'Error: ' + e.message);
+    }
+  }
+
+  // ── UTILS ───────────────────────────────────────────────────────
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // ── INIT ────────────────────────────────────────────────────────
+  loadTemplates();
+</script>
+</body>
+</html>
