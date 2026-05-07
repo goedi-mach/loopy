@@ -424,7 +424,8 @@
       // Enrich each vax row with pet + client
       rabiesRecords = vaxRows.map(v => {
         const pet    = petMap[v.pet_id] || {};
-        const client = pet.clients      || {};
+        const clientRaw = pet.clients;
+        const client = Array.isArray(clientRaw) ? (clientRaw[0] || {}) : (clientRaw || {});
         return {
           ...v,
           pet:    pet,
