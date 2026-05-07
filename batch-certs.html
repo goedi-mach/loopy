@@ -553,7 +553,12 @@
     setText('Last Name',  nameParts.slice(1).join(' ') || '');
     setText('Telephone #', client.phone || '', 9);
 
-    const addr = (client.address || '').trim();
+    const addr = (client.address || (
+      client.street
+        ? [client.street, client.city, (client.state ? client.state.toUpperCase() : ''), client.zip]
+            .filter(Boolean).join(', ')
+        : ''
+    )).trim();
     if (addr) {
       // Normalize spelled-out state names to abbreviations
       const stateAbbr = { illinois:'IL', indiana:'IN', wisconsin:'WI', michigan:'MI', iowa:'IA', missouri:'MO' };
