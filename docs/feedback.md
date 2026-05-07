@@ -1,5 +1,4 @@
 priority
-email reminders
 what can we email?
 
 nice to haves
