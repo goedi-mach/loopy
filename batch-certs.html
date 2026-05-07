@@ -491,11 +491,7 @@
 
     const templateUrl = `${SUPABASE_URL}/storage/v1/object/public/templates/RabiesVacCert.pdf`;
     const templateRes = await fetch(templateUrl);
-    console.log('Template fetch status:', templateRes.status, templateRes.headers.get('content-type'));
     const templateBytes = await templateRes.arrayBuffer();
-    console.log('Template size bytes:', templateBytes.byteLength);
-    console.log('PDFLib loaded:', !!window.PDFLib);
-    console.log('PDFName available:', !!window.PDFLib?.PDFName);
 
     const pdfDoc = await PDFDocument.load(templateBytes);
     const form   = pdfDoc.getForm();
@@ -512,7 +508,6 @@
       try {
         if (!value) return;
         value = toWinAnsi(value);
-        console.log(`setText "${fieldName}" = "${value}"`);
         const field = form.getTextField(fieldName);
         const v  = PDFString.of(String(value));
         const da = `0 0 0 rg /Helv ${fontSize || 10} Tf`;
@@ -569,11 +564,8 @@
       // Match: <street>, <city> <ST> <ZIP>  (comma before city is optional)
       // Works for: "1052 N Lawndale Ave., Chicago IL 60651"
       //            "4137 W Wellington St., Chicago IL 60641"
-      console.log('CLIENT object:', JSON.stringify(client));
-      console.log('RAW addr:', addr);
-      console.log('NORMALIZED:', normalized);
+  
       const m = normalized.match(/^(.+?),\s*([A-Za-z ]+?)\s+([A-Z]{2})\s+(\d[\d-]*)$/);
-      console.log('MATCH result:', m);
       if (m) {
         setText('Street',   m[1].trim());
         setText('City',     m[2].trim());
