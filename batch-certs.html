@@ -625,9 +625,9 @@
     if (r.dose_type === 'initial') setRadio('Dose', 0);
     if (r.dose_type === 'booster') setRadio('Dose', 1);
 
-    if (r.ac_license_type === '1yr')   setCheck('AC 1 year', true);
-    if (r.ac_license_type === '3yr')   setCheck('AC 3 year', true);
-    if (r.ac_license_type === 'other') setCheck('AC other',  true);
+    if (r.usda_duration === '1yr')   setCheck('AC 1 year', true);
+    if (r.usda_duration === '3yr')   setCheck('AC 3 year', true);
+    if (r.usda_duration === 'other') setCheck('AC other',  true);
 
     const fmtDate = iso => {
       if (!iso) return '';
