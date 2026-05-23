@@ -1830,8 +1830,12 @@ if (accessToken) {
       adminBy:      en ? 'Administered By'                 : 'Administrado Por',
       noHistory:    en ? 'No vaccinations on record.'      : 'Sin vacunas registradas.',
       noNextDue:    en ? 'No upcoming vaccinations.'       : 'Sin próximas vacunas.',
-      footer:       en ? 'Thank you for keeping your pet healthy! Questions? peoplehelpingpets.org'
-                       : '¡Gracias por cuidar la salud de tu mascota! ¿Preguntas? peoplehelpingpets.org',
+      footer:     en ? 'Thank you for keeping your pet healthy! Questions? Contact us at peoplehelpingpets.org'
+                     : '¡Gracias por cuidar la salud de tu mascota! ¿Preguntas? Contáctanos en peoplehelpingpets.org',
+      donateHeading: en ? '❤️ Support Our Free Clinics'
+                       : '❤️ Apoya Nuestras Clínicas Gratuitas',
+      donateText:  en ? 'Our clinics are free because of donations from people like you. If you\'re able to give, every dollar helps us serve more pets.'
+                     : 'Nuestras clínicas son gratuitas gracias a donaciones de personas como tú. Si puedes donar, cada dólar nos ayuda a atender a más mascotas.',
       yrs:          en ? 'yrs'                             : 'años',
     };
 
@@ -1871,7 +1875,12 @@ if (accessToken) {
     .vax-record-meta label { font-size:0.72rem; font-weight:700; color:#5a6380; text-transform:uppercase; letter-spacing:0.04em; display:block; }
     .vax-record-meta span { font-size:0.85rem; color:#1a1a2e; }
     .empty { color:#9ca3af; font-style:italic; font-size:0.83rem; padding:0.4rem 0; }
-    .footer { margin-top:2rem; padding-top:1rem; border-top:1px solid #e5e7eb; text-align:center; font-size:0.78rem; color:#9ca3af; }
+    .footer { margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e5e7eb; text-align:center; font-size:0.78rem; color:#9ca3af; }
+    .donate-box { margin-top:2rem; padding:1rem 1.25rem; border:1.5px solid #f28b82; border-radius:10px; display:flex; align-items:center; gap:1.25rem; background:#fff5f5; }
+    .donate-box img { width:90px; height:90px; flex-shrink:0; }
+    .donate-text { text-align:left; font-size:0.85rem; color:#1a1a2e; }
+    .donate-text strong { font-family:'Nunito',sans-serif; font-size:0.95rem; color:#d96b62; display:block; margin-bottom:0.35rem; }
+    .donate-url { font-family:'Nunito',sans-serif; font-weight:800; color:#1a3a8f; font-size:0.82rem; margin-top:0.4rem; display:block; }
     @media print { body { padding:0.5rem; } }
   </style>
 </head>
@@ -1927,6 +1936,14 @@ if (accessToken) {
       </div>
     </div>`).join('') : `<div class="empty">${t.noHistory}</div>`}
 
+  <div class="donate-box">
+    <img src="https://chart.googleapis.com/chart?chs=90x90&cht=qr&chl=https%3A%2F%2Fgivebutter.com%2Fsummer-clinics&choe=UTF-8" alt="Donation QR code" />
+    <div class="donate-text">
+      <strong>${t.donateHeading}</strong>
+      ${t.donateText}
+      <span class="donate-url">givebutter.com/summer-clinics</span>
+    </div>
+  </div>
   <div class="footer">${t.footer}</div>
   <script>window.print();<\/script>
 </body>
