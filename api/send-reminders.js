@@ -61,12 +61,16 @@ async function sendEmail(to, subject, body) {
     })
   });
 }
-async function getNextBoosterClinic(afterDate) {
+async function getNextClinicDate(clinicType, afterDate) {
   const records = await sbFetch(
-    `events?clinic_type=eq.Booster Clinic&event_date=gte.${afterDate}&order=event_date.asc&limit=1`
+    `events?clinic_type=eq.${encodeURIComponent(clinicType)}&event_date=gte.${afterDate}&completed=eq.false&order=event_date.asc&limit=1`
   );
   if (!Array.isArray(records) || records.length === 0) return null;
-  return new Date(records[0].event_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const date = new Date(records[0].event_date + 'T12:00:00');
+  return {
+    en: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    es: date.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+  };
 }
 async function processReminders(weeksOut, sentField) {
   const { start, end } = getDateWindow(weeksOut);
@@ -92,17 +96,20 @@ async function processReminders(weeksOut, sentField) {
     const ownerName = client.name || 'there';
     const petName = pet.name;
     const vaccine = vax.vaccine_name;
-    const dueDate = new Date(vax.next_due).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const dueDate = new Date(vax.next_due + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
    const isBooster = vaccine.toLowerCase().includes('booster');
-    const boosterClinicDate = isBooster ? await getNextBoosterClinic(vax.next_due) : null;
-    const clinicDateLine = isBooster
-      ? (boosterClinicDate
-          ? ` We have a Booster Clinic scheduled on ${boosterClinicDate} — we hope to see you there!`
-          : ' Please keep an eye out for our upcoming Booster Clinic announcements.')
-      : '';
-
-    const vars = { owner_name: ownerName, pet_name: petName, vaccine, due_date: dueDate, clinic_date_line: clinicDateLine };
+    const relevantClinicType = isBooster ? 'Booster Clinic' : 'Vaccine Clinic';
+    const nextClinic = await getNextClinicDate(relevantClinicType, vax.next_due);
+    const clinicLabel = isBooster ? 'Booster Clinic' : 'Vaccine Clinic';
+    const clinicLabelEs = isBooster ? 'Clínica de Refuerzo' : 'Clínica de Vacunas';
+    const clinic_date_line_en = nextClinic
+      ? ` We have a ${clinicLabel} scheduled on ${nextClinic.en} — we hope to see you there!`
+      : ` Please keep an eye out for our upcoming ${clinicLabel} announcements.`;
+    const clinic_date_line_es = nextClinic
+      ? ` Tenemos una ${clinicLabelEs} programada el ${nextClinic.es} — ¡esperamos verlos!`
+      : ` Estén atentos a los anuncios de nuestra próxima ${clinicLabelEs}.`;
+    const vars = { owner_name: ownerName, pet_name: petName, vaccine, due_date: dueDate, clinic_date_line_en, clinic_date_line_es };
     const suffix = isBooster ? '_booster' : '';
     const enTpl  = await getTemplate(`${templateKey}_en${suffix}`);
     const esTpl  = await getTemplate(`${templateKey}_es${suffix}`);
