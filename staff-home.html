@@ -711,15 +711,6 @@
           return;
         }
 
-        const toggleLink = hiddenCount > 0 || showOldEvents
-          ? `<div style="text-align:center; margin-top:0.75rem;">
-               <a href="#" onclick="showOldEvents=!showOldEvents; loadEvents(); return false;"
-                  style="font-size:0.78rem; color:var(--text-muted); text-decoration:underline;">
-                 ${showOldEvents ? 'Hide older events' : `Show ${hiddenCount} older event${hiddenCount !== 1 ? 's' : ''}`}
-               </a>
-             </div>`
-          : '';
-
         list.innerHTML = visible.map(e => {
           const isPast      = e.event_date < today;
           const isCompleted = e.completed;
