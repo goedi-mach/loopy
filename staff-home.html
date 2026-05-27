@@ -702,7 +702,7 @@
       try {
         const today  = new Date().toISOString().split('T')[0];
         const url = currentEventTab === 'upcoming'
-          ? `${SUPABASE_URL}/rest/v1/events?event_date=gte.${today}&completed=eq.false&order=event_date.asc,start_time.asc`
+          ? `${SUPABASE_URL}/rest/v1/events?event_date=gte.${today}&completed=eq.false&order=event_date.asc,start_time.asc&limit=100`
           : `${SUPABASE_URL}/rest/v1/events?or=(event_date.lt.${today},completed.eq.true)&order=event_date.desc,start_time.desc&limit=20`;
         const events = await (await fetch(url, { headers: authHeaders() })).json();
 
@@ -711,7 +711,18 @@
           return;
         }
 
-        list.innerHTML = events.map(e => {
+        const showAll = list.dataset.showAll === 'true';
+        const visible = (currentEventTab === 'upcoming' && !showAll) ? events.slice(0, 2) : events;
+        const moreCount = events.length - 2;
+        const expandLink = (currentEventTab === 'upcoming' && !showAll && moreCount > 0)
+          ? `<div style="text-align:center; margin-top:0.75rem;">
+               <a href="#" onclick="document.getElementById('eventsList').dataset.showAll='true'; loadEvents(); return false;"
+                  style="font-size:0.78rem; color:var(--text-muted); text-decoration:underline;">
+                 Show ${moreCount} more upcoming event${moreCount !== 1 ? 's' : ''}
+               </a>
+             </div>`
+          : '';
+        list.innerHTML = visible.map(e => {
           const isPast      = e.event_date < today;
           const isCompleted = e.completed;
           return `
@@ -734,7 +745,7 @@
               </div>
             </div>
           `;
-        }).join('');
+        }).join('') + expandLink;
       } catch (err) {
         list.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
       }
