@@ -714,13 +714,22 @@
         const showAll = list.dataset.showAll === 'true';
         const visible = (currentEventTab === 'upcoming' && !showAll) ? events.slice(0, 2) : events;
         const moreCount = events.length - 2;
-        const expandLink = (currentEventTab === 'upcoming' && !showAll && moreCount > 0)
-          ? `<div style="text-align:center; margin-top:0.75rem;">
-               <a href="#" onclick="document.getElementById('eventsList').dataset.showAll='true'; loadEvents(); return false;"
-                  style="font-size:0.78rem; color:var(--text-muted); text-decoration:underline;">
-                 Show ${moreCount} more upcoming event${moreCount !== 1 ? 's' : ''}
-               </a>
-             </div>`
+        const expandLink = currentEventTab === 'upcoming'
+          ? ((!showAll && moreCount > 0)
+              ? `<div style="text-align:center; margin-top:0.75rem;">
+                   <a href="#" onclick="document.getElementById('eventsList').dataset.showAll='true'; loadEvents(); return false;"
+                      style="font-size:0.78rem; color:var(--text-muted); text-decoration:underline;">
+                     Show ${moreCount} more upcoming event${moreCount !== 1 ? 's' : ''}
+                   </a>
+                 </div>`
+              : (showAll && events.length > 2)
+                ? `<div style="text-align:center; margin-top:0.75rem;">
+                     <a href="#" onclick="document.getElementById('eventsList').dataset.showAll='false'; loadEvents(); return false;"
+                        style="font-size:0.78rem; color:var(--text-muted); text-decoration:underline;">
+                       Show less
+                     </a>
+                   </div>`
+                : '')
           : '';
         list.innerHTML = visible.map(e => {
           const isPast      = e.event_date < today;
