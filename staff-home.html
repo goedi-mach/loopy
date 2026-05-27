@@ -291,6 +291,31 @@
       font-size: 0.88rem;
     }
 
+    .event-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .event-tab {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .event-tab.active {
+      background: var(--navy);
+      color: white;
+      border-color: var(--navy);
+    }
+
     /* ── Waste modal ── */
     .waste-modal-overlay {
       position: fixed; inset: 0;
@@ -436,8 +461,12 @@
     <!-- ── Event management ── -->
     <p class="section-title">Clinic Events</p>
     <div class="card">
-      <div class="card-header">📅 Upcoming Events</div>
+      <div class="card-header">📅 Clinic Events</div>
       <div class="card-body">
+        <div class="event-tabs">
+          <button class="event-tab active" id="tabUpcoming" onclick="switchEventTab('upcoming')">Upcoming</button>
+          <button class="event-tab" id="tabPast" onclick="switchEventTab('past')">Past</button>
+        </div>
         <div id="eventsList"><div class="empty-state">Loading…</div></div>
         <div style="margin-top:1.25rem; padding-top:1.25rem; border-top:1.5px dashed var(--border);">
           <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.85rem; color:var(--navy); margin-bottom:0.75rem;">➕ Add Event</div>
@@ -659,21 +688,26 @@
 
     let showOldEvents = false;
 
+   let currentEventTab = 'upcoming';
+
+    function switchEventTab(tab) {
+      currentEventTab = tab;
+      document.getElementById('tabUpcoming').classList.toggle('active', tab === 'upcoming');
+      document.getElementById('tabPast').classList.toggle('active', tab === 'past');
+      loadEvents();
+    }
+
     async function loadEvents() {
       const list = document.getElementById('eventsList');
       try {
         const today  = new Date().toISOString().split('T')[0];
-        const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const events = await (await fetch(
-          `${SUPABASE_URL}/rest/v1/events?order=event_date.asc,start_time.asc&limit=100`,
-          { headers: authHeaders() }
-        )).json();
+        const url = currentEventTab === 'upcoming'
+          ? `${SUPABASE_URL}/rest/v1/events?event_date=gte.${today}&completed=eq.false&order=event_date.asc,start_time.asc`
+          : `${SUPABASE_URL}/rest/v1/events?or=(event_date.lt.${today},completed.eq.true)&order=event_date.desc,start_time.desc&limit=20`;
+        const events = await (await fetch(url, { headers: authHeaders() })).json();
 
-        const visible = showOldEvents ? events : events.filter(e => e.event_date >= cutoff);
-        const hiddenCount = events.length - visible.length;
-
-        if (!visible.length && !hiddenCount) {
-          list.innerHTML = '<div class="empty-state">No events yet.</div>';
+        if (!events.length) {
+          list.innerHTML = `<div class="empty-state">No ${currentEventTab} events.</div>`;
           return;
         }
 
