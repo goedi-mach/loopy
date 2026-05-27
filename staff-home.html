@@ -711,7 +711,7 @@
           return;
         }
 
-        list.innerHTML = visible.map(e => {
+        list.innerHTML = events.map(e => {
           const isPast      = e.event_date < today;
           const isCompleted = e.completed;
           return `
@@ -734,7 +734,7 @@
               </div>
             </div>
           `;
-        }).join('') + toggleLink;
+        }).join('');
       } catch (err) {
         list.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
       }
