@@ -657,21 +657,36 @@
       return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
     };
 
+    let showOldEvents = false;
+
     async function loadEvents() {
       const list = document.getElementById('eventsList');
       try {
         const today  = new Date().toISOString().split('T')[0];
+        const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         const events = await (await fetch(
-          `${SUPABASE_URL}/rest/v1/events?order=event_date.asc,start_time.asc&limit=20`,
+          `${SUPABASE_URL}/rest/v1/events?order=event_date.asc,start_time.asc&limit=100`,
           { headers: authHeaders() }
         )).json();
 
-        if (!events.length) {
+        const visible = showOldEvents ? events : events.filter(e => e.event_date >= cutoff);
+        const hiddenCount = events.length - visible.length;
+
+        if (!visible.length && !hiddenCount) {
           list.innerHTML = '<div class="empty-state">No events yet.</div>';
           return;
         }
 
-        list.innerHTML = events.map(e => {
+        const toggleLink = hiddenCount > 0 || showOldEvents
+          ? `<div style="text-align:center; margin-top:0.75rem;">
+               <a href="#" onclick="showOldEvents=!showOldEvents; loadEvents(); return false;"
+                  style="font-size:0.78rem; color:var(--text-muted); text-decoration:underline;">
+                 ${showOldEvents ? 'Hide older events' : `Show ${hiddenCount} older event${hiddenCount !== 1 ? 's' : ''}`}
+               </a>
+             </div>`
+          : '';
+
+        list.innerHTML = visible.map(e => {
           const isPast      = e.event_date < today;
           const isCompleted = e.completed;
           return `
@@ -694,7 +709,7 @@
               </div>
             </div>
           `;
-        }).join('');
+        }).join('') + toggleLink;
       } catch (err) {
         list.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
       }
