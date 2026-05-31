@@ -1877,7 +1877,6 @@ const vaxIdx   = document.getElementById('vaxName').value;
     if (vaxObj.isRabies) {
       payload.rabies_tag_number = document.getElementById('rabiesTagNum').value.trim()  || null;
       payload.colors_markings   = document.getElementById('rabiesColors').value.trim()  || selectedPetObj?.colors_markings || null;
-      payload.breed_en          = document.getElementById('rabiesBreed').value.trim()   || selectedPetObj?.breed || null;
       payload.product_name      = document.getElementById('rabiesProduct').value.trim() || null;
       payload.manufacturer      = document.getElementById('rabiesMan').value.trim().toUpperCase() || null;
       payload.usda_duration     = document.getElementById('rabiesUSDA').value           || null;
