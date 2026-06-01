@@ -605,9 +605,11 @@
     async function checkStaleStatuses() {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const rows  = await sbGet(
-          `events?completed=eq.false&event_date=lt.${today}&order=event_date.desc&limit=1`
+        const res2  = await fetch(
+          `${SUPABASE_URL}/rest/v1/events?completed=eq.false&event_date=lt.${today}&order=event_date.desc&limit=1`,
+          { headers: authHeaders() }
         );
+        const rows  = await res2.json();
         if (!rows.length) return;
 
         const staleDate = new Date(rows[0].event_date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
