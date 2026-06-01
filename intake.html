@@ -699,12 +699,6 @@
       </div>
     </div>
     <div class="form-field">
-        <label style="display:flex; align-items:center; gap:0.5rem; font-weight:600; cursor:pointer;">
-          <input type="checkbox" id="walkinPetSnipInterest" style="width:16px; height:16px; accent-color:var(--navy);" />
-          Interested in spay/neuter resources
-        </label>
-      </div>
-      <div class="form-field">
         <label>Colors / Markings</label>
         <input type="text" id="walkinPetColors" placeholder="e.g. Black & white, tabby" />
       </div>
@@ -792,10 +786,11 @@
               <div>
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                   <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.3rem; color:var(--navy)" id="clientName"></div>
-                  <div id="clientStatusBadge"></div>
-                </div>
                 <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.3rem" id="clientContact"></div>
-              
+                <label style="display:inline-flex; align-items:center; gap:0.4rem; margin-top:0.5rem; font-size:0.82rem; font-weight:700; color:var(--navy); cursor:pointer;">
+                  <input type="checkbox" id="clientSnipInterest" style="width:15px; height:15px; accent-color:var(--navy);" onchange="saveSnipInterest()" />
+                  Interested in spay/neuter resources
+                </label>
               </div>
              <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
 <button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
@@ -885,12 +880,6 @@
                   <option value="no">No</option>
                 </select>
               </div>
-            </div>
-            <div class="form-field" style="margin-top:0.25rem;">
-              <label style="display:flex; align-items:center; gap:0.5rem; font-weight:600; cursor:pointer;">
-                <input type="checkbox" id="editPetSnipInterest" style="width:16px; height:16px; accent-color:var(--navy);" />
-                Interested in spay/neuter resources
-              </label>
             </div>
             <input type="hidden" id="editPetId" />
             <div style="display:flex; gap:0.75rem; margin-top:0.25rem;">
@@ -1210,7 +1199,6 @@ function closeWalkin() {
   document.getElementById('walkinPetAgeUnit').value     = 'years';
   document.getElementById('walkinPetSex').value         = 'unknown';
   document.getElementById('walkinPetAltered').value     = 'unknown';
-  document.getElementById('walkinPetSnipInterest').checked = false;
   document.getElementById('walkinPetMicrochipped').value = 'unknown';
   document.getElementById('duplicateWarning').style.display = 'none';
   if (walkinSigPad) { walkinSigPad.clear(); walkinSigPad = null; }
@@ -1331,7 +1319,6 @@ async function submitWalkin() {
       altered:        document.getElementById('walkinPetAltered').value || 'unknown',
       microchipped:   document.getElementById('walkinPetMicrochipped').value || 'unknown',
       colors_markings: document.getElementById('walkinPetColors').value.trim() || null,
-      snip_interest:  document.getElementById('walkinPetSnipInterest').checked,
     });
 
     closeWalkin();
@@ -1484,6 +1471,8 @@ document.getElementById('petsCard').style.display         = 'block';
 document.getElementById('notesBtn').style.display         = 'block';
 document.getElementById('clientNotesField').value         = client.notes || '';
 document.getElementById('notesPillBody').style.display    = 'none';
+document.getElementById('clientSnipInterest').checked     = client.snip_interest || false;
+document.getElementById('clientSnipInterest').checked     = client.snip_interest || false;
 
     // Reset vaccine section
     clearSelectedPet();
@@ -1559,6 +1548,20 @@ function clearSelectedPet() {
   }
 
   // ─── STATUS UPDATES ────────────────────────────────────────────
+async function saveSnipInterest() {
+  const checked = document.getElementById('clientSnipInterest').checked;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
+      method:  'PATCH',
+      headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+      body:    JSON.stringify({ snip_interest: checked })
+    });
+    currentClient.snip_interest = checked;
+  } catch (err) {
+    console.error('Could not save snip interest:', err);
+  }
+}
+
 function toggleNotesPill() {
   const body = document.getElementById('notesPillBody');
   body.style.display = body.style.display === 'none' ? 'block' : 'none';
@@ -1621,7 +1624,6 @@ async function saveClientNotes() {
         altered:         document.getElementById('newPetAltered').value  || 'unknown',
         microchipped:     document.getElementById('newPetMicrochipped').value || 'unknown',
         microchip_number: document.getElementById('newPetMicrochip').value.trim() || null,
-        snip_interest:   document.getElementById('newPetSnipInterest').checked,
       });
 
       showMsg(msg, 'success', `${name} added!`);
@@ -1632,7 +1634,6 @@ async function saveClientNotes() {
       document.getElementById('newPetAltered').value  = 'unknown';
       document.getElementById('newPetMicrochipped').value = 'unknown';
       document.getElementById('newPetMicrochip').value = '';
-      document.getElementById('newPetSnipInterest').checked = false;
       // Reload pets
       await loadPets(currentClient.id);
     } catch (err) {
@@ -1718,7 +1719,6 @@ function openEditPet(pet) {
   document.getElementById('editPetSex').value          = pet.sex || 'unknown';
   document.getElementById('editPetAltered').value      = pet.altered || 'unknown';
   document.getElementById('editPetMicrochipped').value = pet.microchipped || 'unknown';
-  document.getElementById('editPetSnipInterest').checked = pet.snip_interest || false;
   document.getElementById('petEditForm').style.display = 'block';
   document.getElementById('petEditForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -1748,8 +1748,7 @@ async function saveEditPet() {
         sex:          document.getElementById('editPetSex').value || 'unknown',
         altered:      document.getElementById('editPetAltered').value || 'unknown',
         microchipped: document.getElementById('editPetMicrochipped').value || 'unknown',
-        snip_interest: document.getElementById('editPetSnipInterest').checked,
-      })
+        })
     });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
     closeEditPet();
