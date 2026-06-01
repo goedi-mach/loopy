@@ -788,28 +788,33 @@
                   <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.3rem; color:var(--navy)" id="clientName"></div>
                   <div id="clientStatusBadge"></div>
                 </div>
-                <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.3rem" id="clientContact"></div>
-                <label style="display:inline-flex; align-items:center; gap:0.4rem; margin-top:0.5rem; font-size:0.82rem; font-weight:700; color:var(--navy); cursor:pointer;">
-                  <input type="checkbox" id="clientSnipInterest" style="width:15px; height:15px; accent-color:var(--navy);" onchange="saveSnipInterest()" />
-                  Interested in spay/neuter resources
-                </label>
+                <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.25rem" id="clientContact"></div>
               </div>
-             <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
-<button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
-  <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
-  <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
-  <button id="archiveClientBtn" style="font-size:0.78rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit; display:none;" onclick="toggleArchiveClient()">Archive</button>
-  <button id="notesBtn" onclick="toggleNotesPill()" title="Client notes" style="font-size:1rem; padding:0.4rem 0.6rem; border-radius:999px; border:1.5px solid #f0d97a; background:#fffbea; color:#92720a; cursor:pointer; display:none;">📝</button>
-</div>
+              <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
+                <button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
+                <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
+                <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
+                <button id="notesBtn" onclick="toggleNotesPill()" title="Notes &amp; flags" style="font-size:1rem; padding:0.4rem 0.6rem; border-radius:999px; border:1.5px solid #f0d97a; background:#fffbea; color:#92720a; cursor:pointer; display:none;">📝</button>
+                <div style="position:relative; display:inline-block;">
+                  <button id="overflowBtn" onclick="toggleOverflow()" style="font-size:1rem; padding:0.4rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; display:none;">⋯</button>
+                  <div id="overflowMenu" style="display:none; position:absolute; right:0; top:calc(100% + 6px); background:white; border:1.5px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.12); z-index:100; min-width:130px; overflow:hidden;">
+                    <button id="archiveClientBtn" onclick="toggleOverflow(); toggleArchiveClient();" style="width:100%; text-align:left; padding:0.6rem 1rem; border:none; background:none; font-family:inherit; font-size:0.85rem; font-weight:700; color:var(--text-muted); cursor:pointer; display:none;">Archive</button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <!-- Notes expanded body -->
-          <div id="notesPillBody" style="display:none; margin-top:0.75rem; background:#fffbea; border:1.5px solid #f0d97a; border-radius:12px; padding:0.75rem;">
-            <textarea id="clientNotesField" placeholder="Permanent notes about this client…" style="width:100%; min-height:72px; border:none; background:transparent; font-family:'Nunito Sans',sans-serif; font-size:0.85rem; color:#5a4a00; resize:vertical; outline:none;"></textarea>
-            <div style="display:flex; justify-content:flex-end; margin-top:0.35rem;">
-              <button onclick="saveClientNotes()" style="font-size:0.75rem; padding:0.3rem 0.85rem; border-radius:999px; border:none; background:#f0d97a; color:#5a4a00; font-family:'Nunito',sans-serif; font-weight:800; cursor:pointer;">Save</button>
+            <!-- Notes + flags tray -->
+            <div id="notesPillBody" style="display:none; margin-top:0.75rem; background:#fffbea; border:1.5px solid #f0d97a; border-radius:12px; padding:0.75rem;">
+              <label style="display:inline-flex; align-items:center; gap:0.4rem; margin-bottom:0.6rem; font-size:0.82rem; font-weight:700; color:var(--navy); cursor:pointer;">
+                <input type="checkbox" id="clientSnipInterest" style="width:15px; height:15px; accent-color:var(--navy);" onchange="saveSnipInterest()" />
+                Interested in spay/neuter resources
+              </label>
+              <textarea id="clientNotesField" placeholder="Permanent notes about this client…" style="width:100%; min-height:72px; border:1.5px solid #f0d97a; border-radius:8px; background:white; font-family:'Nunito Sans',sans-serif; font-size:0.85rem; color:#5a4a00; resize:vertical; outline:none; padding:0.5rem;"></textarea>
+              <div style="display:flex; justify-content:flex-end; margin-top:0.35rem;">
+                <button onclick="saveClientNotes()" style="font-size:0.75rem; padding:0.3rem 0.85rem; border-radius:999px; border:none; background:#f0d97a; color:#5a4a00; font-family:'Nunito',sans-serif; font-weight:800; cursor:pointer;">Save notes</button>
+              </div>
+              <div id="notesSaveMsg" class="msg" style="margin-top:0.3rem;"></div>
             </div>
-            <div id="notesSaveMsg" class="msg" style="margin-top:0.3rem;"></div>
           </div>
         </div>
       </div>
@@ -1181,7 +1186,7 @@ function openWalkin() {
   // Hide any currently loaded client profile
   document.getElementById('clientInfo').style.display = 'none';
   document.getElementById('petsCard').style.display = 'none';
-  ['checkinBtn','editClientBtn','viewProfileBtn','archiveClientBtn','notesBtn'].forEach(id => {
+  ['checkinBtn','editClientBtn','viewProfileBtn','notesBtn','overflowBtn'].forEach(id => {
     document.getElementById(id).style.display = 'none';
   });
   // Init after the canvas is visible so dimensions are correct
@@ -1469,6 +1474,7 @@ profileBtn.href = `client.html?id=${client.id}`;
 profileBtn.style.display = 'inline-block';
 document.getElementById('archiveClientBtn').style.display = 'block';
 document.getElementById('archiveClientBtn').textContent   = client.archived ? 'Unarchive' : 'Archive';
+document.getElementById('overflowBtn').style.display      = 'inline-block';
 document.getElementById('petsCard').style.display         = 'block';
 document.getElementById('notesBtn').style.display         = 'block';
 document.getElementById('clientNotesField').value         = client.notes || '';
@@ -1567,6 +1573,33 @@ async function saveSnipInterest() {
 function toggleNotesPill() {
   const body = document.getElementById('notesPillBody');
   body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleOverflow() {
+  const menu = document.getElementById('overflowMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('overflowMenu');
+  const btn  = document.getElementById('overflowBtn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+async function saveSnipInterest() {
+  const checked = document.getElementById('clientSnipInterest').checked;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
+      method:  'PATCH',
+      headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+      body:    JSON.stringify({ snip_interest: checked })
+    });
+    currentClient.snip_interest = checked;
+  } catch (err) {
+    console.error('Could not save snip interest:', err);
+  }
 }
 
 async function saveClientNotes() {
@@ -1701,6 +1734,7 @@ async function toggleArchiveClient() {
     document.getElementById('archiveClientBtn').textContent   = archiving ? 'Unarchive' : 'Archive';
     document.getElementById('editClientBtn').style.display    = archiving ? 'none' : 'block';
     document.getElementById('checkinBtn').style.display       = 'none';
+    document.getElementById('overflowMenu').style.display     = 'none';
     await loadRecentClients();
   } catch (err) {
     alert(err.message);
