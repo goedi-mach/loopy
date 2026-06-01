@@ -658,6 +658,14 @@
     </div>
   </div>
 
+  <!-- ZIP CODE BREAKDOWN -->
+  <div class="section-card">
+    <div class="section-title">📍 Client ZIP Codes</div>
+    <div id="zipWrap">
+      <div class="empty">Run a report to see results.</div>
+    </div>
+  </div>
+
   <!-- VACCINE WASTE -->
   <div class="section-card">
     <div class="section-title">🗑️ Vaccine Waste</div>
@@ -1083,6 +1091,9 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
         `;
       }
 
+    // ── ZIP BREAKDOWN ──
+      await loadZipBreakdown(dateFrom, dateTo, eventId);
+
     } catch (err) {
       console.error(err);
       alert('Error running report: ' + err.message);
@@ -1163,6 +1174,65 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
   }
 
   // ── INIT ───────────────────────────────────────────────────────
+  async function loadZipBreakdown(dateFrom, dateTo, eventId) {
+    const wrap = document.getElementById('zipWrap');
+    try {
+      // Pull clients in range using same logic as main report
+      let path = `clients?select=zip&archived=eq.false`;
+      if (dateFrom) path += `&event_date=gte.${dateFrom}`;
+      if (dateTo)   path += `&event_date=lte.${dateTo}`;
+      path += `&limit=10000`;
+      const clients = await sbGet(path);
+
+      // If specific event selected, filter by that event's date
+      let filtered = clients;
+      if (eventId) {
+        const evSel = document.getElementById('eventFilter');
+        const evDateStr = evSel.options[evSel.selectedIndex].text.split(' — ')[0];
+        const allInEvent = await sbGet(`clients?select=zip&event_date=eq.${evDateStr}&archived=eq.false&limit=10000`);
+        filtered = allInEvent;
+      }
+
+      // Count by ZIP
+      const counts = {};
+      filtered.forEach(c => {
+        const z = (c.zip || '').trim();
+        if (!z) return;
+        counts[z] = (counts[z] || 0) + 1;
+      });
+
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      const total  = filtered.filter(c => c.zip?.trim()).length;
+
+      if (!sorted.length) {
+        wrap.innerHTML = '<div class="empty">No ZIP data in this range.</div>';
+        return;
+      }
+
+      const maxCount = sorted[0][1];
+      wrap.innerHTML = `
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.75rem;">${sorted.length} ZIP code${sorted.length !== 1 ? 's' : ''} · ${total} client${total !== 1 ? 's' : ''} with ZIP on file</div>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          ${sorted.map(([zip, count]) => {
+            const pct = Math.round(count / total * 100);
+            const barW = Math.round(count / maxCount * 100);
+            return `
+              <div style="display:grid; grid-template-columns:70px 1fr 40px 36px; align-items:center; gap:0.6rem;">
+                <span style="font-family:monospace; font-size:0.85rem; font-weight:700;">${zip}</span>
+                <div style="height:16px; background:var(--navy-light); border-radius:999px; overflow:hidden;">
+                  <div style="height:100%; width:${barW}%; background:var(--navy); border-radius:999px;"></div>
+                </div>
+                <span style="font-size:0.82rem; font-weight:700; color:var(--navy); text-align:right;">${count}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); text-align:right;">${pct}%</span>
+              </div>`;
+          }).join('')}
+        </div>
+      `;
+    } catch (err) {
+      wrap.innerHTML = `<div class="empty" style="color:#a00">Error: ${err.message}</div>`;
+    }
+  }
+
   async function loadBoosterReturnRate() {
     const wrap = document.getElementById('boosterReturnWrap');
     try {
