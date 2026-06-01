@@ -711,7 +711,8 @@
               </div>
               <div style="display:flex; gap:0.4rem; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
                 ${!isCompleted ? `<button onclick="completeEvent('${e.id}')" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--green); background:none; color:var(--green); cursor:pointer; font-family:inherit; font-weight:700;">✓ Complete</button>` : ''}
-                <button onclick="openEditEvent('${e.id}', '${e.location.replace(/'/g,"\\'")}', '${e.event_date}', '${e.start_time}', '${(e.end_time||'').replace(/'/g,"\\'")}', '${(e.clinic_type||'').replace(/'/g,"\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️ Edit</button>
+                ${isCompleted ? `<button onclick="sendPostClinicEmail('${e.id}', '${e.event_date}', '${e.location.replace(/'/g,"\\'")}', '${e.clinic_type||''}')" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--navy); background:none; color:var(--navy); cursor:pointer; font-family:inherit; font-weight:700;">✉ Post-Clinic Email</button>` : ''}
+                <button onclick="openEditEvent('${e.id}', '${e.location.replace(/'/g,"\\'")}', '${e.event_date}', '${e.start_time}', '${(e.end_time||'').replace(/'/g,"\\'")}', '${(e.clinic_type||'').replace(/'/g,"\\'")}')\" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️ Edit</button>
                 <button onclick="deleteEvent('${e.id}', '${e.location.replace(/'/g,"\\'")}' )" style="font-size:0.72rem; padding:0.2rem 0.7rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit;">✕ Delete</button>
               </div>
             </div>
@@ -1106,6 +1107,45 @@ body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_numbe
         loadLots();
       } catch (err) {
         showMsg('lotMsg', 'error', err.message);
+      }
+    }
+
+ // ── POST-CLINIC EMAIL ─────────────────────────────────────────
+    async function sendPostClinicEmail(eventId, eventDate, location, clinicType) {
+      const confirmed = confirm(
+        `Send post-clinic email to all clients from the ${clinicType || 'clinic'} on ${fmt(eventDate)} at ${location}?\n\nClients without an email address on file will be skipped.`
+      );
+      if (!confirmed) return;
+
+      try {
+        // Count clients for this event date
+        const countRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/clients?event_date=eq.${eventDate}&archived=eq.false&email=not.is.null`,
+          { method: 'HEAD', headers: { ...authHeaders(), 'Prefer': 'count=exact' } }
+        );
+        const count = countRes.headers.get('content-range')?.split('/')[1] ?? '0';
+        if (count === '0') {
+          alert('No clients with email addresses found for this event.');
+          return;
+        }
+
+        const proceed = confirm(`${count} client${count == 1 ? '' : 's'} with email addresses will receive this email. Continue?`);
+        if (!proceed) return;
+
+        const res = await fetch('/api/send-postclinic', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ eventId, eventDate, clinicType })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Send failed');
+        alert(`✅ Post-clinic email sent to ${data.sent} client${data.sent == 1 ? '' : 's'}. ${data.skipped > 0 ? `${data.skipped} skipped (no email on file).` : ''}`);
+      } catch (err) {
+        alert('Error: ' + err.message);
       }
     }
 
