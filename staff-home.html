@@ -605,73 +605,33 @@
     async function checkStaleStatuses() {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const res   = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=lt.${today}&select=id,event_date&limit=1`,
-          { headers: authHeaders() }
+        const rows  = await sbGet(
+          `events?completed=eq.false&event_date=lt.${today}&order=event_date.desc&limit=1`
         );
-        const rows = await res.json();
         if (!rows.length) return;
 
         const staleDate = new Date(rows[0].event_date + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-
-        // Count total stale clients
-        const countRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=lt.${today}`,
-          { method: 'HEAD', headers: { ...authHeaders(), 'Prefer': 'count=exact' } }
-        );
-        const count = countRes.headers.get('content-range')?.split('/')[1] ?? '?';
-
         document.getElementById('staleWarningText').textContent =
-          `${count} client${count == 1 ? '' : 's'} from ${staleDate} still have active statuses. Did you forget to close that clinic?`;
-        const warning = document.getElementById('staleWarning');
-        warning.style.display = 'flex';
+          `The ${rows[0].clinic_type || 'clinic'} on ${staleDate} at ${rows[0].location || 'unknown location'} was never closed out.`;
+        document.getElementById('staleWarning').style.display = 'flex';
       } catch (err) {
         console.warn('Stale check failed:', err);
       }
     }
 
     async function completeStaleClinic() {
-      if (!confirm('This will reset all active client statuses back to \"In Queue\". This cannot be undone.')) return;
+      if (!confirm('Mark this clinic as closed out? This cannot be undone.')) return;
       try {
         const today = new Date().toISOString().split('T')[0];
-
-        // Find the stale event date first
-        const staleRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=lt.${today}&select=event_date&limit=1`,
+        const res   = await fetch(
+          `${SUPABASE_URL}/rest/v1/events?completed=eq.false&event_date=lt.${today}&order=event_date.desc&limit=1`,
           { headers: authHeaders() }
         );
-        if (!staleRes.ok) throw new Error('Could not fetch stale event date.');
-        const [staleRow] = await staleRes.json();
-        const staleDate = staleRow?.event_date;
-
-        // Reset client statuses
-        const patchClients = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=lt.${today}`,
-          {
-            method:  'PATCH',
-            headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-            body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
-          }
-        );
-        if (!patchClients.ok) throw new Error(`Failed to reset client statuses (${patchClients.status}).`);
-
-       // Mark the matching event as completed, then prompt for waste
-        if (staleDate) {
-          const evLookup = await fetch(
-            `${SUPABASE_URL}/rest/v1/events?event_date=eq.${staleDate}&completed=eq.false&select=id,event_date,location`,
-            { headers: authHeaders() }
-          );
-          const [staleEvent] = await evLookup.json();
-          if (staleEvent) {
-            document.getElementById('staleWarning').style.display = 'none';
-            await loadEvents();
-            openWasteModal(staleEvent.id, staleEvent.event_date, staleEvent.location);
-            return;
-          }
-        }
-
+        const rows = await res.json();
+        if (!rows.length) { alert('No unclosed clinic found.'); return; }
         document.getElementById('staleWarning').style.display = 'none';
         await loadEvents();
+        openWasteModal(rows[0].id, rows[0].event_date, rows[0].location);
       } catch (err) {
         alert('Error: ' + err.message);
       }
