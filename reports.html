@@ -1201,8 +1201,10 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
         counts[z] = (counts[z] || 0) + 1;
       });
 
-      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
       const total  = filtered.filter(c => c.zip?.trim()).length;
+      const sorted = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .filter(([, count]) => Math.round(count / total * 100) >= 3);
 
       if (!sorted.length) {
         wrap.innerHTML = '<div class="empty">No ZIP data in this range.</div>';
@@ -1211,7 +1213,7 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
 
       const maxCount = sorted[0][1];
       wrap.innerHTML = `
-        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.75rem;">${sorted.length} ZIP code${sorted.length !== 1 ? 's' : ''} · ${total} client${total !== 1 ? 's' : ''} with ZIP on file</div>
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.75rem;">${sorted.length} ZIP code${sorted.length !== 1 ? 's' : ''} shown (≥3%) · ${total} client${total !== 1 ? 's' : ''} with ZIP on file</div>
         <div style="display:flex; flex-direction:column; gap:0.5rem;">
           ${sorted.map(([zip, count]) => {
             const pct = Math.round(count / total * 100);
