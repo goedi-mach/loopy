@@ -736,6 +736,12 @@
                 </select>
               </div>
             </div>
+            <div class="form-field" style="margin-top:0.25rem;">
+              <label style="display:flex; align-items:center; gap:0.5rem; font-weight:600; cursor:pointer;">
+                <input type="checkbox" id="editPetSnipInterest" style="width:16px; height:16px; accent-color:var(--navy);" />
+                Interested in spay/neuter resources
+              </label>
+            </div>
             <input type="hidden" id="editPetId" />
             <div style="display:flex; gap:0.75rem; margin-top:0.25rem;">
               <button class="btn-primary" onclick="saveEditPet()">Save</button>
@@ -798,6 +804,12 @@
                   <option value="no">No</option>
                 </select>
               </div>
+            </div>
+            <div class="form-field" style="margin-top:0.25rem;">
+              <label style="display:flex; align-items:center; gap:0.5rem; font-weight:600; cursor:pointer;">
+                <input type="checkbox" id="newPetSnipInterest" style="width:16px; height:16px; accent-color:var(--navy);" />
+                Interested in spay/neuter resources
+              </label>
             </div>
              <div class="form-row">
               <div class="form-field">
@@ -1613,6 +1625,7 @@ async function markDischarged() {
         altered:         document.getElementById('newPetAltered').value  || 'unknown',
         microchipped:     document.getElementById('newPetMicrochipped').value || 'unknown',
         microchip_number: document.getElementById('newPetMicrochip').value.trim() || null,
+        snip_interest:   document.getElementById('newPetSnipInterest').checked,
       });
 
       showMsg(msg, 'success', `${name} added!`);
@@ -1623,6 +1636,7 @@ async function markDischarged() {
       document.getElementById('newPetAltered').value  = 'unknown';
       document.getElementById('newPetMicrochipped').value = 'unknown';
       document.getElementById('newPetMicrochip').value = '';
+      document.getElementById('newPetSnipInterest').checked = false;
       // Reload pets
       await loadPets(currentClient.id);
     } catch (err) {
@@ -2064,6 +2078,7 @@ function openEditPet(pet) {
   document.getElementById('editPetSex').value          = pet.sex || 'unknown';
   document.getElementById('editPetAltered').value      = pet.altered || 'unknown';
   document.getElementById('editPetMicrochipped').value = pet.microchipped || 'unknown';
+  document.getElementById('editPetSnipInterest').checked = pet.snip_interest || false;
   document.getElementById('petEditForm').style.display = 'block';
   document.getElementById('petEditForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -2093,6 +2108,7 @@ async function saveEditPet() {
         sex:          document.getElementById('editPetSex').value || 'unknown',
         altered:      document.getElementById('editPetAltered').value || 'unknown',
         microchipped: document.getElementById('editPetMicrochipped').value || 'unknown',
+        snip_interest: document.getElementById('editPetSnipInterest').checked,
       })
     });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
