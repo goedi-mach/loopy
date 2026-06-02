@@ -18,7 +18,9 @@ async function sbFetch(path) {
 }
 
 function fill(str, vars) {
-  return (str || '').replace(/{{(\w+)}}/g, (_, k) => vars[k] ?? '');
+  return (str || '')
+    .replace(/{{(\w+)}}/g, (_, k) => vars[k] ?? '')
+    .replace(/\\n/g, '<br>');
 }
 
 async function getTemplates() {
@@ -128,8 +130,8 @@ export default async function handler(req, res) {
         clinic_date_es:    clinicDate.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }),
         next_clinic_line_en: nextLineEn,
         next_clinic_line_es: nextLineEs,
-        reaction_doc_en:   REACTION_DOC_EN,
-        reaction_doc_es:   REACTION_DOC_ES,
+        reaction_doc_en:   `<a href="${REACTION_DOC_EN}" style="color:#1a3a8f;">Vaccine Take-Home Information (English)</a>`,
+        reaction_doc_es:   `<a href="${REACTION_DOC_ES}" style="color:#1a3a8f;">Información sobre Vacunas (Español)</a>`,
         snip_link:         SNIP_LINK,
         chip_links:        chips.map(c =>
           `<li><strong>${c.name}:</strong> <a href="https://nano.fitracking.com/register/chip?id=${c.number}&petId=" style="color:#1a3a8f;">Register chip ${c.number}</a></li>`
@@ -145,13 +147,13 @@ export default async function handler(req, res) {
       const chipBlockEn = chips.length ? `
         <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
         <p><strong>${fill(tpl.postclinic_chip_en?.subject, baseVars)}</strong></p>
-        <p>${fill(tpl.postclinic_chip_en?.body, baseVars)}</p>
+        <p>${fill(tpl.postclinic_chip_en?.body, { ...baseVars, chip_links: '' })}</p>
         <ul style="margin:0.5rem 0 0 1rem;">${baseVars.chip_links}</ul>` : '';
 
       const chipBlockEs = chips.length ? `
         <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
         <p><strong>${fill(tpl.postclinic_chip_es?.subject, baseVars)}</strong></p>
-        <p>${fill(tpl.postclinic_chip_es?.body, baseVars)}</p>
+        <p>${fill(tpl.postclinic_chip_es?.body, { ...baseVars, chip_links: '' })}</p>
         <ul style="margin:0.5rem 0 0 1rem;">${baseVars.chip_links}</ul>` : '';
 
       const snipBlockEn = hasSnip ? `
@@ -170,7 +172,7 @@ export default async function handler(req, res) {
 <!DOCTYPE html>
 <html>
 <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:1.5rem;color:#1a1a2e;">
-  <img src="https://peoplehelpingpets.org/wp-content/uploads/2024/01/PHP-Logo.png"
+  <img src="https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/php-logo.png"
        alt="People Helping Pets" style="height:60px;margin-bottom:1.5rem;" />
 
   <!-- ENGLISH -->
