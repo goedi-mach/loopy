@@ -82,10 +82,15 @@ export default async function handler(req, res) {
     const chipMap   = {};
     if (clientIds.length) {
       const pets = await sbFetch(
-        `pets?client_id=in.(${clientIds.join(',')})&select=client_id,name,snip_interest,microchip_number&limit=5000`
+        `pets?client_id=in.(${clientIds.join(',')})&select=client_id,name,microchip_number&limit=5000`
       );
+      // snip_interest lives on clients table
+      const snipClients = await sbFetch(
+        `clients?id=in.(${clientIds.join(',')})&snip_interest=eq.true&select=id&limit=5000`
+      );
+      snipClients.forEach(c => snipSet.add(c.id));
+      if (!Array.isArray(pets)) throw new Error('Could not load pets: ' + JSON.stringify(pets));
       pets.forEach(p => {
-        if (p.snip_interest) snipSet.add(p.client_id);
         if (p.microchip_number) {
           if (!chipMap[p.client_id]) chipMap[p.client_id] = [];
           chipMap[p.client_id].push({ name: p.name, number: p.microchip_number });
