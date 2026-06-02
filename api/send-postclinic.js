@@ -5,6 +5,7 @@ const FROM_EMAIL           = 'reminders@peoplehelpingpets.org';
 
 const REACTION_DOC_EN = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/VaccineTakeHome_ENG.pdf';
 const REACTION_DOC_ES = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/VacunasHojaInfo_ESP.pdf';
+const SNIP_LINK       = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf';
 
 async function sbFetch(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -16,6 +17,19 @@ async function sbFetch(path) {
   return res.json();
 }
 
+function fill(str, vars) {
+  return (str || '').replace(/{{(\w+)}}/g, (_, k) => vars[k] ?? '');
+}
+
+async function getTemplates() {
+  const rows = await sbFetch(
+    'email_templates?id=in.(postclinic_subject,postclinic_en,postclinic_es,postclinic_chip_en,postclinic_chip_es,postclinic_snip_en,postclinic_snip_es)&select=id,subject,body'
+  );
+  const map = {};
+  rows.forEach(r => { map[r.id] = r; });
+  return map;
+}
+
 async function getNextClinic(afterDate) {
   const records = await sbFetch(
     `events?completed=eq.false&event_date=gt.${afterDate}&order=event_date.asc&limit=1`
@@ -24,11 +38,11 @@ async function getNextClinic(afterDate) {
   const e    = records[0];
   const date = new Date(e.event_date + 'T12:00:00');
   return {
-    date_en:    date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
-    date_es:    date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-    location:   e.location || '',
-    clinic_type:    e.clinic_type || 'Clinic',
-    clinic_type_es: e.clinic_type === 'Booster Clinic' ? 'Clínica de Refuerzo' : 'Clínica de Vacunas',
+    date_en:      date.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }),
+    date_es:      date.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' }),
+    location:     e.location || '',
+    type_en:      e.clinic_type || 'Clinic',
+    type_es:      e.clinic_type === 'Booster Clinic' ? 'Clínica de Refuerzo' : 'Clínica de Vacunas',
   };
 }
 
@@ -54,85 +68,124 @@ export default async function handler(req, res) {
   if (!eventDate) return res.status(400).json({ error: 'eventDate is required' });
 
   try {
-    // Pull all non-archived clients for this event date
+    // Load templates from DB
+    const tpl = await getTemplates();
+
+    // Pull clients
     const clients = await sbFetch(
       `clients?event_date=eq.${eventDate}&archived=eq.false&select=id,name,email&limit=5000`
     );
 
-    // Pull pets for these clients to check snip_interest
+    // Pull pets
     const clientIds = clients.map(c => c.id);
     const snipSet   = new Set();
+    const chipMap   = {};
     if (clientIds.length) {
       const pets = await sbFetch(
-        `pets?client_id=in.(${clientIds.join(',')})&snip_interest=eq.true&select=client_id&limit=5000`
+        `pets?client_id=in.(${clientIds.join(',')})&select=client_id,name,snip_interest,microchip_number&limit=5000`
       );
-      pets.forEach(p => snipSet.add(p.client_id));
+      pets.forEach(p => {
+        if (p.snip_interest) snipSet.add(p.client_id);
+        if (p.microchip_number) {
+          if (!chipMap[p.client_id]) chipMap[p.client_id] = [];
+          chipMap[p.client_id].push({ name: p.name, number: p.microchip_number });
+        }
+      });
     }
 
-    // Get next upcoming clinic
+    // Get next clinic
     const nextClinic = await getNextClinic(eventDate);
 
+    const clinicDate   = new Date(eventDate + 'T12:00:00');
     const clinicTypeEs = clinicType === 'Booster Clinic' ? 'Clínica de Refuerzo' : 'Clínica de Vacunas';
+
+    const nextLineEn = nextClinic
+      ? `Our next ${nextClinic.type_en} is on ${nextClinic.date_en} at ${nextClinic.location}. We hope to see you there!`
+      : `Keep an eye out for announcements about our upcoming clinics!`;
+    const nextLineEs = nextClinic
+      ? `Nuestra próxima ${nextClinic.type_es} es el ${nextClinic.date_es} en ${nextClinic.location}. ¡Esperamos verlos!`
+      : `¡Estén atentos a los anuncios sobre nuestras próximas clínicas!`;
 
     let sent = 0, skipped = 0;
 
     for (const client of clients) {
       if (!client.email) { skipped++; continue; }
 
-      const firstName = (client.name || 'there').split(' ')[0];
-      const hasSnipInterest = snipSet.has(client.id);
+      const firstName    = (client.name || 'there').split(' ')[0];
+      const chips        = chipMap[client.id] || [];
+      const hasSnip      = snipSet.has(client.id);
 
-      // Next clinic block
-      const nextClinicBlockEn = nextClinic
-        ? `<p>📅 <strong>Our next clinic:</strong> ${nextClinic.clinic_type} on ${nextClinic.date_en} at ${nextClinic.location}. We hope to see you there!</p>`
-        : `<p>📅 Keep an eye out for announcements about our upcoming clinics!</p>`;
+      const baseVars = {
+        owner_name:        firstName,
+        clinic_type:       clinicType || 'Clinic',
+        clinic_type_es:    clinicTypeEs,
+        clinic_date:       clinicDate.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }),
+        clinic_date_es:    clinicDate.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }),
+        next_clinic_line_en: nextLineEn,
+        next_clinic_line_es: nextLineEs,
+        reaction_doc_en:   REACTION_DOC_EN,
+        reaction_doc_es:   REACTION_DOC_ES,
+        snip_link:         SNIP_LINK,
+        chip_links:        chips.map(c =>
+          `<li><strong>${c.name}:</strong> <a href="https://nano.fitracking.com/register/chip?id=${c.number}&petId=" style="color:#1a3a8f;">Register chip ${c.number}</a></li>`
+        ).join(''),
+      };
 
-      const nextClinicBlockEs = nextClinic
-        ? `<p>📅 <strong>Nuestra próxima clínica:</strong> ${nextClinic.clinic_type_es} el ${nextClinic.date_es} en ${nextClinic.location}. ¡Esperamos verlos!</p>`
-        : `<p>📅 ¡Estén atentos a los anuncios sobre nuestras próximas clínicas!</p>`;
+      // Build sections from DB templates
+      const enHeading  = fill(tpl.postclinic_en?.subject, baseVars);
+      const enBody     = fill(tpl.postclinic_en?.body,    baseVars);
+      const esHeading  = fill(tpl.postclinic_es?.subject, baseVars);
+      const esBody     = fill(tpl.postclinic_es?.body,    baseVars);
 
-      // Spay/neuter block (only if applicable)
-      const snipBlockEn = hasSnipInterest
-        ? `<hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
-           <p>🐾 <strong>Interested in spay/neuter services?</strong> Chicago Animal Care and Control has a resource list of affordable spay/neuter providers in the city. <a href="https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf" style="color:#1a3a8f;">View the resource list (PDF)</a>.</p>`
-        : '';
+      const chipBlockEn = chips.length ? `
+        <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
+        <p><strong>${fill(tpl.postclinic_chip_en?.subject, baseVars)}</strong></p>
+        <p>${fill(tpl.postclinic_chip_en?.body, baseVars)}</p>
+        <ul style="margin:0.5rem 0 0 1rem;">${baseVars.chip_links}</ul>` : '';
 
-      const snipBlockEs = hasSnipInterest
-        ? `<hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
-           <p>🐾 <strong>¿Interesado en servicios de esterilización?</strong> Chicago Animal Care and Control tiene una lista de proveedores de esterilización asequibles en la ciudad. <a href="https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf" style="color:#1a3a8f;">Ver la lista de recursos (PDF)</a>.</p>`
-        : '';
+      const chipBlockEs = chips.length ? `
+        <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
+        <p><strong>${fill(tpl.postclinic_chip_es?.subject, baseVars)}</strong></p>
+        <p>${fill(tpl.postclinic_chip_es?.body, baseVars)}</p>
+        <ul style="margin:0.5rem 0 0 1rem;">${baseVars.chip_links}</ul>` : '';
 
-      const subject = `Thank you for visiting People Helping Pets! / ¡Gracias por visitar People Helping Pets!`;
+      const snipBlockEn = hasSnip ? `
+        <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
+        <p><strong>${fill(tpl.postclinic_snip_en?.subject, baseVars)}</strong></p>
+        <p>${fill(tpl.postclinic_snip_en?.body, baseVars)}</p>` : '';
+
+      const snipBlockEs = hasSnip ? `
+        <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
+        <p><strong>${fill(tpl.postclinic_snip_es?.subject, baseVars)}</strong></p>
+        <p>${fill(tpl.postclinic_snip_es?.body, baseVars)}</p>` : '';
+
+      const subject = fill(tpl.postclinic_subject?.subject, baseVars);
 
       const html = `
 <!DOCTYPE html>
 <html>
 <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:1.5rem;color:#1a1a2e;">
-
   <img src="https://peoplehelpingpets.org/wp-content/uploads/2024/01/PHP-Logo.png"
        alt="People Helping Pets" style="height:60px;margin-bottom:1.5rem;" />
 
   <!-- ENGLISH -->
-  <h2 style="color:#1a3a8f;">Thank you for visiting us, ${firstName}!</h2>
-  <p>We're so glad you and your pet(s) came to our ${clinicType || 'clinic'} on ${new Date(eventDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.</p>
-  <p>📄 Please review the attached vaccine reaction information sheet:<br>
-     <a href="${REACTION_DOC_EN}" style="color:#1a3a8f;font-weight:bold;">Vaccine Take-Home Information (English)</a></p>
-  ${nextClinicBlockEn}
+  <h2 style="color:#1a3a8f;">${enHeading}</h2>
+  <p style="white-space:pre-line;">${enBody}</p>
+  ${chipBlockEn}
   ${snipBlockEn}
 
-  <hr style="margin:2rem 0;border:none;border-top:2px solid #dce6f9;">
+  <hr style="border:none;border-top:2px solid #dce6f9;margin:1.5rem 0;">
 
   <!-- ESPAÑOL -->
-  <h2 style="color:#1a3a8f;">¡Gracias por visitarnos, ${firstName}!</h2>
-  <p>Nos alegra mucho que usted y su(s) mascota(s) hayan venido a nuestra ${clinicTypeEs} el ${new Date(eventDate + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}.</p>
-  <p>📄 Por favor revise la hoja informativa sobre reacciones a vacunas:<br>
-     <a href="${REACTION_DOC_ES}" style="color:#1a3a8f;font-weight:bold;">Información sobre Vacunas (Español)</a></p>
-  ${nextClinicBlockEs}
+  <h2 style="color:#1a3a8f;">${esHeading}</h2>
+  <p style="white-space:pre-line;">${esBody}</p>
+  ${chipBlockEs}
   ${snipBlockEs}
 
-  <hr style="margin:2rem 0;border:none;border-top:1px solid #e5e7eb;">
-  <p style="font-size:0.8rem;color:#888;">
-    People Helping Pets · Chicago, IL · <a href="https://peoplehelpingpets.org" style="color:#888;">peoplehelpingpets.org</a>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0;">
+  <p style="font-size:12px;color:#888;">
+    People Helping Pets · Chicago, IL ·
+    <a href="https://peoplehelpingpets.org" style="color:#888;">peoplehelpingpets.org</a>
   </p>
 </body>
 </html>`;

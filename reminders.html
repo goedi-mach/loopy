@@ -335,6 +335,7 @@
     <div class="template-selector">
       <button class="tpl-btn active" onclick="loadTemplate('reminder_2w')">2-Week Reminder</button>
       <button class="tpl-btn" onclick="loadTemplate('reminder_1w')">1-Week Reminder</button>
+      <button class="tpl-btn" onclick="loadTemplate('postclinic')">📬 Post-Clinic Memo</button>
     </div>
 
     <!-- 2w English -->
@@ -450,8 +451,103 @@
         <div class="msg" id="msg-reminder_1w"></div>
       </div>
     </div>
-  </div>
+  <!-- Post-Clinic Memo -->
+    <div class="card" id="tpl-postclinic" style="display:none;">
+      <div class="card-header">
+        Post-Clinic Memo
+        <button class="btn btn-green" onclick="savePostClinicTemplates()">Save Changes</button>
+      </div>
+      <div class="card-body">
+        <div class="placeholder-hint" style="margin-bottom:1rem;">
+          Available placeholders: <code>{{owner_name}}</code> <code>{{clinic_type}}</code> <code>{{clinic_type_es}}</code> <code>{{clinic_date}}</code> <code>{{clinic_date_es}}</code> <code>{{next_clinic_line_en}}</code> <code>{{next_clinic_line_es}}</code> <code>{{reaction_doc_en}}</code> <code>{{reaction_doc_es}}</code> <code>{{chip_links}}</code> <code>{{snip_link}}</code>
+        </div>
 
+        <!-- Subject -->
+        <div style="margin-bottom:1.25rem;">
+          <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.5rem;font-size:0.9rem;">Subject Line (shared)</div>
+          <div class="template-block">
+            <input type="text" id="postclinic_subject_subject" />
+          </div>
+        </div>
+
+        <div class="template-grid">
+          <!-- EN main -->
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇺🇸 English — Main Body</div>
+            <div class="template-block">
+              <label>Greeting / heading</label>
+              <input type="text" id="postclinic_en_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="postclinic_en_body"></textarea>
+            </div>
+          </div>
+          <!-- ES main -->
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇲🇽 Spanish — Main Body</div>
+            <div class="template-block">
+              <label>Greeting / heading</label>
+              <input type="text" id="postclinic_es_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="postclinic_es_body"></textarea>
+            </div>
+          </div>
+          <!-- Chip EN -->
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇺🇸 English — Chip Registration <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(only sent if chip on file)</span></div>
+            <div class="template-block">
+              <label>Heading</label>
+              <input type="text" id="postclinic_chip_en_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="postclinic_chip_en_body"></textarea>
+            </div>
+          </div>
+          <!-- Chip ES -->
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇲🇽 Spanish — Chip Registration <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(solo si tiene chip)</span></div>
+            <div class="template-block">
+              <label>Heading</label>
+              <input type="text" id="postclinic_chip_es_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="postclinic_chip_es_body"></textarea>
+            </div>
+          </div>
+          <!-- Snip EN -->
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇺🇸 English — Spay/Neuter Resources <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(only if snip_interest)</span></div>
+            <div class="template-block">
+              <label>Heading</label>
+              <input type="text" id="postclinic_snip_en_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="postclinic_snip_en_body"></textarea>
+            </div>
+          </div>
+          <!-- Snip ES -->
+          <div>
+            <div style="font-weight:800;font-family:'Nunito',sans-serif;color:var(--navy);margin-bottom:0.75rem;font-size:0.9rem;">🇲🇽 Spanish — Spay/Neuter Resources <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);">(solo si snip_interest)</span></div>
+            <div class="template-block">
+              <label>Heading</label>
+              <input type="text" id="postclinic_snip_es_subject" />
+            </div>
+            <div class="template-block" style="margin-top:0.75rem;">
+              <label>Body</label>
+              <textarea id="postclinic_snip_es_body"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="msg" id="msg-postclinic"></div>
+      </div>
+    </div>
+  </div>
   <!-- ── UPCOMING TAB ── -->
   <div class="tab-panel" id="tab-upcoming">
     <div class="card">
@@ -638,6 +734,27 @@
       showMsg(`msg-${prefix}`, 'success', '✓ Templates saved.');
     } catch(e) {
       showMsg(`msg-${prefix}`, 'error', 'Error saving: ' + e.message);
+    }
+  }
+
+  // ── SAVE POST-CLINIC TEMPLATES ──────────────────────────────────
+  async function savePostClinicTemplates() {
+    const ids = [
+      'postclinic_subject',
+      'postclinic_en', 'postclinic_es',
+      'postclinic_chip_en', 'postclinic_chip_es',
+      'postclinic_snip_en', 'postclinic_snip_es'
+    ];
+    try {
+      for (const id of ids) {
+        const subject = document.getElementById(`${id}_subject`)?.value?.trim();
+        const body    = document.getElementById(`${id}_body`)?.value?.trim() || '';
+        if (subject === undefined) continue;
+        await sbPatch(`email_templates?id=eq.${id}`, { subject, body, updated_at: new Date().toISOString() });
+      }
+      showMsg('msg-postclinic', 'success', '✓ Post-clinic templates saved.');
+    } catch(e) {
+      showMsg('msg-postclinic', 'error', 'Error saving: ' + e.message);
     }
   }
 
