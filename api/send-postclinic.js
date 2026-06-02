@@ -132,7 +132,7 @@ export default async function handler(req, res) {
         next_clinic_line_es: nextLineEs,
         reaction_doc_en:   `<a href="${REACTION_DOC_EN}" style="color:#1a3a8f;">Vaccine Take-Home Information (English)</a>`,
         reaction_doc_es:   `<a href="${REACTION_DOC_ES}" style="color:#1a3a8f;">Información sobre Vacunas (Español)</a>`,
-        snip_link:         SNIP_LINK,
+        snip_link:         `<a href="${SNIP_LINK}" style="color:#1a3a8f;">View the resource list (PDF)</a>`,
         chip_links:        chips.map(c =>
           `<li><strong>${c.name}:</strong> <a href="https://nano.fitracking.com/register/chip?id=${c.number}&petId=" style="color:#1a3a8f;">Register chip ${c.number}</a></li>`
         ).join(''),
