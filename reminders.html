@@ -344,6 +344,7 @@
         2-Week Reminder
         <button class="btn btn-green" onclick="saveTemplates('reminder_2w')">Save Changes</button>
       </div>
+      <div class="msg" id="msg-reminder_2w" style="margin:0.75rem 1.25rem 0;"></div>
       <div class="card-body">
         <div class="template-grid">
           <div>
@@ -391,9 +392,9 @@
             </div>
           </div>
         </div>
-        <div class="msg" id="msg-reminder_2w"></div>
-      </div>
+        </div>
     </div>
+
 
     <!-- 1w -->
     <div class="card" id="tpl-reminder_1w" style="display:none;">
@@ -401,6 +402,7 @@
         1-Week Reminder
         <button class="btn btn-green" onclick="saveTemplates('reminder_1w')">Save Changes</button>
       </div>
+      <div class="msg" id="msg-reminder_1w" style="margin:0.75rem 1.25rem 0;"></div>
       <div class="card-body">
         <div class="template-grid">
           <div>
@@ -457,6 +459,7 @@
         Post-Clinic Memo
         <button class="btn btn-green" onclick="savePostClinicTemplates()">Save Changes</button>
       </div>
+      <div class="msg" id="msg-postclinic" style="margin:0.75rem 1.25rem 0;"></div>
       <div class="card-body">
         <div class="placeholder-hint" style="margin-bottom:1rem;">
           Available placeholders: <code>{{owner_name}}</code> <code>{{clinic_type}}</code> <code>{{clinic_type_es}}</code> <code>{{clinic_date}}</code> <code>{{clinic_date_es}}</code> <code>{{next_clinic_line_en}}</code> <code>{{next_clinic_line_es}}</code> <code>{{reaction_doc_en}}</code> <code>{{reaction_doc_es}}</code> <code>{{chip_links}}</code> <code>{{snip_link}}</code>
@@ -544,7 +547,6 @@
             </div>
           </div>
         </div>
-        <div class="msg" id="msg-postclinic"></div>
       </div>
     </div>
   </div>
