@@ -999,23 +999,33 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
         `;
       }
 
-      // ── NEW vs RETURNING ──
-      // "New" = client's event_date is in the selected range AND they don't appear in any earlier clinic visit
-      // Proxy: count clients where event_date equals earliest visit (first seen), vs those who appeared before dateFrom
-      const allClients = await sbGet('clients?select=id,event_date&order=event_date.asc&limit=50000');
-      // earliest visit per client
-      const firstVisit = {};
-      allClients.forEach(c => {
-        if (!firstVisit[c.id] || c.event_date < firstVisit[c.id]) firstVisit[c.id] = c.event_date;
-      });
-
+// ── NEW vs RETURNING ──
+      // "Returning" = client has at least one vaccination with date_given BEFORE dateFrom
+      // "New" = all their vaccinations fall within or after dateFrom
       let newCount = 0, returningCount = 0;
-      clientIds.forEach(cid => {
-        const first = firstVisit[cid];
-        if (!first || (dateFrom && first >= dateFrom)) newCount++;
-        else returningCount++;
-      });
-
+      if (clientIds.length && dateFrom) {
+        // Pull earliest vaccination date per client across all time
+        const allVax = await sbGet(
+          `vaccinations?select=pet_id,date_given&order=date_given.asc&limit=100000`
+        );
+        // Map pet_id → client_id using existing petMap
+        const earliestVax = {};
+        allVax.forEach(v => {
+          const cid = petMap[v.pet_id]?.client_id;
+          if (!cid) return;
+          if (!earliestVax[cid] || v.date_given < earliestVax[cid]) {
+            earliestVax[cid] = v.date_given;
+          }
+        });
+        clientIds.forEach(cid => {
+          const first = earliestVax[cid];
+          if (!first || first >= dateFrom) newCount++;
+          else returningCount++;
+        });
+      } else {
+        // No dateFrom — treat all as new
+        newCount = clientIds.length;
+      }
       const returningWrap = document.getElementById('returningWrap');
       if (totalClients === 0) {
         returningWrap.innerHTML = '<div class="empty">No clients in this range.</div>';
