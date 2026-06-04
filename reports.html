@@ -1004,26 +1004,20 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
       // "New" = all their vaccinations fall within or after dateFrom
       let newCount = 0, returningCount = 0;
       if (clientIds.length && dateFrom) {
-        // Pull earliest vaccination date per client across all time
+        // For each client in range, check if they have any vaccination before dateFrom
+        const returningSet = new Set();
         const allVax = await sbGet(
-          `vaccinations?select=pet_id,date_given&order=date_given.asc&limit=100000`
+          `vaccinations?select=pet_id,date_given&date_given=lt.${dateFrom}&limit=100000`
         );
-        // Map pet_id → client_id using existing petMap
-        const earliestVax = {};
         allVax.forEach(v => {
           const cid = petMap[v.pet_id]?.client_id;
-          if (!cid) return;
-          if (!earliestVax[cid] || v.date_given < earliestVax[cid]) {
-            earliestVax[cid] = v.date_given;
-          }
+          if (cid) returningSet.add(cid);
         });
         clientIds.forEach(cid => {
-          const first = earliestVax[cid];
-          if (!first || first >= dateFrom) newCount++;
-          else returningCount++;
+          if (returningSet.has(cid)) returningCount++;
+          else newCount++;
         });
       } else {
-        // No dateFrom — treat all as new
         newCount = clientIds.length;
       }
       const returningWrap = document.getElementById('returningWrap');
