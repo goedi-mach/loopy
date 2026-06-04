@@ -1000,52 +1000,104 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
       }
 
 // ── NEW vs RETURNING ──
-      // "Returning" = client has at least one vaccination with date_given BEFORE dateFrom
-      // "New" = all their vaccinations fall within or after dateFrom
-      let newCount = 0, returningCount = 0;
-      if (clientIds.length && dateFrom) {
-        // For each client in range, check if they have any vaccination before dateFrom
-        const returningSet = new Set();
-        const allVax = await sbGet(
-          `vaccinations?select=pet_id,date_given&date_given=lt.${dateFrom}&limit=100000`
-        );
-        allVax.forEach(v => {
-          const cid = petMap[v.pet_id]?.client_id;
-          if (cid) returningSet.add(cid);
-        });
-        clientIds.forEach(cid => {
-          if (returningSet.has(cid)) returningCount++;
-          else newCount++;
-        });
-      } else {
-        newCount = clientIds.length;
-      }
+      // Overall: clients with vaccinations on more than one distinct date = returning
+      // Per-event: clients at this event who had any vaccination before this event's date
       const returningWrap = document.getElementById('returningWrap');
-      if (totalClients === 0) {
-        returningWrap.innerHTML = '<div class="empty">No clients in this range.</div>';
-      } else {
-        const newPct = totalClients ? Math.round(newCount / totalClients * 100) : 0;
-        const retPct = 100 - newPct;
-        returningWrap.innerHTML = `
-          <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem;">
-            <div style="flex:1; min-width:140px; background:var(--navy-light); border-radius:10px; padding:1rem 1.25rem;">
-              <div class="stat-label" style="color:var(--navy);">🆕 New Clients</div>
-              <div style="font-family:'Nunito',sans-serif; font-size:1.8rem; font-weight:800; color:var(--navy);">${newCount}</div>
-              <div class="stat-sub">${newPct}% of total</div>
+
+      // Always show overall stats
+      const allVaxDates = await sbGet('vaccinations?select=pet_id,date_given&limit=100000');
+      const vaxDatesByClient = {};
+      allVaxDates.forEach(v => {
+        const cid = petMap[v.pet_id]?.client_id;
+        if (!cid) return;
+        if (!vaxDatesByClient[cid]) vaxDatesByClient[cid] = new Set();
+        vaxDatesByClient[cid].add(v.date_given);
+      });
+      let overallNew = 0, overallReturning = 0;
+      Object.values(vaxDatesByClient).forEach(dates => {
+        if (dates.size > 1) overallReturning++;
+        else overallNew++;
+      });
+      const overallTotal = overallNew + overallReturning;
+      const overallNewPct = overallTotal ? Math.round(overallNew / overallTotal * 100) : 0;
+      const overallRetPct = 100 - overallNewPct;
+
+      // Per-event stats (only if a specific event is selected)
+      let eventBlock = '';
+      if (eventId) {
+        const evSel    = document.getElementById('eventFilter');
+        const evDate   = evSel.options[evSel.selectedIndex].text.split(' — ')[0];
+        const evLabel  = evSel.options[evSel.selectedIndex].text;
+
+        // Clients who got vaccines on this event date
+        const evVax = await sbGet(`vaccinations?select=pet_id&date_given=eq.${evDate}&limit=10000`);
+        const evClientIds = [...new Set(evVax.map(v => petMap[v.pet_id]?.client_id).filter(Boolean))];
+
+        // Of those, how many had a prior vaccination before this date
+        const priorVax = await sbGet(`vaccinations?select=pet_id&date_given=lt.${evDate}&limit=100000`);
+        const priorClientSet = new Set(priorVax.map(v => petMap[v.pet_id]?.client_id).filter(Boolean));
+
+        let evNew = 0, evRet = 0;
+        evClientIds.forEach(cid => {
+          if (priorClientSet.has(cid)) evRet++;
+          else evNew++;
+        });
+        const evTotal  = evNew + evRet;
+        const evNewPct = evTotal ? Math.round(evNew / evTotal * 100) : 0;
+        const evRetPct = 100 - evNewPct;
+
+        eventBlock = `
+          <div style="margin-top:1.25rem; padding-top:1rem; border-top:1.5px dashed var(--border);">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">
+              📅 ${evLabel}
             </div>
-            <div style="flex:1; min-width:140px; background:var(--green-light); border-radius:10px; padding:1rem 1.25rem;">
+            <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+              <div style="flex:1; min-width:120px; background:var(--navy-light); border-radius:10px; padding:0.85rem 1rem;">
+                <div class="stat-label" style="color:var(--navy);">🆕 New</div>
+                <div style="font-family:'Nunito',sans-serif; font-size:1.6rem; font-weight:800; color:var(--navy);">${evNew}</div>
+                <div class="stat-sub">${evNewPct}% of event</div>
+              </div>
+              <div style="flex:1; min-width:120px; background:var(--green-light); border-radius:10px; padding:0.85rem 1rem;">
+                <div class="stat-label" style="color:var(--green);">🔄 Returning</div>
+                <div style="font-family:'Nunito',sans-serif; font-size:1.6rem; font-weight:800; color:var(--green);">${evRet}</div>
+                <div class="stat-sub">${evRetPct}% of event</div>
+              </div>
+            </div>
+            <div style="height:12px; border-radius:999px; overflow:hidden; background:var(--navy-light);">
+              <div style="height:100%; width:${evNewPct}%; background:var(--navy); border-radius:999px 0 0 999px; transition:width 0.5s ease;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">
+              <span>New ${evNewPct}%</span><span>Returning ${evRetPct}%</span>
+            </div>
+          </div>`;
+      }
+
+      if (overallTotal === 0) {
+        returningWrap.innerHTML = '<div class="empty">No client data available.</div>';
+      } else {
+        returningWrap.innerHTML = `
+          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.75rem;">
+            📊 All Time (${overallTotal} clients)
+          </div>
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+            <div style="flex:1; min-width:120px; background:var(--navy-light); border-radius:10px; padding:0.85rem 1rem;">
+              <div class="stat-label" style="color:var(--navy);">🆕 New Clients</div>
+              <div style="font-family:'Nunito',sans-serif; font-size:1.6rem; font-weight:800; color:var(--navy);">${overallNew}</div>
+              <div class="stat-sub">${overallNewPct}% of total</div>
+            </div>
+            <div style="flex:1; min-width:120px; background:var(--green-light); border-radius:10px; padding:0.85rem 1rem;">
               <div class="stat-label" style="color:var(--green);">🔄 Returning Clients</div>
-              <div style="font-family:'Nunito',sans-serif; font-size:1.8rem; font-weight:800; color:var(--green);">${returningCount}</div>
-              <div class="stat-sub">${retPct}% of total</div>
+              <div style="font-family:'Nunito',sans-serif; font-size:1.6rem; font-weight:800; color:var(--green);">${overallReturning}</div>
+              <div class="stat-sub">${overallRetPct}% of total</div>
             </div>
           </div>
-          <div style="height:16px; border-radius:999px; overflow:hidden; background:var(--navy-light);">
-            <div style="height:100%; width:${newPct}%; background:var(--navy); border-radius:999px 0 0 999px; transition:width 0.5s ease;"></div>
+          <div style="height:12px; border-radius:999px; overflow:hidden; background:var(--navy-light);">
+            <div style="height:100%; width:${overallNewPct}%; background:var(--navy); border-radius:999px 0 0 999px; transition:width 0.5s ease;"></div>
           </div>
           <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">
-            <span>New ${newPct}%</span>
-            <span>Returning ${retPct}%</span>
+            <span>New ${overallNewPct}%</span><span>Returning ${overallRetPct}%</span>
           </div>
+          ${eventBlock}
         `;
       }
 
