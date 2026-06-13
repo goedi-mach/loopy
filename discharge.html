@@ -653,10 +653,11 @@
             <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
               <div>
                 <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <div style="display:flex; align-items:center; gap:0.5rem;">
                   <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.3rem; color:var(--navy)" id="clientName"></div>
-                  <div id="clientStatusBadge"></div>
+                  <div id="clientLangBadge"></div>
                 </div>
-                <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.25rem" id="clientContact"></div>
+                <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.3rem" id="clientContact"></div>
                 <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.1rem" id="clientSince"></div>
               </div>
               <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
@@ -1468,7 +1469,13 @@ async function deleteEvent(eventId, location) {
       list.innerHTML = `<li class="empty-state" style="color:#a00">Error: ${err.message}</li>`;
     }
   }
-
+function renderLangBadge(lang) {
+  if (!lang) return '';
+  const label = lang === 'es' ? 'ES' : 'EN';
+  const bg    = lang === 'es' ? '#fef3c7' : '#dce6f9';
+  const color = lang === 'es' ? '#92400e' : '#1a3a8f';
+  return `<span style="font-size:0.7rem; font-weight:800; font-family:'Nunito',sans-serif; padding:0.15rem 0.5rem; border-radius:999px; background:${bg}; color:${color}; letter-spacing:0.04em;">${label}</span>`;
+}
   // ─── CLIENT DETAIL ─────────────────────────────────────────────
   async function selectClient(client) {
     currentClient  = client;
@@ -1491,7 +1498,8 @@ const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
-document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
+document.getElementById('clientLangBadge').innerHTML = renderLangBadge(client.preferred_language);
+document.getElementById('editClientBtn').style.display= !client.archived ? 'block' : 'none';
 document.getElementById('deleteClientBtn').style.display = client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
 profileBtn.href = `client.html?id=${client.id}`;
