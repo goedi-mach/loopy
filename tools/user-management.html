@@ -270,11 +270,11 @@
   <nav class="topnav">
     <div class="topnav-brand">🐾 PHP Clinic App — Staff</div>
     <div class="topnav-links">
-      <a href="intake.html" class="nav-link">🏥 Intake</a>
-      <a href="discharge.html" class="nav-link">💉 Discharge</a>
-      <a href="records.html" class="nav-link">📋 Records</a>
-      <a id="reportsLink" href="reports.html" class="nav-link" style="display:none;">📊 Reports</a>
-      <a href="staff-home.html" class="nav-link">🏠 Staff Home</a>
+      <a href="../intake.html" class="nav-link">🏥 Intake</a>
+      <a href="../discharge.html" class="nav-link">💉 Discharge</a>
+      <a href="../records.html" class="nav-link">📋 Records</a>
+      <a id="reportsLink" href="../reports.html" class="nav-link" style="display:none;">📊 Reports</a>
+      <a href="../staff-home.html" class="nav-link">🏠 Staff Home</a>
       <button class="btn-logout" onclick="signOut()">Sign Out</button>
     </div>
   </nav>
@@ -325,7 +325,7 @@
 
     // ── Auth guard: admin only ────────────────────────────────────
     const token = localStorage.getItem('php_token');
-    if (!token) window.location.href = 'login.html';
+    if (!token) window.location.href = '../login.html';
 
     function getRoleFromToken(t) {
       try {
@@ -348,7 +348,7 @@
     function signOut() {
       localStorage.removeItem('php_token');
       localStorage.removeItem('php_email');
-      window.location.href = 'login.html';
+      window.location.href = '../login.html';
     }
 
     // ── Show message ──────────────────────────────────────────────
