@@ -235,14 +235,14 @@
   </div>
 
   <a class="display-link" href="queue-display.html" target="_blank">↗ Open display screen</a>
-  <a class="back-link" href="staff-home.html">← Back to Staff Home</a>
+  <a class="back-link" href="../staff-home.html">← Back to Staff Home</a>
 
   <script>
     const SUPABASE_URL      = CONFIG.SUPABASE_URL;
     const SUPABASE_ANON_KEY = CONFIG.SUPABASE_ANON_KEY;
 
     const token = localStorage.getItem('php_token');
-    if (!token) window.location.href = 'dashboard.html';
+    if (!token) window.location.href = '../login.html';
 
     function authHeaders() {
       return {
