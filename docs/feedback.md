@@ -1,6 +1,4 @@
 priority
-registration - ask what language they want comms
-discharge - display/ask language
 
 Reminders
 spay neuter services should be sent out to anyone whose pet is not s/n.
@@ -8,8 +6,6 @@ spay neuter services should be sent out to anyone whose pet is not s/n.
 You can give them our hotline number to make an appointment- 872-302-4670. They must leave a voicemail for a call back. Our appointment wait time is fairly short, especially for small dogs and cats. If the client does not have a vehicle, we can help transport the animal to and from their house.
 
 edit volunteer form
-not require signature from regular volunteers
-only ask signature from vets
 
 nice to haves
 Return visit detection — flag or highlight clients who've attended multiple clinics, which could be useful for tracking community engagement
