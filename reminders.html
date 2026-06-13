@@ -323,6 +323,7 @@
     <button class="tab-btn" onclick="switchTab('upcoming')">📅 Upcoming</button>
     <button class="tab-btn" onclick="switchTab('sent')">✅ Sent Log</button>
     <button class="tab-btn" onclick="switchTab('manual')">📨 Manual Send</button>
+    <button class="tab-btn" onclick="switchTab('triggers')">⚡ Triggers</button>
   </div>
 
   <!-- ── TEMPLATES TAB ── -->
@@ -646,6 +647,134 @@
     </div>
   </div>
 
+  <!-- ── TRIGGERS TAB ── -->
+  <div class="tab-panel" id="tab-triggers">
+
+    <div class="card">
+      <div class="card-header" style="justify-content:space-between;">
+        <span>⚡ Email Triggers</span>
+        <button class="btn btn-green" onclick="openTriggerModal(null)">+ New Trigger</button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div id="triggerList"><div class="empty-state" style="padding:1.5rem;">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- Trigger edit modal -->
+    <div id="triggerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:white; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,0.2); width:100%; max-width:680px; max-height:90vh; overflow-y:auto; margin:1rem; padding:1.75rem;">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+          <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.1rem; color:var(--navy);" id="modalTitle">New Trigger</div>
+          <button onclick="closeTriggerModal()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-muted);">✕</button>
+        </div>
+
+        <div class="msg" id="triggerModalMsg"></div>
+
+        <input type="hidden" id="triggerModalId" />
+
+        <!-- Name + event -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.85rem;">
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; display:block; margin-bottom:0.25rem;">Trigger Name *</label>
+            <input type="text" id="tModalName" placeholder="e.g. Tree House S/N Program" style="width:100%; padding:0.55rem 0.8rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.9rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; display:block; margin-bottom:0.25rem;">Send After *</label>
+            <select id="tModalEvent" style="width:100%; padding:0.55rem 0.8rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.9rem; appearance:none;">
+              <option value="post_clinic">Post-Vaccine Clinic</option>
+              <option value="post_booster">Post-Booster Clinic</option>
+              <option value="reminder_2w">2-Week Vaccine Reminder</option>
+              <option value="reminder_1w">1-Week Vaccine Reminder</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div style="margin-bottom:0.85rem;">
+          <label style="font-size:0.82rem; font-weight:700; display:block; margin-bottom:0.25rem;">Description</label>
+          <input type="text" id="tModalDesc" placeholder="What does this trigger do?" style="width:100%; padding:0.55rem 0.8rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.9rem;" />
+        </div>
+
+        <!-- Conditions -->
+        <div style="background:var(--navy-light); border-radius:10px; padding:1rem; margin-bottom:0.85rem;">
+          <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:0.82rem; color:var(--navy); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.75rem;">Conditions — only send if…</div>
+          <div style="display:flex; flex-direction:column; gap:0.6rem;">
+
+            <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; cursor:pointer;">
+              <input type="checkbox" id="tCondIntact" style="width:15px; height:15px; accent-color:var(--navy);" />
+              Client has at least one pet that is <strong style="margin:0 0.25rem;">not confirmed spayed/neutered</strong>
+            </label>
+
+            <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; cursor:pointer;">
+              <input type="checkbox" id="tCondChip" style="width:15px; height:15px; accent-color:var(--navy);" />
+              Client has at least one pet with a <strong style="margin:0 0.25rem;">microchip on record</strong>
+            </label>
+
+            <div>
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; cursor:pointer; margin-bottom:0.35rem;">
+                <input type="checkbox" id="tCondZipEnabled" style="width:15px; height:15px; accent-color:var(--navy);" onchange="document.getElementById('tCondZipRow').style.display = this.checked ? 'block' : 'none'" />
+                Client lives in specific <strong style="margin:0 0.25rem;">ZIP codes</strong>
+              </label>
+              <div id="tCondZipRow" style="display:none; margin-left:1.5rem;">
+                <input type="text" id="tCondZips" placeholder="60651, 60639" style="width:100%; padding:0.45rem 0.7rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.85rem;" />
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">Comma-separated ZIP codes</div>
+              </div>
+            </div>
+
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.75rem;">All checked conditions must be true. Leave all unchecked to send to everyone.</div>
+        </div>
+
+        <!-- Template IDs -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.85rem;">
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; display:block; margin-bottom:0.25rem;">English Template ID *</label>
+            <input type="text" id="tModalTplEn" placeholder="e.g. tree_house_snip_en" style="width:100%; padding:0.55rem 0.8rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.9rem; font-family:monospace;" />
+          </div>
+          <div>
+            <label style="font-size:0.82rem; font-weight:700; display:block; margin-bottom:0.25rem;">Spanish Template ID *</label>
+            <input type="text" id="tModalTplEs" placeholder="e.g. tree_house_snip_es" style="width:100%; padding:0.55rem 0.8rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.9rem; font-family:monospace;" />
+          </div>
+        </div>
+
+        <!-- Inline template editor -->
+        <div style="border:1.5px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:1rem;">
+          <div style="background:var(--navy-light); padding:0.65rem 1rem; font-family:'Nunito',sans-serif; font-weight:800; font-size:0.82rem; color:var(--navy); display:flex; justify-content:space-between; align-items:center;">
+            <span>✏️ Email Content</span>
+            <button onclick="loadTriggerTemplates()" style="font-size:0.75rem; padding:0.25rem 0.7rem; border-radius:999px; border:1.5px solid var(--navy); background:none; color:var(--navy); cursor:pointer; font-family:inherit; font-weight:700;">Load / Refresh</button>
+          </div>
+          <div style="padding:1rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div>
+              <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.04em;">🇺🇸 English</div>
+              <label style="font-size:0.78rem; font-weight:700; display:block; margin-bottom:0.2rem;">Section heading</label>
+              <input type="text" id="tTplEnSubject" placeholder="Subject / heading" style="width:100%; padding:0.45rem 0.7rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.85rem; margin-bottom:0.5rem;" />
+              <label style="font-size:0.78rem; font-weight:700; display:block; margin-bottom:0.2rem;">Body</label>
+              <textarea id="tTplEnBody" rows="6" placeholder="Email body text…" style="width:100%; padding:0.45rem 0.7rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.85rem; resize:vertical;"></textarea>
+            </div>
+            <div>
+              <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.04em;">🇲🇽 Español</div>
+              <label style="font-size:0.78rem; font-weight:700; display:block; margin-bottom:0.2rem;">Encabezado de sección</label>
+              <input type="text" id="tTplEsSubject" placeholder="Asunto / encabezado" style="width:100%; padding:0.45rem 0.7rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.85rem; margin-bottom:0.5rem;" />
+              <label style="font-size:0.78rem; font-weight:700; display:block; margin-bottom:0.2rem;">Cuerpo</label>
+              <textarea id="tTplEsBody" rows="6" placeholder="Texto del correo…" style="width:100%; padding:0.45rem 0.7rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.85rem; resize:vertical;"></textarea>
+            </div>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); padding:0 1rem 0.75rem;">
+            Available variables: <code>{{owner_name}}</code> <code>{{clinic_date}}</code> <code>{{snip_link}}</code> <code>{{chip_links}}</code> <code>{{website_link}}</code>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+          <button onclick="closeTriggerModal()" style="padding:0.6rem 1.4rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); font-family:inherit; font-weight:700; cursor:pointer;">Cancel</button>
+          <button onclick="saveTrigger()" class="btn btn-green" id="triggerSaveBtn">Save Trigger</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <script>
@@ -922,6 +1051,232 @@
 
   // ── INIT ────────────────────────────────────────────────────────
   loadTemplates();
+
+  // ── TRIGGERS ────────────────────────────────────────────────────
+  async function sbPost(path, body) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+      body: JSON.stringify(body)
+    });
+    return res;
+  }
+
+  async function loadTriggers() {
+    const el = document.getElementById('triggerList');
+    try {
+      const rows = await sbGet('triggers?order=event.asc,created_at.asc');
+      if (!rows.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:1.5rem;">No triggers yet. Click + New Trigger to create one.</div>';
+        return;
+      }
+      const eventLabel = {
+        post_clinic:   '💉 Post-Vaccine Clinic',
+        post_booster:  '🔁 Post-Booster Clinic',
+        reminder_2w:   '📅 2-Week Reminder',
+        reminder_1w:   '📅 1-Week Reminder',
+      };
+      el.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Event</th>
+              <th>Conditions</th>
+              <th>Templates</th>
+              <th>Active</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(t => {
+              const conds = [];
+              if (t.conditions?.has_intact_pet) conds.push('Has intact pet');
+              if (t.conditions?.has_microchip)  conds.push('Has microchip');
+              if (t.conditions?.zip?.length)     conds.push(`ZIP: ${t.conditions.zip.join(', ')}`);
+              return `<tr>
+                <td>
+                  <div style="font-weight:700;">${t.name}</div>
+                  ${t.description ? `<div style="font-size:0.78rem;color:var(--text-muted);">${t.description}</div>` : ''}
+                </td>
+                <td style="font-size:0.82rem;">${eventLabel[t.event] || t.event}</td>
+                <td style="font-size:0.82rem;">${conds.length ? conds.join('<br>') : '<span style="color:var(--text-muted)">Everyone</span>'}</td>
+                <td style="font-size:0.78rem; font-family:monospace; color:var(--text-muted);">${t.template_en}<br>${t.template_es}</td>
+                <td>
+                  <label style="display:inline-flex;align-items:center;gap:0.35rem;cursor:pointer;">
+                    <input type="checkbox" ${t.active ? 'checked' : ''} onchange="toggleTrigger('${t.id}', this.checked)"
+                      style="width:15px;height:15px;accent-color:var(--navy);" />
+                    <span style="font-size:0.8rem;">${t.active ? 'On' : 'Off'}</span>
+                  </label>
+                </td>
+                <td>
+                  <button onclick="openTriggerModal(${JSON.stringify(t).replace(/"/g,'&quot;')})"
+                    style="font-size:0.78rem;padding:0.25rem 0.7rem;border-radius:999px;border:1.5px solid var(--border);background:none;color:var(--navy);cursor:pointer;font-family:inherit;font-weight:700;">
+                    ✏️ Edit
+                  </button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    } catch(e) {
+      el.innerHTML = `<div class="empty-state" style="padding:1.5rem;color:#a00;">Error: ${e.message}</div>`;
+    }
+  }
+
+  async function toggleTrigger(id, active) {
+    await sbPatch(`triggers?id=eq.${id}`, { active, updated_at: new Date().toISOString() });
+    loadTriggers();
+  }
+
+  function openTriggerModal(trigger) {
+    const isNew = !trigger;
+    document.getElementById('modalTitle').textContent    = isNew ? 'New Trigger' : 'Edit Trigger';
+    document.getElementById('triggerModalId').value      = trigger?.id || '';
+    document.getElementById('tModalName').value          = trigger?.name || '';
+    document.getElementById('tModalDesc').value          = trigger?.description || '';
+    document.getElementById('tModalEvent').value         = trigger?.event || 'post_clinic';
+    document.getElementById('tModalTplEn').value         = trigger?.template_en || '';
+    document.getElementById('tModalTplEs').value         = trigger?.template_es || '';
+
+    // Conditions
+    const c = trigger?.conditions || {};
+    document.getElementById('tCondIntact').checked       = !!c.has_intact_pet;
+    document.getElementById('tCondChip').checked         = !!c.has_microchip;
+    const hasZip = Array.isArray(c.zip) && c.zip.length > 0;
+    document.getElementById('tCondZipEnabled').checked   = hasZip;
+    document.getElementById('tCondZipRow').style.display = hasZip ? 'block' : 'none';
+    document.getElementById('tCondZips').value           = hasZip ? c.zip.join(', ') : '';
+
+    // Clear template fields
+    ['tTplEnSubject','tTplEnBody','tTplEsSubject','tTplEsBody'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+
+    document.getElementById('triggerModalMsg').className = 'msg';
+    const modal = document.getElementById('triggerModal');
+    modal.style.display = 'flex';
+
+    // Auto-load templates if editing an existing trigger
+    if (!isNew && trigger.template_en) loadTriggerTemplates();
+  }
+
+  function closeTriggerModal() {
+    document.getElementById('triggerModal').style.display = 'none';
+  }
+
+  async function loadTriggerTemplates() {
+    const enId = document.getElementById('tModalTplEn').value.trim();
+    const esId = document.getElementById('tModalTplEs').value.trim();
+    if (!enId && !esId) {
+      showMsg('triggerModalMsg', 'error', 'Enter template IDs first, then click Load.');
+      return;
+    }
+    try {
+      const [enRows, esRows] = await Promise.all([
+        enId ? sbGet(`email_templates?id=eq.${enId}&select=subject,body`) : Promise.resolve([]),
+        esId ? sbGet(`email_templates?id=eq.${esId}&select=subject,body`) : Promise.resolve([]),
+      ]);
+      if (enRows[0]) {
+        document.getElementById('tTplEnSubject').value = enRows[0].subject || '';
+        document.getElementById('tTplEnBody').value    = enRows[0].body    || '';
+      }
+      if (esRows[0]) {
+        document.getElementById('tTplEsSubject').value = esRows[0].subject || '';
+        document.getElementById('tTplEsBody').value    = esRows[0].body    || '';
+      }
+    } catch(e) {
+      showMsg('triggerModalMsg', 'error', 'Could not load templates: ' + e.message);
+    }
+  }
+
+  async function saveTrigger() {
+    const btn  = document.getElementById('triggerSaveBtn');
+    const id   = document.getElementById('triggerModalId').value.trim();
+    const name = document.getElementById('tModalName').value.trim();
+    const enId = document.getElementById('tModalTplEn').value.trim();
+    const esId = document.getElementById('tModalTplEs').value.trim();
+
+    if (!name)  { showMsg('triggerModalMsg', 'error', 'Trigger name is required.'); return; }
+    if (!enId)  { showMsg('triggerModalMsg', 'error', 'English template ID is required.'); return; }
+    if (!esId)  { showMsg('triggerModalMsg', 'error', 'Spanish template ID is required.'); return; }
+
+    // Build conditions object
+    const conditions = {};
+    if (document.getElementById('tCondIntact').checked) conditions.has_intact_pet = true;
+    if (document.getElementById('tCondChip').checked)   conditions.has_microchip   = true;
+    if (document.getElementById('tCondZipEnabled').checked) {
+      const zips = document.getElementById('tCondZips').value
+        .split(',').map(z => z.trim()).filter(Boolean);
+      if (zips.length) conditions.zip = zips;
+    }
+
+    const triggerId = id || name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+    const payload = {
+      id:          triggerId,
+      name,
+      description: document.getElementById('tModalDesc').value.trim() || null,
+      event:       document.getElementById('tModalEvent').value,
+      conditions,
+      template_en: enId,
+      template_es: esId,
+      active:      true,
+      updated_at:  new Date().toISOString(),
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      // Save trigger (upsert)
+      const triggerRes = await fetch(`${SUPABASE_URL}/rest/v1/triggers`, {
+        method:  'POST',
+        headers: { ...authHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' },
+        body:    JSON.stringify(payload)
+      });
+      if (!triggerRes.ok) throw new Error((await triggerRes.json().catch(()=>({}))).message || 'Could not save trigger');
+
+      // Save template content if filled in
+      const enSubject = document.getElementById('tTplEnSubject').value.trim();
+      const enBody    = document.getElementById('tTplEnBody').value.trim();
+      const esSubject = document.getElementById('tTplEsSubject').value.trim();
+      const esBody    = document.getElementById('tTplEsBody').value.trim();
+
+      await Promise.all([
+        enSubject || enBody ? fetch(`${SUPABASE_URL}/rest/v1/email_templates`, {
+          method:  'POST',
+          headers: { ...authHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+          body:    JSON.stringify({ id: enId, subject: enSubject, body: enBody, updated_at: new Date().toISOString() })
+        }) : Promise.resolve(),
+        esSubject || esBody ? fetch(`${SUPABASE_URL}/rest/v1/email_templates`, {
+          method:  'POST',
+          headers: { ...authHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+          body:    JSON.stringify({ id: esId, subject: esSubject, body: esBody, updated_at: new Date().toISOString() })
+        }) : Promise.resolve(),
+      ]);
+
+      closeTriggerModal();
+      loadTriggers();
+    } catch(e) {
+      showMsg('triggerModalMsg', 'error', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save Trigger';
+    }
+  }
+
+  // Close modal when clicking backdrop
+  document.getElementById('triggerModal').addEventListener('click', function(e) {
+    if (e.target === this) closeTriggerModal();
+  });
+
+  // Load triggers when tab is opened
+  const _origSwitchTab = switchTab;
+  switchTab = function(name) {
+    _origSwitchTab(name);
+    if (name === 'triggers') loadTriggers();
+  };
 </script>
 </body>
 </html>
