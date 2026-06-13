@@ -8,6 +8,7 @@ const REACTION_DOC_ES = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/obj
 const SNIP_LINK       = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf';
 const WEBSITE_LINK    = 'https://peoplehelpingpets.org';
 
+// ─── SUPABASE HELPER ───────────────────────────────────────────
 async function sbFetch(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
@@ -18,19 +19,30 @@ async function sbFetch(path) {
   return res.json();
 }
 
+// ─── TEMPLATE VARIABLE SUBSTITUTION ───────────────────────────
 function fill(str, vars) {
   return (str || '')
     .replace(/{{(\w+)}}/g, (_, k) => vars[k] ?? '')
     .replace(/\\n/g, '<br>');
 }
 
-async function getTemplates(prefix) {
-  const ids = [
-    `${prefix}_subject`,
-    `${prefix}_en`, `${prefix}_es`,
-    `${prefix}_chip_en`, `${prefix}_chip_es`,
-    `${prefix}_snip_en`, `${prefix}_snip_es`
-  ];
+// ─── LOAD TRIGGERS FOR AN EVENT TYPE ──────────────────────────
+async function loadTriggers(event) {
+  const rows = await sbFetch(
+    `triggers?event=eq.${encodeURIComponent(event)}&active=eq.true&order=created_at.asc`
+  );
+  return Array.isArray(rows) ? rows : [];
+}
+
+// ─── LOAD A SINGLE EMAIL TEMPLATE ─────────────────────────────
+async function loadTemplate(id) {
+  const rows = await sbFetch(`email_templates?id=eq.${id}&select=id,subject,body`);
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+// ─── LOAD MAIN EMAIL TEMPLATES (subject + EN/ES body) ─────────
+async function getMainTemplates(prefix) {
+  const ids = [`${prefix}_subject`, `${prefix}_en`, `${prefix}_es`];
   const map = {};
   await Promise.all(ids.map(async id => {
     const rows = await sbFetch(`email_templates?id=eq.${id}&select=id,subject,body`);
@@ -39,9 +51,71 @@ async function getTemplates(prefix) {
   return map;
 }
 
+// ─── CONDITION EVALUATOR ───────────────────────────────────────
+// Supported conditions (all are optional; omitting one means "no restriction"):
+//   has_intact_pet  — true: client has any pet with altered = 'no' or 'unknown'
+//   has_microchip   — true: client has any pet with a microchip_number
+//   zip             — array of ZIP strings: client's ZIP must be in the list
+//   clinic_type     — 'Vaccine Clinic' | 'Booster Clinic' (matches the event's clinicType)
+//   preferred_language — 'en' | 'es'
+function evaluateConditions(conditions, client, clientPets, clinicType) {
+  if (!conditions || Object.keys(conditions).length === 0) return true;
+
+  if ('has_intact_pet' in conditions && conditions.has_intact_pet === true) {
+    const hasIntact = clientPets.some(
+      p => p.altered === 'no' || p.altered === 'unknown'
+    );
+    if (!hasIntact) return false;
+  }
+
+  if ('has_microchip' in conditions && conditions.has_microchip === true) {
+    const hasChip = clientPets.some(p => !!p.microchip_number);
+    if (!hasChip) return false;
+  }
+
+  if ('zip' in conditions && Array.isArray(conditions.zip)) {
+    const clientZip = (client.zip || '').trim();
+    if (!conditions.zip.includes(clientZip)) return false;
+  }
+
+  if ('clinic_type' in conditions) {
+    if (conditions.clinic_type !== clinicType) return false;
+  }
+
+  if ('preferred_language' in conditions) {
+    if (conditions.preferred_language !== client.preferred_language) return false;
+  }
+
+  return true;
+}
+
+// ─── BUILD TRIGGER BLOCK HTML ──────────────────────────────────
+// Each trigger renders an EN block and an ES block.
+// chip_links is a special variable computed per-client.
+function buildTriggerBlock(tplEn, tplEs, vars) {
+  if (!tplEn && !tplEs) return { en: '', es: '' };
+
+  const en = tplEn ? `
+    <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
+    <p><strong>${fill(tplEn.subject, vars)}</strong></p>
+    <p>${fill(tplEn.body, vars)}</p>
+    ${vars.chip_links ? `<ul style="margin:0.5rem 0 0 1rem;">${vars.chip_links}</ul>` : ''}
+  ` : '';
+
+  const es = tplEs ? `
+    <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
+    <p><strong>${fill(tplEs.subject, vars)}</strong></p>
+    <p>${fill(tplEs.body, vars)}</p>
+    ${vars.chip_links ? `<ul style="margin:0.5rem 0 0 1rem;">${vars.chip_links}</ul>` : ''}
+  ` : '';
+
+  return { en, es };
+}
+
+// ─── NEXT BOOSTER CLINIC ───────────────────────────────────────
 async function getNextBoosterClinic(afterDate) {
   const records = await sbFetch(
-    `events?clinic_type=eq.Booster Clinic&completed=eq.false&event_date=gt.${afterDate}&order=event_date.asc&limit=1`
+    `events?notes=eq.Booster Clinic&completed=eq.false&event_date=gt.${afterDate}&order=event_date.asc&limit=1`
   );
   if (!Array.isArray(records) || !records.length) return null;
   const e    = records[0];
@@ -52,8 +126,8 @@ async function getNextBoosterClinic(afterDate) {
   };
 }
 
+// ─── DUE DATE BLOCK ────────────────────────────────────────────
 function buildDueDates(pets, vaccinations) {
-  // Group vaccinations by pet_id, keep only future next_due
   const today = new Date().toISOString().split('T')[0];
   const byPet = {};
   vaccinations.forEach(v => {
@@ -66,10 +140,10 @@ function buildDueDates(pets, vaccinations) {
   pets.forEach(pet => {
     const vaxes = byPet[pet.id];
     if (!vaxes || !vaxes.length) return;
-    const items = vaxes.map(v => {
-      const due = new Date(v.next_due + 'T12:00:00');
-      return { name: v.vaccine_name, due };
-    }).sort((a, b) => a.due - b.due);
+    const items = vaxes.map(v => ({
+      name: v.vaccine_name,
+      due:  new Date(v.next_due + 'T12:00:00')
+    })).sort((a, b) => a.due - b.due);
     lines.push({ petName: pet.name, items });
   });
 
@@ -81,7 +155,6 @@ function buildDueDates(pets, vaccinations) {
   const enLines = lines.map(l =>
     `<li><strong>${l.petName}:</strong> ${l.items.map(i => `${i.name} due ${fmtEn(i.due)}`).join(' · ')}</li>`
   ).join('');
-
   const esLines = lines.map(l =>
     `<li><strong>${l.petName}:</strong> ${l.items.map(i => `${i.name} vence ${fmtEs(i.due)}`).join(' · ')}</li>`
   ).join('');
@@ -92,6 +165,7 @@ function buildDueDates(pets, vaccinations) {
   };
 }
 
+// ─── SEND EMAIL ────────────────────────────────────────────────
 async function sendEmail(to, subject, html) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -107,62 +181,64 @@ async function sendEmail(to, subject, html) {
   }
 }
 
+// ─── MAIN HANDLER ─────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { eventDate, clinicType } = req.body;
   if (!eventDate) return res.status(400).json({ error: 'eventDate is required' });
 
-  const isBooster = clinicType === 'Booster Clinic';
-  const prefix    = isBooster ? 'postclinic_booster' : 'postclinic_vaccine';
+  const isBooster  = clinicType === 'Booster Clinic';
+  const prefix     = isBooster ? 'postclinic_booster' : 'postclinic_vaccine';
+  const triggerEvent = isBooster ? 'post_booster' : 'post_clinic';
 
   try {
-    const tpl = await getTemplates(prefix);
+    // Load main templates and active triggers in parallel
+    const [tpl, triggers] = await Promise.all([
+      getMainTemplates(prefix),
+      loadTriggers(triggerEvent),
+    ]);
 
-    // Pull clients
+    // Pre-load all trigger templates in parallel (EN + ES for each trigger)
+    const triggerTemplates = {};
+    await Promise.all(triggers.flatMap(t => [
+      loadTemplate(t.template_en).then(r => { triggerTemplates[t.template_en] = r; }),
+      loadTemplate(t.template_es).then(r => { triggerTemplates[t.template_es] = r; }),
+    ]));
+
+    // Pull clients (include zip and preferred_language for condition evaluation)
     const clients = await sbFetch(
-      `clients?event_date=eq.${eventDate}&archived=eq.false&select=id,name,email&limit=5000`
+      `clients?event_date=eq.${eventDate}&archived=eq.false` +
+      `&select=id,name,email,zip,preferred_language&limit=5000`
     );
     if (!Array.isArray(clients)) throw new Error('Could not load clients');
 
     const clientIds = clients.map(c => c.id);
     if (!clientIds.length) return res.status(200).json({ ok: true, sent: 0, skipped: 0 });
 
-    // Pull pets
+    // Pull pets (altered + microchip_number needed for condition evaluation)
     const pets = await sbFetch(
-      `pets?client_id=in.(${clientIds.join(',')})&archived=eq.false&select=id,client_id,name,microchip_number&limit=5000`
+      `pets?client_id=in.(${clientIds.join(',')})&archived=eq.false` +
+      `&select=id,client_id,name,microchip_number,altered&limit=5000`
     );
     if (!Array.isArray(pets)) throw new Error('Could not load pets');
 
-    // Pull snip interest from clients
-    const snipClients = await sbFetch(
-      `clients?id=in.(${clientIds.join(',')})&snip_interest=eq.true&select=id&limit=5000`
-    );
-    const snipSet = new Set(Array.isArray(snipClients) ? snipClients.map(c => c.id) : []);
-
-    // Pull future vaccinations for all pets
+    // Pull future vaccinations for due-date block
     const petIds = pets.map(p => p.id);
     const today  = new Date().toISOString().split('T')[0];
     const vaccinations = petIds.length ? await sbFetch(
-      `vaccinations?pet_id=in.(${petIds.join(',')})&next_due=gt.${today}&select=pet_id,vaccine_name,next_due&limit=5000`
+      `vaccinations?pet_id=in.(${petIds.join(',')})&next_due=gt.${today}` +
+      `&select=pet_id,vaccine_name,next_due&limit=5000`
     ) : [];
 
-    // Group pets and vaccinations by client
+    // Group pets by client
     const petsByClient = {};
     pets.forEach(p => {
       if (!petsByClient[p.client_id]) petsByClient[p.client_id] = [];
       petsByClient[p.client_id].push(p);
     });
 
-    const chipMap = {};
-    pets.forEach(p => {
-      if (p.microchip_number) {
-        if (!chipMap[p.client_id]) chipMap[p.client_id] = [];
-        chipMap[p.client_id].push({ name: p.name, number: p.microchip_number });
-      }
-    });
-
-    // Get next booster clinic (vaccine sends only)
+    // Next booster clinic date (vaccine sends only)
     const nextBooster = !isBooster ? await getNextBoosterClinic(eventDate) : null;
 
     const clinicDate = new Date(eventDate + 'T12:00:00');
@@ -173,56 +249,51 @@ export default async function handler(req, res) {
       if (!client.email) { skipped++; continue; }
 
       const firstName  = (client.name || 'there').split(' ')[0];
-      const chips      = chipMap[client.id] || [];
-      const hasSnip    = snipSet.has(client.id);
       const clientPets = petsByClient[client.id] || [];
       const dueDates   = buildDueDates(clientPets, Array.isArray(vaccinations) ? vaccinations : []);
 
+      // Build chip_links for any trigger templates that need {{chip_links}}
+      const chipLinks = clientPets
+        .filter(p => p.microchip_number)
+        .map(p =>
+          `<li><strong>${p.name}:</strong> <a href="https://nano.fitracking.com/register/chip?id=${p.microchip_number}&petId=" style="color:#1a3a8f;">Register chip ${p.microchip_number}</a></li>`
+        ).join('');
+
       const baseVars = {
-        owner_name:            firstName,
-        clinic_date:           clinicDate.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }),
-        clinic_date_es:        clinicDate.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }),
-        reaction_doc_en:       `<a href="${REACTION_DOC_EN}" style="color:#1a3a8f;">Vaccine Take-Home Information (English)</a>`,
-        reaction_doc_es:       `<a href="${REACTION_DOC_ES}" style="color:#1a3a8f;">Información sobre Vacunas (Español)</a>`,
-        pet_due_dates_en:      dueDates.en,
-        pet_due_dates_es:      dueDates.es,
-        next_booster_clinic:   nextBooster ? nextBooster.en : 'TBD — stay tuned for announcements',
+        owner_name:             firstName,
+        clinic_date:            clinicDate.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }),
+        clinic_date_es:         clinicDate.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }),
+        reaction_doc_en:        `<a href="${REACTION_DOC_EN}" style="color:#1a3a8f;">Vaccine Take-Home Information (English)</a>`,
+        reaction_doc_es:        `<a href="${REACTION_DOC_ES}" style="color:#1a3a8f;">Información sobre Vacunas (Español)</a>`,
+        pet_due_dates_en:       dueDates.en,
+        pet_due_dates_es:       dueDates.es,
+        next_booster_clinic:    nextBooster ? nextBooster.en : 'TBD — stay tuned for announcements',
         next_booster_clinic_es: nextBooster ? nextBooster.es : 'por anunciar — estén atentos',
-        website_link:          `<a href="${WEBSITE_LINK}" style="color:#1a3a8f;">peoplehelpingpets.org</a>`,
-        snip_link:             `<a href="${SNIP_LINK}" style="color:#1a3a8f;">View the resource list (PDF)</a>`,
-        chip_links:            chips.map(c =>
-          `<li><strong>${c.name}:</strong> <a href="https://nano.fitracking.com/register/chip?id=${c.number}&petId=" style="color:#1a3a8f;">Register chip ${c.number}</a></li>`
-        ).join(''),
+        website_link:           `<a href="${WEBSITE_LINK}" style="color:#1a3a8f;">peoplehelpingpets.org</a>`,
+        snip_link:              `<a href="${SNIP_LINK}" style="color:#1a3a8f;">View the resource list (PDF)</a>`,
+        chip_links:             chipLinks,
       };
 
+      // Evaluate each trigger and build conditional blocks
+      let extraBlocksEn = '';
+      let extraBlocksEs = '';
+
+      for (const trigger of triggers) {
+        if (!evaluateConditions(trigger.conditions, client, clientPets, clinicType)) continue;
+
+        const tplEn = triggerTemplates[trigger.template_en];
+        const tplEs = triggerTemplates[trigger.template_es];
+        const block = buildTriggerBlock(tplEn, tplEs, baseVars);
+        extraBlocksEn += block.en;
+        extraBlocksEs += block.es;
+      }
+
+      // Build main email body
       const enHeading = fill(tpl[`${prefix}_en`]?.subject, baseVars);
       const enBody    = fill(tpl[`${prefix}_en`]?.body,    baseVars);
       const esHeading = fill(tpl[`${prefix}_es`]?.subject, baseVars);
       const esBody    = fill(tpl[`${prefix}_es`]?.body,    baseVars);
-
-      const chipBlockEn = chips.length ? `
-        <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
-        <p><strong>${fill(tpl[`${prefix}_chip_en`]?.subject, baseVars)}</strong></p>
-        <p>${fill(tpl[`${prefix}_chip_en`]?.body, { ...baseVars, chip_links: '' })}</p>
-        <ul style="margin:0.5rem 0 0 1rem;">${baseVars.chip_links}</ul>` : '';
-
-      const chipBlockEs = chips.length ? `
-        <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
-        <p><strong>${fill(tpl[`${prefix}_chip_es`]?.subject, baseVars)}</strong></p>
-        <p>${fill(tpl[`${prefix}_chip_es`]?.body, { ...baseVars, chip_links: '' })}</p>
-        <ul style="margin:0.5rem 0 0 1rem;">${baseVars.chip_links}</ul>` : '';
-
-      const snipBlockEn = hasSnip ? `
-        <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
-        <p><strong>${fill(tpl[`${prefix}_snip_en`]?.subject, baseVars)}</strong></p>
-        <p>${fill(tpl[`${prefix}_snip_en`]?.body, baseVars)}</p>` : '';
-
-      const snipBlockEs = hasSnip ? `
-        <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
-        <p><strong>${fill(tpl[`${prefix}_snip_es`]?.subject, baseVars)}</strong></p>
-        <p>${fill(tpl[`${prefix}_snip_es`]?.body, baseVars)}</p>` : '';
-
-      const subject = fill(tpl[`${prefix}_subject`]?.subject, baseVars);
+      const subject   = fill(tpl[`${prefix}_subject`]?.subject, baseVars);
 
       const html = `
 <!DOCTYPE html>
@@ -233,15 +304,13 @@ export default async function handler(req, res) {
 
   <h2 style="color:#1a3a8f;">${enHeading}</h2>
   <p style="white-space:pre-line;">${enBody}</p>
-  ${chipBlockEn}
-  ${snipBlockEn}
+  ${extraBlocksEn}
 
   <hr style="border:none;border-top:2px solid #dce6f9;margin:1.5rem 0;">
 
   <h2 style="color:#1a3a8f;">${esHeading}</h2>
   <p style="white-space:pre-line;">${esBody}</p>
-  ${chipBlockEs}
-  ${snipBlockEs}
+  ${extraBlocksEs}
 
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0;">
   <p style="font-size:12px;color:#888;">
