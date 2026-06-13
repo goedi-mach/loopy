@@ -2406,11 +2406,7 @@ function setRadio(fieldName, index) {
     setText('Rabies Tag #',          r.rabies_tag_number  || '', 9);
     setText('Product Name',          r.product_name       || '', 9);
     setText('Vaccine Serial Number', r.lot_number         || '', 9);
-    const licenseMap = {
-      'Dr. Ana Valbuena':       CONFIG.VET_LICENSE_ANA,
-      'Dr. Alexandra Friedman': CONFIG.VET_LICENSE_FRIEDMAN,
-    };
-    setText('License Number', r.ac_license_number || licenseMap[r.administered_by] || '', 9);
+    setText('License Number', CONFIG.VET_LICENSE_ANA, 9);
 
     const man = (r.manufacturer || '').toUpperCase().padEnd(3, ' ');
     setText('Manufacturer', man[0]);
@@ -2438,14 +2434,12 @@ function setRadio(fieldName, index) {
     setText('Next Vaccination Date', fmtDate(r.next_due),   9);
 
     // ── Vet ────────────────────────────────────────────────────
-    setText("Veterinarian's Name",    r.administered_by || 'Dr. Ana García', 9);
+    setText("Veterinarian's Name",    'Dr. Ana Valbuena', 9);
     setText("Veterinarian's address", 'People Helping Pets, Chicago IL',     8);
 
     // ── Vet signature ───────────────────────────────────────────
     try {
-      const sigFile = r.administered_by === 'Dr. Alexandra Friedman'
-        ? 'alex_signature.png'
-        : 'ana_signature.png';
+      const sigFile = 'ana_signature.png';
       const sigRes   = await fetch(
         `https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/${sigFile}`
       );
