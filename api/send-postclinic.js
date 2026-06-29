@@ -172,18 +172,31 @@ function buildDueDates(pets, vaccinations) {
 }
 
 // ─── SEND EMAIL ────────────────────────────────────────────────
-async function sendEmail(to, subject, html) {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization:  `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ from: FROM_EMAIL, to, subject, html })
-  });
-  if (!res.ok) {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function sendEmail(to, subject, html, retries = 3) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization:  `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ from: FROM_EMAIL, to, subject, html })
+    });
+
+    if (res.ok) return;
+
+    if (res.status === 429 && attempt < retries) {
+      // Back off and retry — Resend allows 10 req/sec
+      await sleep(500 * (attempt + 1));
+      continue;
+    }
+
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Resend error');
+    throw new Error(err.message || `Resend error (${res.status})`);
   }
 }
 
@@ -191,7 +204,7 @@ async function sendEmail(to, subject, html) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { eventDate, clinicType, preview } = req.body;
+  const { eventDate, clinicType, preview, offset = 0, batchSize = 40 } = req.body;
   if (!eventDate) return res.status(400).json({ error: 'eventDate is required' });
 
   const isBooster  = clinicType === 'Booster Clinic';
@@ -212,15 +225,20 @@ export default async function handler(req, res) {
       loadTemplate(t.template_es).then(r => { triggerTemplates[t.template_es] = r; }),
     ]));
 
-    // Pull clients (include zip and preferred_language for condition evaluation)
-    const clients = await sbFetch(
+    // Pull ALL clients first (needed for full pet/vaccination context regardless of batch)
+    const allClients = await sbFetch(
       `clients?event_date=eq.${eventDate}&archived=eq.false` +
-      `&select=id,name,email,zip,preferred_language&limit=5000`
+      `&select=id,name,email,zip,preferred_language&order=id.asc&limit=5000`
     );
-    if (!Array.isArray(clients)) throw new Error('Could not load clients');
+    if (!Array.isArray(allClients)) throw new Error('Could not load clients');
 
-    const clientIds = clients.map(c => c.id);
-    if (!clientIds.length) return res.status(200).json({ ok: true, sent: 0, skipped: 0 });
+    if (!allClients.length) {
+      return res.status(200).json({ ok: true, sent: 0, skipped: 0, done: true, totalClients: 0 });
+    }
+
+    const clientIds = allClients.map(c => c.id);
+    // The slice we'll actually process and send to in this invocation (real sends only — preview always processes everyone)
+    const clients = preview ? allClients : allClients.slice(offset, offset + batchSize);
 
     // Pull pets (altered + microchip_number needed for condition evaluation)
     const pets = await sbFetch(
@@ -363,6 +381,7 @@ export default async function handler(req, res) {
 
       await sendEmail(client.email, subject, html);
       sent++;
+      await sleep(120); // stay safely under Resend's 10 req/sec limit
     }
 
     if (preview) {
@@ -375,7 +394,17 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ ok: true, sent, skipped });
+    const nextOffset = offset + batchSize;
+    const done = preview ? true : nextOffset >= allClients.length;
+
+    return res.status(200).json({
+      ok: true,
+      sent,
+      skipped,
+      done,
+      nextOffset: done ? null : nextOffset,
+      totalClients: allClients.length,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });

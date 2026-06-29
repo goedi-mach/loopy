@@ -1439,18 +1439,34 @@
     if (!confirm(`Send post-clinic emails to everyone registered for ${clinicType} on ${fmt}?`)) return;
 
     btn.disabled = true;
-    btn.textContent = 'Sending…';
-    showMsg('postClinicMsg', 'success', 'Sending — this may take a moment…');
+
+    let offset = 0;
+    let totalSent = 0;
+    let totalSkipped = 0;
+    let done = false;
 
     try {
-      const res = await fetch('/api/send-postclinic', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventDate, clinicType })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Send failed');
-      showMsg('postClinicMsg', 'success', `✓ Sent to ${data.sent} client${data.sent === 1 ? '' : 's'}. Skipped ${data.skipped} (no email on file).`);
+      while (!done) {
+        btn.textContent = `Sending… (${totalSent} sent so far)`;
+        showMsg('postClinicMsg', 'success', `Sending batch starting at ${offset}…`);
+
+        const res = await fetch('/api/send-postclinic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventDate, clinicType, offset, batchSize: 40 })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Send failed');
+
+        totalSent    += data.sent;
+        totalSkipped += data.skipped;
+        done          = data.done;
+        offset        = data.nextOffset;
+
+        showMsg('postClinicMsg', 'success', `✓ ${totalSent} sent so far${data.totalClients ? ` of ~${data.totalClients}` : ''}…`);
+      }
+
+      showMsg('postClinicMsg', 'success', `✓ Done! Sent to ${totalSent} client${totalSent === 1 ? '' : 's'}. Skipped ${totalSkipped} (no email on file).`);
       lastPreviewSelection = null;
     } catch(e) {
       showMsg('postClinicMsg', 'error', 'Error: ' + e.message);
