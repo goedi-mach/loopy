@@ -6,6 +6,7 @@ const FROM_EMAIL           = 'reminders@peoplehelpingpets.org';
 const REACTION_DOC_EN = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/VaccineTakeHome_ENG.pdf';
 const REACTION_DOC_ES = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/VacunasHojaInfo_ESP.pdf';
 const SNIP_LINK       = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf';
+const LOWCOST_LINK    = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf';
 const WEBSITE_LINK    = 'https://peoplehelpingpets.org';
 
 // ─── SUPABASE HELPER ───────────────────────────────────────────
@@ -58,7 +59,7 @@ async function getMainTemplates(prefix) {
 //   zip             — array of ZIP strings: client's ZIP must be in the list
 //   clinic_type     — 'Vaccine Clinic' | 'Booster Clinic' (matches the event's clinicType)
 //   preferred_language — 'en' | 'es'
-function evaluateConditions(conditions, client, clientPets, clinicType) {
+function evaluateConditions(conditions, client, clientPets, clinicType, hasUpcomingDue) {
   if (!conditions || Object.keys(conditions).length === 0) return true;
 
   if ('has_intact_pet' in conditions && conditions.has_intact_pet === true) {
@@ -71,6 +72,10 @@ function evaluateConditions(conditions, client, clientPets, clinicType) {
   if ('has_microchip' in conditions && conditions.has_microchip === true) {
     const hasChip = clientPets.some(p => !!p.microchip_number);
     if (!hasChip) return false;
+  }
+
+  if ('has_upcoming_due' in conditions && conditions.has_upcoming_due === true) {
+    if (!hasUpcomingDue) return false;
   }
 
   if ('zip' in conditions && Array.isArray(conditions.zip)) {
@@ -185,7 +190,7 @@ async function sendEmail(to, subject, html) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { eventDate, clinicType } = req.body;
+  const { eventDate, clinicType, preview } = req.body;
   if (!eventDate) return res.status(400).json({ error: 'eventDate is required' });
 
   const isBooster  = clinicType === 'Booster Clinic';
@@ -244,6 +249,7 @@ export default async function handler(req, res) {
     const clinicDate = new Date(eventDate + 'T12:00:00');
 
     let sent = 0, skipped = 0;
+    const previewVariants = preview ? new Map() : null; // key: sorted trigger ids -> { html, subject, triggerNames, sampleClient }
 
     for (const client of clients) {
       if (!client.email) { skipped++; continue; }
@@ -251,6 +257,11 @@ export default async function handler(req, res) {
       const firstName  = (client.name || 'there').split(' ')[0];
       const clientPets = petsByClient[client.id] || [];
       const dueDates   = buildDueDates(clientPets, Array.isArray(vaccinations) ? vaccinations : []);
+      const hasUpcomingDue = clientPets.some(p =>
+        (Array.isArray(vaccinations) ? vaccinations : []).some(
+          v => v.pet_id === p.id && v.next_due && v.next_due > today
+        )
+      );
 
       // Build chip_links for any trigger templates that need {{chip_links}}
       const chipLinks = clientPets
@@ -271,6 +282,7 @@ export default async function handler(req, res) {
         next_booster_clinic_es: nextBooster ? nextBooster.es : 'por anunciar — estén atentos',
         website_link:           `<a href="${WEBSITE_LINK}" style="color:#1a3a8f;">peoplehelpingpets.org</a>`,
         snip_link:              `<a href="${SNIP_LINK}" style="color:#1a3a8f;">View the resource list (PDF)</a>`,
+        lowcost_link:           `<a href="${LOWCOST_LINK}" style="color:#1a3a8f;">View the resource list (PDF)</a>`,
         chip_links:             chipLinks,
       };
 
@@ -279,7 +291,7 @@ export default async function handler(req, res) {
       let extraBlocksEs = '';
 
       for (const trigger of triggers) {
-        if (!evaluateConditions(trigger.conditions, client, clientPets, clinicType)) continue;
+        if (!evaluateConditions(trigger.conditions, client, clientPets, clinicType, hasUpcomingDue)) continue;
 
         const tplEn = triggerTemplates[trigger.template_en];
         const tplEs = triggerTemplates[trigger.template_es];
@@ -320,8 +332,40 @@ export default async function handler(req, res) {
 </body>
 </html>`;
 
+      if (preview) {
+        const firedTriggerIds = triggers
+          .filter(t => evaluateConditions(t.conditions, client, clientPets, clinicType, hasUpcomingDue))
+          .map(t => t.id)
+          .sort();
+        const variantKey = firedTriggerIds.join(',') || '__none__';
+
+        if (!previewVariants.has(variantKey)) {
+          previewVariants.set(variantKey, {
+            triggerIds:   firedTriggerIds,
+            triggerNames: triggers.filter(t => firedTriggerIds.includes(t.id)).map(t => t.name),
+            sampleClient: client.name,
+            recipientCount: 1,
+            subject,
+            html,
+          });
+        } else {
+          previewVariants.get(variantKey).recipientCount++;
+        }
+        continue; // do not actually send in preview mode
+      }
+
       await sendEmail(client.email, subject, html);
       sent++;
+    }
+
+    if (preview) {
+      return res.status(200).json({
+        ok: true,
+        preview: true,
+        totalRecipients: clients.filter(c => c.email).length,
+        skipped: clients.filter(c => !c.email).length,
+        variants: Array.from(previewVariants.values()),
+      });
     }
 
     return res.status(200).json({ ok: true, sent, skipped });

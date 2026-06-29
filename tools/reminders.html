@@ -614,6 +614,53 @@
 
   <!-- ── MANUAL SEND TAB ── -->
   <div class="tab-panel" id="tab-manual">
+
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div class="card-header">📨 Send Post-Clinic Email</div>
+      <div class="card-body">
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+          Sends to every client registered for the selected clinic, with chip/S-N/etc. blocks applied automatically based on active triggers.
+        </p>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+          <div style="display:flex; flex-direction:column; gap:0.3rem; flex:1; min-width:260px;">
+            <label style="font-size:0.78rem; font-weight:700; color:var(--text-muted);">Clinic Event</label>
+            <select id="postClinicEventSelect" onchange="onPostClinicEventChange()" style="padding:0.55rem 0.75rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.9rem;">
+              <option value="">Loading clinics…</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="previewPostClinicBtn" onclick="previewPostClinicEmail()" style="background:var(--navy-mid);">👁 Preview Emails</button>
+          <button class="btn btn-primary" id="sendPostClinicBtn" onclick="sendPostClinicEmail()" disabled title="Preview first">Send Post-Clinic Email</button>
+        </div>
+        <div class="msg" id="postClinicMsg"></div>
+      </div>
+    </div>
+
+    <!-- Preview modal -->
+    <div id="previewModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:white; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,0.25); width:100%; max-width:780px; max-height:88vh; overflow:hidden; margin:1rem; display:flex; flex-direction:column;">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:1.25rem 1.5rem; border-bottom:1.5px solid var(--border); flex-shrink:0;">
+          <div>
+            <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1.05rem; color:var(--navy);">Email Preview</div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.15rem;" id="previewSummary"></div>
+          </div>
+          <button onclick="closePreviewModal()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-muted);">✕</button>
+        </div>
+
+        <div style="display:flex; gap:0.5rem; padding:1rem 1.5rem 0; flex-wrap:wrap; flex-shrink:0;" id="previewVariantTabs"></div>
+
+        <div style="flex:1; overflow-y:auto; padding:1.5rem;">
+          <div id="previewVariantContent"></div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; padding:1.1rem 1.5rem; border-top:1.5px solid var(--border); flex-shrink:0;">
+          <button onclick="closePreviewModal()" style="padding:0.6rem 1.4rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); font-family:inherit; font-weight:700; cursor:pointer;">Close</button>
+          <button class="btn btn-primary" onclick="confirmSendFromPreview()" id="confirmSendBtn">Looks Good — Send Now</button>
+        </div>
+
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-header">Search for a Vaccination Record</div>
       <div class="card-body">
@@ -1276,7 +1323,147 @@
   switchTab = function(name) {
     _origSwitchTab(name);
     if (name === 'triggers') loadTriggers();
+    if (name === 'manual')   loadPostClinicEvents();
   };
+
+  // ── POST-CLINIC MANUAL SEND ─────────────────────────────────────
+  async function loadPostClinicEvents() {
+    const select = document.getElementById('postClinicEventSelect');
+    try {
+      const events = await sbGet(
+        `events?order=event_date.desc&limit=30&select=id,event_date,location,notes,completed`
+      );
+      if (!events.length) {
+        select.innerHTML = '<option value="">No clinic events found</option>';
+        return;
+      }
+      select.innerHTML = events.map(e => {
+        const fmt = new Date(e.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+        const type = e.notes || 'Clinic';
+        return `<option value="${e.event_date}|${type}">${fmt} — ${e.location} (${type})</option>`;
+      }).join('');
+    } catch(e) {
+      select.innerHTML = '<option value="">Could not load clinics</option>';
+    }
+  }
+
+  let lastPreviewSelection = null; // remembers eventDate/clinicType that was last previewed
+
+  function onPostClinicEventChange() {
+    lastPreviewSelection = null;
+    document.getElementById('sendPostClinicBtn').disabled = true;
+  }
+
+  async function previewPostClinicEmail() {
+    const select = document.getElementById('postClinicEventSelect');
+    const btn    = document.getElementById('previewPostClinicBtn');
+    const val    = select.value;
+
+    if (!val) { showMsg('postClinicMsg', 'error', 'Please select a clinic event.'); return; }
+
+    const [eventDate, clinicType] = val.split('|');
+
+    btn.disabled = true;
+    btn.textContent = 'Loading preview…';
+    document.getElementById('sendPostClinicBtn').disabled = true;
+
+    try {
+      const res = await fetch('/api/send-postclinic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventDate, clinicType, preview: true })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Preview failed');
+
+      lastPreviewSelection = { eventDate, clinicType };
+      renderPreviewModal(data);
+      document.getElementById('sendPostClinicBtn').disabled = false;
+      showMsg('postClinicMsg', 'success', '✓ Preview ready below.');
+    } catch(e) {
+      showMsg('postClinicMsg', 'error', 'Error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '👁 Preview Emails';
+    }
+  }
+
+  function renderPreviewModal(data) {
+    document.getElementById('previewSummary').textContent =
+      `${data.totalRecipients} recipient${data.totalRecipients === 1 ? '' : 's'} with email · ${data.variants.length} distinct version${data.variants.length === 1 ? '' : 's'} · ${data.skipped} skipped (no email)`;
+
+    const tabsEl = document.getElementById('previewVariantTabs');
+    const contentEl = document.getElementById('previewVariantContent');
+
+    tabsEl.innerHTML = data.variants.map((v, i) => {
+      const label = v.triggerNames.length ? v.triggerNames.join(' + ') : 'Base email only';
+      return `<button class="tpl-btn ${i === 0 ? 'active' : ''}" onclick="showPreviewVariant(${i})" id="previewTab${i}">
+        ${label} <span style="opacity:0.7;">(${v.recipientCount})</span>
+      </button>`;
+    }).join('');
+
+    window.__previewVariants = data.variants;
+    showPreviewVariant(0);
+
+    document.getElementById('previewModal').style.display = 'flex';
+  }
+
+  function showPreviewVariant(i) {
+    document.querySelectorAll('#previewVariantTabs .tpl-btn').forEach((b, idx) => {
+      b.classList.toggle('active', idx === i);
+    });
+    const v = window.__previewVariants[i];
+    document.getElementById('previewVariantContent').innerHTML = `
+      <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.5rem;">
+        Sample recipient: <strong>${v.sampleClient}</strong> · Subject: <strong>${v.subject}</strong>
+      </div>
+      <iframe srcdoc="${v.html.replace(/"/g, '&quot;')}" style="width:100%; height:60vh; border:1.5px solid var(--border); border-radius:10px; background:white;"></iframe>
+    `;
+  }
+
+  function closePreviewModal() {
+    document.getElementById('previewModal').style.display = 'none';
+  }
+
+  async function confirmSendFromPreview() {
+    closePreviewModal();
+    await sendPostClinicEmail();
+  }
+
+  async function sendPostClinicEmail() {
+    if (!lastPreviewSelection) { showMsg('postClinicMsg', 'error', 'Please preview before sending.'); return; }
+    const { eventDate, clinicType } = lastPreviewSelection;
+    const btn = document.getElementById('sendPostClinicBtn');
+
+    const fmt = new Date(eventDate + 'T12:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+    if (!confirm(`Send post-clinic emails to everyone registered for ${clinicType} on ${fmt}?`)) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    showMsg('postClinicMsg', 'success', 'Sending — this may take a moment…');
+
+    try {
+      const res = await fetch('/api/send-postclinic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventDate, clinicType })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Send failed');
+      showMsg('postClinicMsg', 'success', `✓ Sent to ${data.sent} client${data.sent === 1 ? '' : 's'}. Skipped ${data.skipped} (no email on file).`);
+      lastPreviewSelection = null;
+    } catch(e) {
+      showMsg('postClinicMsg', 'error', 'Error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Post-Clinic Email';
+    }
+  }
+
+  // Close preview modal when clicking backdrop
+  document.getElementById('previewModal').addEventListener('click', function(e) {
+    if (e.target === this) closePreviewModal();
+  });
 </script>
 </body>
 </html>
