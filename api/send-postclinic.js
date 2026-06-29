@@ -120,7 +120,7 @@ function buildTriggerBlock(tplEn, tplEs, vars) {
 // ─── NEXT BOOSTER CLINIC ───────────────────────────────────────
 async function getNextBoosterClinic(afterDate) {
   const records = await sbFetch(
-    `events?notes=eq.Booster Clinic&completed=eq.false&event_date=gt.${afterDate}&order=event_date.asc&limit=1`
+    `events?clinic_type=eq.Booster Clinic&completed=eq.false&event_date=gt.${afterDate}&order=event_date.asc&limit=1`
   );
   if (!Array.isArray(records) || !records.length) return null;
   const e    = records[0];

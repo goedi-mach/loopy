@@ -1331,7 +1331,7 @@
     const select = document.getElementById('postClinicEventSelect');
     try {
       const events = await sbGet(
-        `events?order=event_date.desc&limit=30&select=id,event_date,location,notes,completed`
+        `events?order=event_date.desc&limit=30&select=id,event_date,location,clinic_type,completed`
       );
       if (!events.length) {
         select.innerHTML = '<option value="">No clinic events found</option>';
@@ -1339,7 +1339,7 @@
       }
       select.innerHTML = events.map(e => {
         const fmt = new Date(e.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
-        const type = e.notes || 'Clinic';
+        const type = e.clinic_type || 'Clinic';
         return `<option value="${e.event_date}|${type}">${fmt} — ${e.location} (${type})</option>`;
       }).join('');
     } catch(e) {
