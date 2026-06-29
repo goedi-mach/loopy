@@ -280,10 +280,13 @@ export default async function handler(req, res) {
     const clinicDate = new Date(eventDate + 'T12:00:00');
 
     let sent = 0, skipped = 0;
+    const failedEmails = [];
     const previewVariants = preview ? new Map() : null; // key: sorted trigger ids -> { html, subject, triggerNames, sampleClient }
 
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     for (const client of clients) {
-      if (!client.email) { skipped++; continue; }
+      if (!client.email || !EMAIL_RE.test(client.email.trim())) { skipped++; continue; }
 
       const firstName  = (client.name || 'there').split(' ')[0];
       const clientPets = petsByClient[client.id] || [];
@@ -391,20 +394,26 @@ export default async function handler(req, res) {
         continue; // do not actually send in preview mode
       }
 
-      await sendEmail(client.email, subject, html);
-      sent++;
+      try {
+        await sendEmail(client.email, subject, html);
+        sent++;
 
-      // Log this send so a retry/resume never double-emails this client for this clinic
-      await fetch(`${SUPABASE_URL}/rest/v1/postclinic_email_log`, {
-        method: 'POST',
-        headers: {
-          apikey:         SUPABASE_SERVICE_KEY,
-          Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
-          'Content-Type': 'application/json',
-          Prefer:         'resolution=ignore-duplicates'
-        },
-        body: JSON.stringify({ client_id: client.id, event_date: eventDate, clinic_type: clinicType })
-      });
+        // Log this send so a retry/resume never double-emails this client for this clinic
+        await fetch(`${SUPABASE_URL}/rest/v1/postclinic_email_log`, {
+          method: 'POST',
+          headers: {
+            apikey:         SUPABASE_SERVICE_KEY,
+            Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer:         'resolution=ignore-duplicates'
+          },
+          body: JSON.stringify({ client_id: client.id, event_date: eventDate, clinic_type: clinicType })
+        });
+      } catch (sendErr) {
+        console.error(`Failed to send to ${client.email} (client ${client.id}): ${sendErr.message}`);
+        skipped++;
+        failedEmails.push({ name: client.name, email: client.email, error: sendErr.message });
+      }
 
       await sleep(120); // stay safely under Resend's 10 req/sec limit
     }
@@ -430,6 +439,7 @@ export default async function handler(req, res) {
       nextOffset: done ? null : nextOffset,
       totalClients: eligibleClients.length,
       alreadySentCount: alreadySentSet.size,
+      failedEmails,
     });
   } catch (err) {
     console.error(err);
