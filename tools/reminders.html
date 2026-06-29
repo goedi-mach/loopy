@@ -637,7 +637,7 @@
 
     <!-- Preview modal -->
     <div id="previewModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-      <div style="background:white; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,0.25); width:100%; max-width:780px; max-height:88vh; overflow:hidden; margin:1rem; display:flex; flex-direction:column;">
+      <div style="background:white; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,0.25); width:96vw; max-width:1100px; height:92vh; overflow:hidden; margin:1rem; display:flex; flex-direction:column;">
 
         <div style="display:flex; justify-content:space-between; align-items:center; padding:1.25rem 1.5rem; border-bottom:1.5px solid var(--border); flex-shrink:0;">
           <div>
@@ -647,10 +647,10 @@
           <button onclick="closePreviewModal()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-muted);">✕</button>
         </div>
 
-        <div style="display:flex; gap:0.5rem; padding:1rem 1.5rem 0; flex-wrap:wrap; flex-shrink:0;" id="previewVariantTabs"></div>
+        <div style="display:flex; gap:0.5rem; padding:1rem 1.5rem; flex-wrap:wrap; flex-shrink:0; border-bottom:1.5px solid var(--border); max-height:140px; overflow-y:auto;" id="previewVariantTabs"></div>
 
-        <div style="flex:1; overflow-y:auto; padding:1.5rem;">
-          <div id="previewVariantContent"></div>
+        <div style="flex:1; overflow-y:auto; padding:1.5rem; min-height:0;">
+          <div id="previewVariantContent" style="height:100%; display:flex; flex-direction:column;"></div>
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:0.75rem; padding:1.1rem 1.5rem; border-top:1.5px solid var(--border); flex-shrink:0;">
@@ -1414,10 +1414,10 @@
     });
     const v = window.__previewVariants[i];
     document.getElementById('previewVariantContent').innerHTML = `
-      <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.5rem;">
+      <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.5rem; flex-shrink:0;">
         Sample recipient: <strong>${v.sampleClient}</strong> · Subject: <strong>${v.subject}</strong>
       </div>
-      <iframe srcdoc="${v.html.replace(/"/g, '&quot;')}" style="width:100%; height:60vh; border:1.5px solid var(--border); border-radius:10px; background:white;"></iframe>
+      <iframe srcdoc="${v.html.replace(/"/g, '&quot;')}" style="width:100%; flex:1; min-height:0; border:1.5px solid var(--border); border-radius:10px; background:white;"></iframe>
     `;
   }
 
