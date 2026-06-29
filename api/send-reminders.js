@@ -103,7 +103,7 @@ function buildTriggerBlock(tplEn, tplEs, vars) {
 // ─── NEXT CLINIC DATE ──────────────────────────────────────────
 async function getNextClinicDate(clinicType, afterDate) {
   const records = await sbFetch(
-    `events?notes=eq.${encodeURIComponent(clinicType)}&event_date=gte.${afterDate}&completed=eq.false&order=event_date.asc&limit=1`
+    `events?clinic_type=eq.${encodeURIComponent(clinicType)}&event_date=gte.${afterDate}&completed=eq.false&order=event_date.asc&limit=1`
   );
   if (!Array.isArray(records) || !records.length) return null;
   const date = new Date(records[0].event_date + 'T12:00:00');
