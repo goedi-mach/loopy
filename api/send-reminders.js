@@ -87,16 +87,23 @@ function evaluateConditions(conditions, client, clientPets) {
 }
 
 // ─── BUILD TRIGGER BLOCK HTML ──────────────────────────────────
-function buildTriggerBlock(tplEn, tplEs, vars) {
+function buildTriggerBlock(tplEn, tplEs, vars, includeChipList) {
   if (!tplEn && !tplEs) return { en: '', es: '' };
+
   const en = tplEn ? `
     <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
     <p><strong>${fill(tplEn.subject, vars)}</strong></p>
-    <p>${fill(tplEn.body, vars)}</p>` : '';
+    <p>${fill(tplEn.body, vars)}</p>
+    ${includeChipList && vars.chip_links ? `<ul style="margin:0.5rem 0 0 1rem;">${vars.chip_links}</ul>` : ''}
+  ` : '';
+
   const es = tplEs ? `
     <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
     <p><strong>${fill(tplEs.subject, vars)}</strong></p>
-    <p>${fill(tplEs.body, vars)}</p>` : '';
+    <p>${fill(tplEs.body, vars)}</p>
+    ${includeChipList && vars.chip_links ? `<ul style="margin:0.5rem 0 0 1rem;">${vars.chip_links}</ul>` : ''}
+  ` : '';
+
   return { en, es };
 }
 
@@ -226,14 +233,12 @@ async function processReminders(weeksOut, sentField) {
     let extraBlocksEn = '';
     let extraBlocksEs = '';
     for (const trigger of triggers) {
-      // Skip clinic_type-scoped triggers that don't match this reminder's vaccine type
-      if ('clinic_type' in trigger.conditions && trigger.conditions.clinic_type !== clinicType) continue;
-
-      if (!evaluateConditions(trigger.conditions, client, Array.isArray(clientPets) ? clientPets : [])) continue;
+      if (!evaluateConditions(trigger.conditions, client, clientPets)) continue;
 
       const tplEn = triggerTemplates[trigger.template_en];
       const tplEs = triggerTemplates[trigger.template_es];
-      const block = buildTriggerBlock(tplEn, tplEs, baseVars);
+      const isChipTrigger = trigger.conditions?.has_microchip === true;
+      const block = buildTriggerBlock(tplEn, tplEs, baseVars, isChipTrigger);
       extraBlocksEn += block.en;
       extraBlocksEs += block.es;
     }

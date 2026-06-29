@@ -97,21 +97,21 @@ function evaluateConditions(conditions, client, clientPets, clinicType, hasUpcom
 // ─── BUILD TRIGGER BLOCK HTML ──────────────────────────────────
 // Each trigger renders an EN block and an ES block.
 // chip_links is a special variable computed per-client.
-function buildTriggerBlock(tplEn, tplEs, vars) {
+function buildTriggerBlock(tplEn, tplEs, vars, includeChipList) {
   if (!tplEn && !tplEs) return { en: '', es: '' };
 
   const en = tplEn ? `
     <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
     <p><strong>${fill(tplEn.subject, vars)}</strong></p>
     <p>${fill(tplEn.body, vars)}</p>
-    ${vars.chip_links ? `<ul style="margin:0.5rem 0 0 1rem;">${vars.chip_links}</ul>` : ''}
+    ${includeChipList && vars.chip_links ? `<ul style="margin:0.5rem 0 0 1rem;">${vars.chip_links}</ul>` : ''}
   ` : '';
 
   const es = tplEs ? `
     <hr style="margin:1.5rem 0;border:none;border-top:1px solid #e5e7eb;">
     <p><strong>${fill(tplEs.subject, vars)}</strong></p>
     <p>${fill(tplEs.body, vars)}</p>
-    ${vars.chip_links ? `<ul style="margin:0.5rem 0 0 1rem;">${vars.chip_links}</ul>` : ''}
+    ${includeChipList && vars.chip_links ? `<ul style="margin:0.5rem 0 0 1rem;">${vars.chip_links}</ul>` : ''}
   ` : '';
 
   return { en, es };
@@ -301,7 +301,8 @@ export default async function handler(req, res) {
 
         const tplEn = triggerTemplates[trigger.template_en];
         const tplEs = triggerTemplates[trigger.template_es];
-        const block = buildTriggerBlock(tplEn, tplEs, baseVars);
+        const isChipTrigger = trigger.conditions?.has_microchip === true;
+        const block = buildTriggerBlock(tplEn, tplEs, baseVars, isChipTrigger);
         extraBlocksEn += block.en;
         extraBlocksEs += block.es;
       }
