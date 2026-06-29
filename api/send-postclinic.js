@@ -237,8 +237,20 @@ export default async function handler(req, res) {
     }
 
     const clientIds = allClients.map(c => c.id);
+
+    // Find who's already received this exact clinic's post-clinic email (skip them on real sends)
+    const alreadySent = preview ? [] : await sbFetch(
+      `postclinic_email_log?event_date=eq.${eventDate}&clinic_type=eq.${encodeURIComponent(clinicType)}` +
+      `&client_id=in.(${clientIds.join(',')})&select=client_id`
+    );
+    const alreadySentSet = new Set(
+      Array.isArray(alreadySent) ? alreadySent.map(r => r.client_id) : []
+    );
+
+    const eligibleClients = preview ? allClients : allClients.filter(c => !alreadySentSet.has(c.id));
+
     // The slice we'll actually process and send to in this invocation (real sends only — preview always processes everyone)
-    const clients = preview ? allClients : allClients.slice(offset, offset + batchSize);
+    const clients = preview ? allClients : eligibleClients.slice(offset, offset + batchSize);
 
     // Pull pets (altered + microchip_number needed for condition evaluation)
     const pets = await sbFetch(
@@ -381,6 +393,19 @@ export default async function handler(req, res) {
 
       await sendEmail(client.email, subject, html);
       sent++;
+
+      // Log this send so a retry/resume never double-emails this client for this clinic
+      await fetch(`${SUPABASE_URL}/rest/v1/postclinic_email_log`, {
+        method: 'POST',
+        headers: {
+          apikey:         SUPABASE_SERVICE_KEY,
+          Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer:         'resolution=ignore-duplicates'
+        },
+        body: JSON.stringify({ client_id: client.id, event_date: eventDate, clinic_type: clinicType })
+      });
+
       await sleep(120); // stay safely under Resend's 10 req/sec limit
     }
 
@@ -395,7 +420,7 @@ export default async function handler(req, res) {
     }
 
     const nextOffset = offset + batchSize;
-    const done = preview ? true : nextOffset >= allClients.length;
+    const done = preview ? true : nextOffset >= eligibleClients.length;
 
     return res.status(200).json({
       ok: true,
@@ -403,7 +428,8 @@ export default async function handler(req, res) {
       skipped,
       done,
       nextOffset: done ? null : nextOffset,
-      totalClients: allClients.length,
+      totalClients: eligibleClients.length,
+      alreadySentCount: alreadySentSet.size,
     });
   } catch (err) {
     console.error(err);
