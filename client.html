@@ -1081,6 +1081,7 @@ function toggleClientNotes() {
               <div class="field"><label>Altered</label><div class="field-value muted">${p.altered || '—'}</div></div>
               <div class="field"><label>Microchipped</label><div class="field-value muted">${p.microchipped || '—'}</div></div>
               <div class="field"><label>Microchip #</label><div class="field-value muted">${p.microchip_number || '—'}</div></div>
+              <div class="field"><label>Color/Markings</label><div class="field-value muted">${p.colors_markings || '—'}</div></div>
             </div>
             <div class="btn-group">
               <button class="btn btn-sm btn-outline" onclick="openEditPet('${p.id}', '${id}')">✏️ Edit Pet</button>
@@ -1126,6 +1127,7 @@ function toggleClientNotes() {
                 </select>
               </div>
               <div class="field"><label>Microchip #</label><input type="text" id="eMicrochipNum_${id}" value="${p.microchip_number || ''}" /></div>
+              <div class="field"><label>Color/Markings</label><input type="text" id="eColorMarkings_${id}" value="${p.colors_markings || ''}" /></div>
             </div>
             <div class="msg" id="petMsg_${id}"></div>
             <div class="btn-group">
@@ -1177,6 +1179,7 @@ function toggleClientNotes() {
         altered:          document.getElementById(`eAltered_${id}`).value          || 'unknown',
         microchipped:     document.getElementById(`eMicrochipped_${id}`).value     || 'unknown',
         microchip_number: document.getElementById(`eMicrochipNum_${id}`).value.trim() || null,
+        colors_markings:  document.getElementById(`eColorMarkings_${id}`).value.trim() || null,
       });
       await loadPets();
     } catch (err) {
