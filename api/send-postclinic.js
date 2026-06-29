@@ -126,6 +126,7 @@ async function getNextBoosterClinic(afterDate) {
   const e    = records[0];
   const date = new Date(e.event_date + 'T12:00:00');
   return {
+    date: e.event_date, // raw ISO date string, used for due-date cutoff comparisons
     en: `${date.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' })} at ${e.location}`,
     es: `${date.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} en ${e.location}`,
   };
@@ -257,11 +258,16 @@ export default async function handler(req, res) {
       const firstName  = (client.name || 'there').split(' ')[0];
       const clientPets = petsByClient[client.id] || [];
       const dueDates   = buildDueDates(clientPets, Array.isArray(vaccinations) ? vaccinations : []);
-      const hasUpcomingDue = clientPets.some(p =>
-        (Array.isArray(vaccinations) ? vaccinations : []).some(
-          v => v.pet_id === p.id && v.next_due && v.next_due > today
-        )
-      );
+      // Only counts as "upcoming due" if the pet's next due date falls on or before
+      // the next scheduled booster clinic — not just any future date.
+      const boosterCutoff = nextBooster?.date || null;
+      const hasUpcomingDue = boosterCutoff
+        ? clientPets.some(p =>
+            (Array.isArray(vaccinations) ? vaccinations : []).some(
+              v => v.pet_id === p.id && v.next_due && v.next_due > today && v.next_due <= boosterCutoff
+            )
+          )
+        : false;
 
       // Build chip_links for any trigger templates that need {{chip_links}}
       const chipLinks = clientPets
