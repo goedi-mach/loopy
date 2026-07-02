@@ -535,16 +535,7 @@
   </style>
 <script src="config.js"></script>
 <script src="auth.js"></script>
-<script>
-  if (window.location.hostname.includes('sandbox')) {
-    document.addEventListener('DOMContentLoaded', function() {
-      const banner = document.createElement('div');
-      banner.style.cssText = 'background:#f28b82;color:#fff;text-align:center;padding:0.5rem;font-family:Nunito,sans-serif;font-weight:700;font-size:0.9rem;letter-spacing:0.03em;position:sticky;top:0;z-index:9999;';
-      banner.innerHTML = '🧪 SANDBOX — This is a test environment. No real data will be affected. <a href="https://php-clinic.vercel.app" style="color:white;font-weight:800;text-decoration:underline;">Go to production →</a>';
-      document.body.prepend(banner);
-    });
-  }
-</script>
+
 </head>
 <body>
 
@@ -1979,10 +1970,7 @@ if (savedToken) {
         style="width:100%;text-align:left;padding:0.6rem 0.75rem;border-radius:8px;border:1.5px solid #c8d3ec;background:none;font-family:inherit;font-size:0.88rem;font-weight:700;color:#1a3a8f;cursor:pointer;display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
         🎯 Interactive Tour
       </button>
-      <button onclick="window.open('https://pawkit-sandbox.vercel.app','_blank');document.getElementById('helpDialog').remove();"
-        style="width:100%;text-align:left;padding:0.6rem 0.75rem;border-radius:8px;border:1.5px solid #f28b82;background:none;font-family:inherit;font-size:0.88rem;font-weight:700;color:#c0392b;cursor:pointer;display:flex;align-items:center;gap:0.5rem;">
-        🧪 Try Sandbox
-      </button>
+       
     `;
     // Close if clicking outside
     setTimeout(() => {

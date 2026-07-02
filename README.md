@@ -8,23 +8,23 @@ Live at: [clinic.phpchi.org](https://clinic.phpchi.org)
 
 ## Pages
 
-| File | Purpose |
-| ---- | ------- |
-| `index.html` | Landing / home page |
-| `intake.html` | Staff intake tool — client search, walk-in registration, check-in, pet records, client notes |
-| `discharge.html` | Staff discharge tool — vaccine logging, microchip, certificate download, client notes |
-| `records.html` | Sortable, filterable table of all clients and pets; CSV export |
-| `client.html` | Client profile page — edit client/pet records, full vaccination history, cert download, signed waiver, client notes, file attachments |
-| `reports.html` | Stats page with date/event filters, charts, per-event table, vaccine waste summary, CSV export |
-| `staff-home.html` | Nav hub for staff — event management, user management, inventory, queue control |
-| `volunteer-home.html` | Role picker (Intake/Discharge) for volunteers |
-| `set-password.html` | Password setup page for new invited users |
-| `login.html` | Login page, shared by staff and volunteers |
-| `registration.html` | Public-facing self-registration form (bilingual EN/ES) |
-| `queue-display.html` | Public-facing queue display — shows "Now Serving" numbers; auto-refreshes every 10 seconds |
-| `queue-control.html` | Staff-only queue control panel — advance, go back, or reset the queue number |
-| `merge-clients.html` | Staff tool for merging duplicate client records side-by-side |
-| `user-management.html` | Admin tool for inviting users and managing roles |
+| File                   | Purpose                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.html`           | Landing / home page                                                                                                                   |
+| `intake.html`          | Staff intake tool — client search, walk-in registration, check-in, pet records, client notes                                          |
+| `discharge.html`       | Staff discharge tool — vaccine logging, microchip, certificate download, client notes                                                 |
+| `records.html`         | Sortable, filterable table of all clients and pets; CSV export                                                                        |
+| `client.html`          | Client profile page — edit client/pet records, full vaccination history, cert download, signed waiver, client notes, file attachments |
+| `reports.html`         | Stats page with date/event filters, charts, per-event table, vaccine waste summary, CSV export                                        |
+| `staff-home.html`      | Nav hub for staff — event management, user management, inventory, queue control                                                       |
+| `volunteer-home.html`  | Role picker (Intake/Discharge) for volunteers                                                                                         |
+| `set-password.html`    | Password setup page for new invited users                                                                                             |
+| `login.html`           | Login page, shared by staff and volunteers                                                                                            |
+| `registration.html`    | Public-facing self-registration form (bilingual EN/ES)                                                                                |
+| `queue-display.html`   | Public-facing queue display — shows "Now Serving" numbers; auto-refreshes every 10 seconds                                            |
+| `queue-control.html`   | Staff-only queue control panel — advance, go back, or reset the queue number                                                          |
+| `merge-clients.html`   | Staff tool for merging duplicate client records side-by-side                                                                          |
+| `user-management.html` | Admin tool for inviting users and managing roles                                                                                      |
 
 ---
 
@@ -107,11 +107,11 @@ Live at: [clinic.phpchi.org](https://clinic.phpchi.org)
 
 ## Serverless Functions (`api/`)
 
-| File | Purpose |
-| ---- | ------- |
-| `api/admin-users.js` | User management — invite, list, set role |
-| `api/send-reminders.js` | Vaccine reminder cron job (called by Vercel Cron) |
-| `api/translate.js` | DeepL translation proxy — translates breed/color fields from Spanish to English for rabies certificates |
+| File                    | Purpose                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| `api/admin-users.js`    | User management — invite, list, set role                                                                |
+| `api/send-reminders.js` | Vaccine reminder cron job (called by Vercel Cron)                                                       |
+| `api/translate.js`      | DeepL translation proxy — translates breed/color fields from Spanish to English for rabies certificates |
 
 ---
 
@@ -119,126 +119,126 @@ Live at: [clinic.phpchi.org](https://clinic.phpchi.org)
 
 ### `clients` table
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `uuid` | Primary key, default `gen_random_uuid()` |
-| `name` | `text` | Required |
-| `email` | `text` | Optional |
-| `phone` | `text` | Optional |
-| `street` | `text` | Optional |
-| `city` | `text` | Optional |
-| `state` | `text` | Optional |
-| `zip` | `text` | Optional |
-| `address` | `text` | Legacy — kept for backward compatibility |
-| `event_date` | `date` | Set on registration |
-| `status` | `text` | `registered`, `checked_in`, `seen`, or `discharged` |
-| `checked_in_at` | `timestamptz` | Optional |
-| `seen_at` | `timestamptz` | Optional |
-| `notes` | `text` | Permanent client notes |
-| `archived` | `bool` | Default `false` |
-| `waiver_signature` | `text` | Base64 PNG of drawn signature |
-| `waiver_signed_at` | `timestamptz` | UTC timestamp of waiver signature |
-| `created_at` | `timestamptz` | Default `now()` |
+| Column             | Type          | Notes                                               |
+| ------------------ | ------------- | --------------------------------------------------- |
+| `id`               | `uuid`        | Primary key, default `gen_random_uuid()`            |
+| `name`             | `text`        | Required                                            |
+| `email`            | `text`        | Optional                                            |
+| `phone`            | `text`        | Optional                                            |
+| `street`           | `text`        | Optional                                            |
+| `city`             | `text`        | Optional                                            |
+| `state`            | `text`        | Optional                                            |
+| `zip`              | `text`        | Optional                                            |
+| `address`          | `text`        | Legacy — kept for backward compatibility            |
+| `event_date`       | `date`        | Set on registration                                 |
+| `status`           | `text`        | `registered`, `checked_in`, `seen`, or `discharged` |
+| `checked_in_at`    | `timestamptz` | Optional                                            |
+| `seen_at`          | `timestamptz` | Optional                                            |
+| `notes`            | `text`        | Permanent client notes                              |
+| `archived`         | `bool`        | Default `false`                                     |
+| `waiver_signature` | `text`        | Base64 PNG of drawn signature                       |
+| `waiver_signed_at` | `timestamptz` | UTC timestamp of waiver signature                   |
+| `created_at`       | `timestamptz` | Default `now()`                                     |
 
 ### `pets` table
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `uuid` | Primary key, default `gen_random_uuid()` |
-| `client_id` | `uuid` | Foreign key → `clients.id` (cascade delete) |
-| `name` | `text` | Required |
-| `species` | `text` | `dog`, `cat`, `ferret`, or `other` |
-| `breed` | `text` | Optional |
-| `age` | `float8` | Optional, in years or months depending on `age_unit` |
-| `age_unit` | `text` | `years` or `months` |
-| `weight` | `float8` | Optional, in lbs |
-| `sex` | `text` | `male`, `female`, or `unknown` |
-| `altered` | `text` | `yes`, `no`, or `unknown` |
-| `microchipped` | `text` | `yes`, `no`, or `unknown` |
-| `microchip_number` | `text` | Optional |
-| `colors_markings` | `text` | Optional |
-| `archived` | `bool` | Default `false` |
+| Column             | Type     | Notes                                                |
+| ------------------ | -------- | ---------------------------------------------------- |
+| `id`               | `uuid`   | Primary key, default `gen_random_uuid()`             |
+| `client_id`        | `uuid`   | Foreign key → `clients.id` (cascade delete)          |
+| `name`             | `text`   | Required                                             |
+| `species`          | `text`   | `dog`, `cat`, `ferret`, or `other`                   |
+| `breed`            | `text`   | Optional                                             |
+| `age`              | `float8` | Optional, in years or months depending on `age_unit` |
+| `age_unit`         | `text`   | `years` or `months`                                  |
+| `weight`           | `float8` | Optional, in lbs                                     |
+| `sex`              | `text`   | `male`, `female`, or `unknown`                       |
+| `altered`          | `text`   | `yes`, `no`, or `unknown`                            |
+| `microchipped`     | `text`   | `yes`, `no`, or `unknown`                            |
+| `microchip_number` | `text`   | Optional                                             |
+| `colors_markings`  | `text`   | Optional                                             |
+| `archived`         | `bool`   | Default `false`                                      |
 
 ### `vaccinations` table
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `uuid` | Primary key, default `gen_random_uuid()` |
-| `pet_id` | `uuid` | Foreign key → `pets.id` |
-| `vaccine_name` | `text` | e.g. `Rabies 1 Year`, `DAPP 1 Year`, `Lepto 1 Year`, `FVRCP 1 Year` |
-| `product_name` | `text` | e.g. `IMRAB 3` |
-| `manufacturer` | `text` | First 3 letters, uppercased |
-| `lot_number` | `text` | Optional |
-| `serial_number` | `text` | Legacy field |
-| `rabies_tag_number` | `text` | Optional |
-| `colors_markings` | `text` | Recorded at time of vaccination |
-| `breed_en` | `text` | English-translated breed for certificate |
-| `date_given` | `date` | Required |
-| `next_due` | `date` | Optional |
-| `exp_date` | `date` | Lot expiration date at time of logging |
-| `administered_by` | `text` | Optional |
-| `usda_duration` | `text` | `1yr`, `3yr`, or `4yr` |
-| `dose_type` | `text` | `initial` or `booster` |
-| `ac_license_number` | `text` | Animal control license number |
-| `ac_license_type` | `text` | `1yr`, `3yr`, or `other` |
-| `reminder_2w_sent` | `bool` | Default `false` — set when 2-week reminder is sent |
-| `reminder_1w_sent` | `bool` | Default `false` — set when 1-week reminder is sent |
-| `created_at` | `timestamptz` | Default `now()` |
+| Column              | Type          | Notes                                                               |
+| ------------------- | ------------- | ------------------------------------------------------------------- |
+| `id`                | `uuid`        | Primary key, default `gen_random_uuid()`                            |
+| `pet_id`            | `uuid`        | Foreign key → `pets.id`                                             |
+| `vaccine_name`      | `text`        | e.g. `Rabies 1 Year`, `DAPP 1 Year`, `Lepto 1 Year`, `FVRCP 1 Year` |
+| `product_name`      | `text`        | e.g. `IMRAB 3`                                                      |
+| `manufacturer`      | `text`        | First 3 letters, uppercased                                         |
+| `lot_number`        | `text`        | Optional                                                            |
+| `serial_number`     | `text`        | Legacy field                                                        |
+| `rabies_tag_number` | `text`        | Optional                                                            |
+| `colors_markings`   | `text`        | Recorded at time of vaccination                                     |
+| `breed_en`          | `text`        | English-translated breed for certificate                            |
+| `date_given`        | `date`        | Required                                                            |
+| `next_due`          | `date`        | Optional                                                            |
+| `exp_date`          | `date`        | Lot expiration date at time of logging                              |
+| `administered_by`   | `text`        | Optional                                                            |
+| `usda_duration`     | `text`        | `1yr`, `3yr`, or `4yr`                                              |
+| `dose_type`         | `text`        | `initial` or `booster`                                              |
+| `ac_license_number` | `text`        | Animal control license number                                       |
+| `ac_license_type`   | `text`        | `1yr`, `3yr`, or `other`                                            |
+| `reminder_2w_sent`  | `bool`        | Default `false` — set when 2-week reminder is sent                  |
+| `reminder_1w_sent`  | `bool`        | Default `false` — set when 1-week reminder is sent                  |
+| `created_at`        | `timestamptz` | Default `now()`                                                     |
 
 ### `events` table
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `uuid` | Primary key, default `gen_random_uuid()` |
-| `location` | `text` | Required |
-| `event_date` | `date` | Required |
-| `start_time` | `time` | Required |
-| `end_time` | `time` | Optional |
-| `clinic_type` | `text` | `Vaccine Clinic` or `Booster Clinic` |
-| `completed` | `bool` | Default `false` |
-| `completed_at` | `timestamptz` | Set when event is closed |
+| Column         | Type          | Notes                                    |
+| -------------- | ------------- | ---------------------------------------- |
+| `id`           | `uuid`        | Primary key, default `gen_random_uuid()` |
+| `location`     | `text`        | Required                                 |
+| `event_date`   | `date`        | Required                                 |
+| `start_time`   | `time`        | Required                                 |
+| `end_time`     | `time`        | Optional                                 |
+| `clinic_type`  | `text`        | `Vaccine Clinic` or `Booster Clinic`     |
+| `completed`    | `bool`        | Default `false`                          |
+| `completed_at` | `timestamptz` | Set when event is closed                 |
 
 ### `vaccine_inventory` table
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `uuid` | Primary key |
-| `vaccine_type` | `text` | e.g. `rabies`, `dapp`, `dapp_lepto`, `fvrcp` |
-| `lot_number` | `text` | Required |
-| `manufacturer` | `text` | Optional |
-| `exp_date` | `date` | Optional |
-| `active` | `bool` | Default `false` — only active lots appear in the discharge dropdown |
+| Column         | Type   | Notes                                                               |
+| -------------- | ------ | ------------------------------------------------------------------- |
+| `id`           | `uuid` | Primary key                                                         |
+| `vaccine_type` | `text` | e.g. `rabies`, `dapp`, `dapp_lepto`, `fvrcp`                        |
+| `lot_number`   | `text` | Required                                                            |
+| `manufacturer` | `text` | Optional                                                            |
+| `exp_date`     | `date` | Optional                                                            |
+| `active`       | `bool` | Default `false` — only active lots appear in the discharge dropdown |
 
 ### `vaccine_waste` table
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `uuid` | Primary key, default `gen_random_uuid()` |
-| `event_id` | `uuid` | Foreign key → `events.id` (cascade delete) |
-| `vaccine_name` | `text` | e.g. `Rabies`, `DAPP`, `Lepto`, `FVRCP` |
-| `doses_wasted` | `int` | Must be > 0 |
-| `created_at` | `timestamptz` | Default `now()` |
-| `created_by` | `uuid` | Foreign key → `auth.users.id` |
+| Column         | Type          | Notes                                      |
+| -------------- | ------------- | ------------------------------------------ |
+| `id`           | `uuid`        | Primary key, default `gen_random_uuid()`   |
+| `event_id`     | `uuid`        | Foreign key → `events.id` (cascade delete) |
+| `vaccine_name` | `text`        | e.g. `Rabies`, `DAPP`, `Lepto`, `FVRCP`    |
+| `doses_wasted` | `int`         | Must be > 0                                |
+| `created_at`   | `timestamptz` | Default `now()`                            |
+| `created_by`   | `uuid`        | Foreign key → `auth.users.id`              |
 
 ### `queue_state` table
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `int` | Always `1` — single row only |
-| `now_serving` | `int` | Current ticket number batch start |
-| `updated_at` | `timestamptz` | Updated on each advance/reset |
+| Column        | Type          | Notes                             |
+| ------------- | ------------- | --------------------------------- |
+| `id`          | `int`         | Always `1` — single row only      |
+| `now_serving` | `int`         | Current ticket number batch start |
+| `updated_at`  | `timestamptz` | Updated on each advance/reset     |
 
 ### `attachments` table
 
-| Column | Type | Notes |
-| ------ | ---- | ----- |
-| `id` | `uuid` | Primary key, default `gen_random_uuid()` |
-| `client_id` | `uuid` | Foreign key → `clients.id` |
-| `pet_id` | `uuid` | Optional — if set, attachment belongs to a specific pet |
-| `storage_path` | `text` | Full path in Supabase Storage (`attachments/clients/{id}/...`) |
-| `display_name` | `text` | Original filename shown in the UI |
-| `uploaded_by` | `uuid` | Foreign key → `auth.users.id` |
-| `uploaded_at` | `timestamptz` | Default `now()` |
+| Column         | Type          | Notes                                                          |
+| -------------- | ------------- | -------------------------------------------------------------- |
+| `id`           | `uuid`        | Primary key, default `gen_random_uuid()`                       |
+| `client_id`    | `uuid`        | Foreign key → `clients.id`                                     |
+| `pet_id`       | `uuid`        | Optional — if set, attachment belongs to a specific pet        |
+| `storage_path` | `text`        | Full path in Supabase Storage (`attachments/clients/{id}/...`) |
+| `display_name` | `text`        | Original filename shown in the UI                              |
+| `uploaded_by`  | `uuid`        | Foreign key → `auth.users.id`                                  |
+| `uploaded_at`  | `timestamptz` | Default `now()`                                                |
 
 ---
 
@@ -246,20 +246,20 @@ Live at: [clinic.phpchi.org](https://clinic.phpchi.org)
 
 Row Level Security is enabled on all tables.
 
-| Table | Role | Permissions |
-| ----- | ---- | ----------- |
-| `clients` | `anon` | INSERT, SELECT, UPDATE |
-| `clients` | `authenticated` | SELECT, UPDATE, DELETE |
-| `pets` | `anon` | INSERT, SELECT, UPDATE |
-| `pets` | `authenticated` | SELECT, UPDATE, DELETE |
-| `vaccinations` | `anon` | SELECT |
-| `vaccinations` | `authenticated` | INSERT, SELECT, UPDATE, DELETE |
-| `events` | `authenticated` | INSERT, SELECT, UPDATE, DELETE |
-| `vaccine_inventory` | `authenticated` | INSERT, SELECT, UPDATE |
-| `vaccine_waste` | `authenticated` | INSERT, SELECT |
-| `queue_state` | `anon` | SELECT |
-| `queue_state` | `authenticated` | SELECT, UPDATE |
-| `attachments` | `authenticated` | INSERT, SELECT, DELETE |
+| Table               | Role            | Permissions                    |
+| ------------------- | --------------- | ------------------------------ |
+| `clients`           | `anon`          | INSERT, SELECT, UPDATE         |
+| `clients`           | `authenticated` | SELECT, UPDATE, DELETE         |
+| `pets`              | `anon`          | INSERT, SELECT, UPDATE         |
+| `pets`              | `authenticated` | SELECT, UPDATE, DELETE         |
+| `vaccinations`      | `anon`          | SELECT                         |
+| `vaccinations`      | `authenticated` | INSERT, SELECT, UPDATE, DELETE |
+| `events`            | `authenticated` | INSERT, SELECT, UPDATE, DELETE |
+| `vaccine_inventory` | `authenticated` | INSERT, SELECT, UPDATE         |
+| `vaccine_waste`     | `authenticated` | INSERT, SELECT                 |
+| `queue_state`       | `anon`          | SELECT                         |
+| `queue_state`       | `authenticated` | SELECT, UPDATE                 |
+| `attachments`       | `authenticated` | INSERT, SELECT, DELETE         |
 
 ---
 
@@ -268,6 +268,7 @@ Row Level Security is enabled on all tables.
 Two buckets are required:
 
 **`templates`** (public) — upload:
+
 - `RabiesVacCert.pdf` — the NASPHV Form 51 template
 - `ana_signature.png` — Dr. Ana Valbuena's signature
 - `alex_signature.png` — Dr. Alexandra Friedman's signature
@@ -282,15 +283,15 @@ Two buckets are required:
 
 The following variables must be set in Vercel (Settings → Environment Variables):
 
-| Variable | Used by |
-| -------- | ------- |
-| `SUPABASE_URL` | All pages via `config.js` |
-| `SUPABASE_ANON_KEY` | All pages via `config.js` |
-| `SUPABASE_SERVICE_ROLE_KEY` | `api/send-reminders.js`, `api/admin-users.js` |
-| `RESEND_API_KEY` | `api/send-reminders.js` |
-| `DEEPL_API_KEY` | `api/translate.js` (free tier key ending in `:fx`) |
-| `VET_LICENSE_ANA` | `config.js` — injected into cert generation |
-| `VET_LICENSE_FRIEDMAN` | `config.js` — injected into cert generation |
+| Variable                    | Used by                                            |
+| --------------------------- | -------------------------------------------------- |
+| `SUPABASE_URL`              | All pages via `config.js`                          |
+| `SUPABASE_ANON_KEY`         | All pages via `config.js`                          |
+| `SUPABASE_SERVICE_ROLE_KEY` | `api/send-reminders.js`, `api/admin-users.js`      |
+| `RESEND_API_KEY`            | `api/send-reminders.js`                            |
+| `DEEPL_API_KEY`             | `api/translate.js` (free tier key ending in `:fx`) |
+| `VET_LICENSE_ANA`           | `config.js` — injected into cert generation        |
+| `VET_LICENSE_FRIEDMAN`      | `config.js` — injected into cert generation        |
 
 ### `config.js`
 
