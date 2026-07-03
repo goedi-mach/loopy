@@ -1,0 +1,27 @@
+{
+  "name": "pawkit",
+  "version": "1.0.0",
+  "description": "Internal web tools for running free vaccine clinics. Built for [People Helping Pets](https://peoplehelpingpets.org), a Chicago-based nonprofit providing bilingual vaccine clinics for cats and dogs in underserved neighborhoods.",
+  "main": "auth.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goedi-mach/pawkit.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/goedi-mach/pawkit/issues"
+  },
+  "homepage": "https://github.com/goedi-mach/pawkit#readme",
+  "dependencies": {
+    "svix": "^1.96.1"
+  }
+}
