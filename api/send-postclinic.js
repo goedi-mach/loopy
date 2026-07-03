@@ -171,33 +171,29 @@ function buildDueDates(pets, vaccinations) {
   };
 }
 
-// ─── SEND EMAIL ────────────────────────────────────────────────
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+// ─── SEND EMAIL (BATCH) ────────────────────────────────────────
+async function sendBatch(items) {
+  const res = await fetch('https://api.resend.com/emails/batch', {
+    method: 'POST',
+    headers: {
+      Authorization:  `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(items.map(item => ({
+      from:    FROM_EMAIL,
+      to:      item.to,
+      subject: item.subject,
+      html:    item.html,
+    })))
+  });
 
-async function sendEmail(to, subject, html, retries = 3) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization:  `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ from: FROM_EMAIL, to, subject, html })
-    });
-
-    if (res.ok) return;
-
-    if (res.status === 429 && attempt < retries) {
-      // Back off and retry — Resend allows 10 req/sec
-      await sleep(500 * (attempt + 1));
-      continue;
-    }
-
+  if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Resend error (${res.status})`);
+    throw new Error(err.message || `Resend batch error (${res.status})`);
   }
+
+  const { data } = await res.json();
+  return (data || []).map(d => d.id);
 }
 
 // ─── MAIN HANDLER ─────────────────────────────────────────────
@@ -284,6 +280,7 @@ export default async function handler(req, res) {
     const previewVariants = preview ? new Map() : null; // key: sorted trigger ids -> { html, subject, triggerNames, sampleClient }
 
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const sendQueue = [];
 
     for (const client of clients) {
       if (!client.email || !EMAIL_RE.test(client.email.trim())) { skipped++; continue; }
@@ -394,28 +391,66 @@ export default async function handler(req, res) {
         continue; // do not actually send in preview mode
       }
 
-      try {
-        await sendEmail(client.email, subject, html);
-        sent++;
+      // Queue for batch sending — actual send happens after this loop
+      sendQueue.push({ client, subject, html });
+    }
 
-        // Log this send so a retry/resume never double-emails this client for this clinic
-        await fetch(`${SUPABASE_URL}/rest/v1/postclinic_email_log`, {
-          method: 'POST',
-          headers: {
-            apikey:         SUPABASE_SERVICE_KEY,
-            Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
-            'Content-Type': 'application/json',
-            Prefer:         'resolution=ignore-duplicates'
-          },
-          body: JSON.stringify({ client_id: client.id, event_date: eventDate, clinic_type: clinicType })
-        });
-      } catch (sendErr) {
-        console.error(`Failed to send to ${client.email} (client ${client.id}): ${sendErr.message}`);
-        skipped++;
-        failedEmails.push({ name: client.name, email: client.email, error: sendErr.message });
+    // ── BATCH SEND ──────────────────────────────────────────────
+    if (!preview) {
+      const BATCH_CHUNK = 100; // Resend's per-call max
+      for (let i = 0; i < sendQueue.length; i += BATCH_CHUNK) {
+        const chunk = sendQueue.slice(i, i + BATCH_CHUNK);
+        try {
+          const resendIds = await sendBatch(chunk.map(item => ({
+            to:      item.client.email,
+            subject: item.subject,
+            html:    item.html,
+          })));
+
+          await Promise.all(chunk.map((item, idx) =>
+            fetch(`${SUPABASE_URL}/rest/v1/postclinic_email_log`, {
+              method: 'POST',
+              headers: {
+                apikey:         SUPABASE_SERVICE_KEY,
+                Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
+                'Content-Type': 'application/json',
+                Prefer:         'resolution=ignore-duplicates'
+              },
+              body: JSON.stringify({
+                client_id:       item.client.id,
+                event_date:      eventDate,
+                clinic_type:     clinicType,
+                resend_email_id: resendIds[idx] || null,
+              })
+            })
+          ));
+          sent += chunk.length;
+        } catch (batchErr) {
+          console.error(`Batch send failed for ${chunk.length} client(s): ${batchErr.message}`);
+          skipped += chunk.length;
+          for (const item of chunk) {
+            failedEmails.push({ name: item.client.name, email: item.client.email, error: batchErr.message });
+          }
+          await Promise.all(chunk.map(item =>
+            fetch(`${SUPABASE_URL}/rest/v1/email_send_failures`, {
+              method: 'POST',
+              headers: {
+                apikey:         SUPABASE_SERVICE_KEY,
+                Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                client_id:   item.client.id,
+                email:       item.client.email,
+                context:     prefix,
+                event_date:  eventDate,
+                clinic_type: clinicType,
+                error:       batchErr.message,
+              })
+            })
+          ));
+        }
       }
-
-      await sleep(120); // stay safely under Resend's 10 req/sec limit
     }
 
     if (preview) {
