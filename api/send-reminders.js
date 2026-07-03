@@ -132,20 +132,46 @@ function getDateWindow(weeksOut) {
   };
 }
 
-// ─── SEND EMAIL (HTML) ─────────────────────────────────────────
-async function sendEmail(to, subject, html) {
-  const res = await fetch('https://api.resend.com/emails', {
+// ─── SEND EMAIL (BATCH) ─────────────────────────────────────────
+async function sendBatch(items) {
+  const res = await fetch('https://api.resend.com/emails/batch', {
     method: 'POST',
     headers: {
       Authorization:  `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ from: FROM_EMAIL, to, subject, html })
+    body: JSON.stringify(items.map(item => ({
+      from:    FROM_EMAIL,
+      to:      item.to,
+      subject: item.subject,
+      html:    item.html,
+    })))
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || 'Resend error');
+    throw new Error(err.message || `Resend batch error (${res.status})`);
   }
+
+  const { data } = await res.json();
+  return (data || []).map(d => d.id);
+}
+
+async function logSendFailure(client, context, error) {
+  await fetch(`${SUPABASE_URL}/rest/v1/email_send_failures`, {
+    method: 'POST',
+    headers: {
+      apikey:         SUPABASE_SERVICE_KEY,
+      Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      client_id: client.id,
+      email:     client.email,
+      context,
+      error,
+    })
+  });
 }
 
 // ─── PROCESS REMINDERS ─────────────────────────────────────────
@@ -178,6 +204,8 @@ async function processReminders(weeksOut, sentField) {
     loadTemplate(t.template_en).then(r => { triggerTemplates[t.template_en] = r; }),
     loadTemplate(t.template_es).then(r => { triggerTemplates[t.template_es] = r; }),
   ]));
+
+  const sendQueue = [];
 
   for (const vax of records) {
     const pet    = vax.pets;
@@ -268,10 +296,44 @@ async function processReminders(weeksOut, sentField) {
 </body>
 </html>`;
 
-    await sendEmail(client.email, subject, html);
-    await sbPatch(`vaccinations?id=eq.${vax.id}`, { [sentField]: true });
+    sendQueue.push({ client, vaxId: vax.id, subject, html });
+  }
 
-    console.log(`Sent ${templateKey} for pet "${petName}" to ${client.email}`);
+  // ── BATCH SEND ──────────────────────────────────────────────
+  const BATCH_CHUNK = 100; // Resend's per-call max
+  for (let i = 0; i < sendQueue.length; i += BATCH_CHUNK) {
+    const chunk = sendQueue.slice(i, i + BATCH_CHUNK);
+    try {
+      const resendIds = await sendBatch(chunk.map(item => ({
+        to:      item.client.email,
+        subject: item.subject,
+        html:    item.html,
+      })));
+
+      await Promise.all(chunk.map(async (item, idx) => {
+        await sbPatch(`vaccinations?id=eq.${item.vaxId}`, { [sentField]: true });
+        await fetch(`${SUPABASE_URL}/rest/v1/reminder_email_log`, {
+          method: 'POST',
+          headers: {
+            apikey:         SUPABASE_SERVICE_KEY,
+            Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer:         'resolution=ignore-duplicates'
+          },
+          body: JSON.stringify({
+            vaccination_id:  item.vaxId,
+            reminder_type:   weeksOut === 2 ? '2w' : '1w',
+            resend_email_id: resendIds[idx] || null,
+          })
+        });
+        console.log(`Sent ${templateKey} for pet to ${item.client.email}`);
+      }));
+    } catch (batchErr) {
+      console.error(`Batch send failed for ${chunk.length} reminder(s): ${batchErr.message}`);
+      await Promise.all(chunk.map(item =>
+        logSendFailure(item.client, templateKey, batchErr.message)
+      ));
+    }
   }
 }
 

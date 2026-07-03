@@ -982,6 +982,10 @@
                 <input type="text" id="newPetMicrochip" placeholder="985112345678901" />
               </div>
             </div>
+            <div class="form-field">
+              <label>Colors / Markings</label>
+              <input type="text" id="newPetColors" placeholder="e.g. Black & white, tabby" />
+            </div>
             <button class="btn-primary" onclick="addPet()">Save Pet</button>
           </div>
         </div>
@@ -1686,11 +1690,12 @@ async function saveClientNotes() {
         altered:         document.getElementById('newPetAltered').value  || 'unknown',
         microchipped:     document.getElementById('newPetMicrochipped').value || 'unknown',
         microchip_number: document.getElementById('newPetMicrochip').value.trim() || null,
+        colors_markings:  document.getElementById('newPetColors').value.trim() || null,
       });
 
       showMsg(msg, 'success', `${name} added!`);
       // Clear form
-      ['newPetName','newPetBreed','newPetAge','newPetWeight'].forEach(id => document.getElementById(id).value = '');
+      ['newPetName','newPetBreed','newPetAge','newPetWeight','newPetColors'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('newPetSpecies').value = '';
       document.getElementById('newPetSex').value     = 'unknown';
       document.getElementById('newPetAltered').value  = 'unknown';
