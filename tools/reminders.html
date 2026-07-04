@@ -239,8 +239,11 @@
     .badge-sent   { background: var(--green-light);  color: var(--green); }
     .badge-unsent { background: var(--amber-light);  color: var(--amber); }
     .badge-none   { background: var(--border);       color: var(--text-muted); }
-    .badge-2w     { background: var(--purple-light); color: var(--purple); }
-    .badge-1w     { background: var(--navy-light);   color: var(--navy); }
+    .badge-2w        { background: var(--purple-light); color: var(--purple); }
+    .badge-1w        { background: var(--navy-light);   color: var(--navy); }
+    .badge-bounced    { background: var(--coral-light);  color: var(--coral-dark); }
+    .badge-complained { background: var(--coral-light);  color: var(--coral-dark); }
+    .badge-delayed    { background: var(--amber-light);  color: var(--amber); }
 
     /* ── BUTTONS ── */
     .btn {
@@ -324,6 +327,7 @@
     <button class="tab-btn" onclick="switchTab('sent')">✅ Sent Log</button>
     <button class="tab-btn" onclick="switchTab('manual')">📨 Manual Send</button>
     <button class="tab-btn" onclick="switchTab('triggers')">⚡ Triggers</button>
+    <button class="tab-btn" onclick="switchTab('failures')">⚠️ Failures</button>
   </div>
 
   <!-- ── TEMPLATES TAB ── -->
@@ -692,6 +696,56 @@
         <div class="msg" id="manualMsg"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ── FAILURES TAB ── -->
+  <div class="tab-panel" id="tab-failures">
+
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div class="card-header">
+        <span>⚠️ Send Failures</span>
+        <button class="btn btn-primary" onclick="loadSendFailures()">Refresh</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Client</th>
+              <th>Email</th>
+              <th>Context</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody id="sendFailuresBody">
+            <tr><td colspan="5" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span>📬 Bounces & Complaints</span>
+        <button class="btn btn-primary" onclick="loadEmailEvents()">Refresh</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Email</th>
+              <th>Client</th>
+            </tr>
+          </thead>
+          <tbody id="emailEventsBody">
+            <tr><td colspan="4" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── TRIGGERS TAB ── -->
@@ -1089,6 +1143,62 @@
     }
   }
 
+  // ── FAILURES ────────────────────────────────────────────────────
+  async function loadSendFailures() {
+    const tbody = document.getElementById('sendFailuresBody');
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Loading…</td></tr>';
+    try {
+      const rows = await sbGet(
+        `email_send_failures?select=*,clients(name)&order=created_at.desc&limit=200`
+      );
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No send failures recorded.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td style="font-size:0.78rem;">${fmtDateTime(r.created_at)}</td>
+          <td>${r.clients?.name || '—'}</td>
+          <td style="font-size:0.78rem;">${r.email}</td>
+          <td style="font-size:0.78rem;">${r.context}${r.event_date ? ` · ${r.event_date}` : ''}</td>
+          <td style="font-size:0.78rem; color:var(--coral-dark);">${r.error}</td>
+        </tr>
+      `).join('');
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  async function loadEmailEvents() {
+    const tbody = document.getElementById('emailEventsBody');
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Loading…</td></tr>';
+    try {
+      const rows = await sbGet(
+        `email_events?select=*,clients(name)&event_type=in.(bounced,complained,delivery_delayed)&order=created_at.desc&limit=200`
+      );
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No bounces or complaints recorded.</td></tr>';
+        return;
+      }
+      const badgeClass = { bounced: 'badge-bounced', complained: 'badge-complained', delivery_delayed: 'badge-delayed' };
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td style="font-size:0.78rem;">${fmtDateTime(r.created_at)}</td>
+          <td><span class="badge ${badgeClass[r.event_type] || 'badge-none'}">${r.event_type}</span></td>
+          <td style="font-size:0.78rem;">${r.email || '—'}</td>
+          <td>${r.clients?.name || '<span style="color:var(--text-muted)">Unknown</span>'}</td>
+        </tr>
+      `).join('');
+    } catch(e) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty-state">Error: ${e.message}</td></tr>`;
+    }
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
   // ── UTILS ───────────────────────────────────────────────────────
   function fmtDate(iso) {
     if (!iso) return '—';
@@ -1322,8 +1432,9 @@
   const _origSwitchTab = switchTab;
   switchTab = function(name) {
     _origSwitchTab(name);
-    if (name === 'triggers') loadTriggers();
-    if (name === 'manual')   loadPostClinicEvents();
+    if (name === 'triggers')  loadTriggers();
+    if (name === 'manual')    loadPostClinicEvents();
+    if (name === 'failures')  { loadSendFailures(); loadEmailEvents(); }
   };
 
   // ── POST-CLINIC MANUAL SEND ─────────────────────────────────────
