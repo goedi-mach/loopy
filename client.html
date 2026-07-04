@@ -1855,10 +1855,6 @@ if (accessToken) {
       noNextDue:    en ? 'No upcoming vaccinations.'       : 'Sin próximas vacunas.',
       footer:     en ? 'Thank you for keeping your pet healthy! Questions? Contact us at peoplehelpingpets.org'
                      : '¡Gracias por cuidar la salud de tu mascota! ¿Preguntas? Contáctanos en peoplehelpingpets.org',
-      donateHeading: en ? '❤️ Support Our Free Clinics'
-                       : '❤️ Apoya Nuestras Clínicas Gratuitas',
-      donateText:  en ? 'Our clinics are free because of donations from people like you. If you\'re able to give, every dollar helps us serve more pets.'
-                     : 'Nuestras clínicas son gratuitas gracias a donaciones de personas como tú. Si puedes donar, cada dólar nos ayuda a atender a más mascotas.',
       yrs:          en ? 'yrs'                             : 'años',
     };
 
@@ -1899,11 +1895,6 @@ if (accessToken) {
     .vax-record-meta span { font-size:0.76rem; }
     .empty { color:#555; font-style:italic; font-size:0.75rem; padding:0.25rem 0; }
     .footer { margin-top:0.6rem; padding-top:0.35rem; border-top:1px solid #ccc; text-align:center; font-size:0.68rem; color:#555; }
-    .donate-box { margin-top:0.75rem; padding:0.5rem 0.75rem; border:1px solid #999; border-radius:6px; display:flex; align-items:center; gap:0.75rem; }
-    .donate-box img { width:60px; height:60px; flex-shrink:0; }
-    .donate-text { text-align:left; font-size:0.72rem; }
-    .donate-text strong { font-size:0.8rem; display:block; margin-bottom:0.15rem; }
-    .donate-url { font-weight:800; font-size:0.7rem; margin-top:0.2rem; display:block; }
     @media print { body { padding:0.3in; } }
   </style>
 </head>
@@ -1959,14 +1950,6 @@ if (accessToken) {
       </div>
     </div>`).join('') : `<div class="empty">${t.noHistory}</div>`}
 
-  <div class="donate-box">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=https%3A%2F%2Fgivebutter.com%2Fsummer-clinics" alt="Donation QR code" />
-    <div class="donate-text">
-      <strong>${t.donateHeading}</strong>
-      ${t.donateText}
-      <span class="donate-url">givebutter.com/summer-clinics</span>
-    </div>
-  </div>
   <div class="footer">${t.footer}</div>
   <script>window.print();<\/script>
 </body>
