@@ -1814,8 +1814,14 @@ if (accessToken) {
     let vax = [];
     try { vax = await sbGet(`vaccinations?pet_id=eq.${pet.id}&order=date_given.desc`); } catch (_) {}
 
-    // Pull colors_markings from most recent vax record that has it
+   // Pull colors_markings from most recent vax record that has it
     const colors = vax.find(v => v.colors_markings)?.colors_markings || '';
+
+    // A record's next_due is stale if a later dose of the same vaccine was already given
+    const isSuperseded = (v) => {
+      const base = v.vaccine_name.split(' ')[0];
+      return vax.some(o => o !== v && o.vaccine_name.split(' ')[0] === base && o.date_given > v.date_given);
+    };
 
     const fmt = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString(en ? 'en-US' : 'es-MX', { month:'long', day:'numeric', year:'numeric' }) : '—';
     const today = new Date().toLocaleDateString(en ? 'en-US' : 'es-MX', { month:'long', day:'numeric', year:'numeric' });
@@ -1851,6 +1857,8 @@ if (accessToken) {
       dateGiven:    en ? 'Date Given'                      : 'Fecha de Aplicación',
       nextDueCol:   en ? 'Next Due'                        : 'Próxima Dosis',
       adminBy:      en ? 'Administered By'                 : 'Administrado Por',
+      completed:    en ? 'Completed'                       : 'Completado',
+      rabiesTag:    en ? 'Rabies Tag #'                    : '# de Placa Antirrábica',
       noHistory:    en ? 'No vaccinations on record.'      : 'Sin vacunas registradas.',
       noNextDue:    en ? 'No upcoming vaccinations.'       : 'Sin próximas vacunas.',
       footer:     en ? 'Thank you for keeping your pet healthy! Questions? Contact us at peoplehelpingpets.org'
@@ -1945,8 +1953,9 @@ if (accessToken) {
       <div class="vax-record-meta">
         <div><label>${t.dateGiven}</label><span>${fmt(v.date_given)}</span></div>
         <div><label>${t.lotNum}</label><span>${v.lot_number || '—'}</span></div>
-        <div><label>${t.nextDueCol}</label><span>${fmt(v.next_due)}</span></div>
+        <div><label>${t.nextDueCol}</label><span>${v.next_due && isSuperseded(v) ? t.completed : fmt(v.next_due)}</span></div>
         <div><label>${t.adminBy}</label><span>${v.administered_by || '—'}</span></div>
+        ${v.rabies_tag_number ? `<div><label>${t.rabiesTag}</label><span>${v.rabies_tag_number}</span></div>` : ''}
       </div>
     </div>`).join('') : `<div class="empty">${t.noHistory}</div>`}
 
