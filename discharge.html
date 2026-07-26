@@ -2595,7 +2595,7 @@ function setRadio(fieldName, index) {
         return;
       }
 
-      const fmt = d => d ? new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+      const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
 
       content.innerHTML = `
         <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem">
