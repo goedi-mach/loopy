@@ -201,7 +201,7 @@ async function sendBatch(items) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { eventDate, clinicType, preview, offset = 0, batchSize = 40 } = req.body;
+  const { eventDate, clinicType, preview, offset = 0, batchSize = 40, testClientId } = req.body;
   if (!eventDate) return res.status(400).json({ error: 'eventDate is required' });
 
   const isBooster  = clinicType === 'Booster Clinic';
@@ -223,10 +223,13 @@ export default async function handler(req, res) {
     ]));
 
     // Pull ALL clients first (needed for full pet/vaccination context regardless of batch)
-    const allClients = await sbFetch(
-      `clients?event_date=eq.${eventDate}&archived=eq.false` +
-      `&select=id,name,email,zip,preferred_language&order=id.asc&limit=5000`
-    );
+    // Test mode: fetch just the one specified client, ignoring event_date matching.
+    const allClients = testClientId
+      ? await sbFetch(`clients?id=eq.${testClientId}&archived=eq.false&select=id,name,email,zip,preferred_language`)
+      : await sbFetch(
+          `clients?event_date=eq.${eventDate}&archived=eq.false` +
+          `&select=id,name,email,zip,preferred_language&order=id.asc&limit=5000`
+        );
     if (!Array.isArray(allClients)) throw new Error('Could not load clients');
 
     if (!allClients.length) {
@@ -236,7 +239,8 @@ export default async function handler(req, res) {
     const clientIds = allClients.map(c => c.id);
 
     // Find who's already received this exact clinic's post-clinic email (skip them on real sends)
-    const alreadySent = preview ? [] : await sbFetch(
+    // Test mode bypasses this so you can resend to the same test client repeatedly.
+    const alreadySent = (preview || testClientId) ? [] : await sbFetch(
       `postclinic_email_log?event_date=eq.${eventDate}&clinic_type=eq.${encodeURIComponent(clinicType)}` +
       `&client_id=in.(${clientIds.join(',')})&select=client_id`
     );
