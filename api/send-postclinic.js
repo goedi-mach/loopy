@@ -184,6 +184,7 @@ async function sendBatch(items) {
       to:      item.to,
       subject: item.subject,
       html:    item.html,
+      tags:    item.tags,
     })))
   });
 
@@ -392,7 +393,14 @@ export default async function handler(req, res) {
       }
 
       // Queue for batch sending — actual send happens after this loop
-      sendQueue.push({ client, subject, html });
+      sendQueue.push({
+        client, subject, html,
+        tags: [
+          { name: 'client_id',  value: String(client.id) },
+          { name: 'email_type', value: prefix },
+          { name: 'event_date', value: eventDate },
+        ],
+      });
     }
 
     // ── BATCH SEND ──────────────────────────────────────────────
@@ -405,6 +413,7 @@ export default async function handler(req, res) {
             to:      item.client.email,
             subject: item.subject,
             html:    item.html,
+            tags:    item.tags,
           })));
 
           await Promise.all(chunk.map((item, idx) =>
