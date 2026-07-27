@@ -1081,24 +1081,34 @@
       }
       tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Searching…</td></tr>';
       try {
-        // Search by pet name or client name via vaccinations join
-        const rows = await sbGet(
-          `vaccinations?select=id,vaccine_name,next_due,reminder_2w_sent,reminder_1w_sent,pets(name,clients(name,email))` +
-          `&next_due=not.is.null&order=next_due.asc&limit=200`
+        // Step 1: find matching pets by pet name OR client name — filter happens in the query,
+        // not client-side after an arbitrary row cap.
+        const enc = encodeURIComponent(q);
+        const matchedPets = await sbGet(
+          `pets?select=id,name,clients(id,name,email)` +
+          `&archived=eq.false&or=(name.ilike.*${enc}*,clients.name.ilike.*${enc}*)&limit=50`
         );
-        const lower = q.toLowerCase();
-        const filtered = rows.filter(r => {
-          const petName    = r.pets?.name?.toLowerCase() || '';
-          const clientName = r.pets?.clients?.name?.toLowerCase() || '';
-          return petName.includes(lower) || clientName.includes(lower);
-        });
-        if (!filtered.length) {
+        if (!matchedPets.length) {
           tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No results found.</td></tr>';
           return;
         }
-        tbody.innerHTML = filtered.map(r => {
-          const pet    = r.pets      || {};
-          const client = pet.clients || {};
+        const petIds = matchedPets.map(p => p.id);
+        const petById = {};
+        matchedPets.forEach(p => { petById[p.id] = p; });
+
+        // Step 2: pull vaccinations with a due date for just those pets — no row cap needed here
+        // since the pet list is already narrowed by the search term.
+        const rows = await sbGet(
+          `vaccinations?select=id,pet_id,vaccine_name,next_due,reminder_2w_sent,reminder_1w_sent` +
+          `&pet_id=in.(${petIds.join(',')})&next_due=not.is.null&order=next_due.asc`
+        );
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No results found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows.map(r => {
+          const pet    = petById[r.pet_id] || {};
+          const client = pet.clients        || {};
           const hasEmail = !!client.email;
           return `<tr>
             <td><strong>${pet.name || '—'}</strong></td>
