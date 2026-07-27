@@ -1081,34 +1081,53 @@
       }
       tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Searching…</td></tr>';
       try {
-        // Step 1: find matching pets by pet name OR client name — filter happens in the query,
-        // not client-side after an arbitrary row cap.
         const enc = encodeURIComponent(q);
-        const matchedPets = await sbGet(
-          `pets?select=id,name,clients(id,name,email)` +
-          `&archived=eq.false&or=(name.ilike.*${enc}*,clients.name.ilike.*${enc}*)&limit=50`
-        );
+
+        // Two flat queries — no cross-table filters, so no !inner join gotchas.
+        const [matchedClients, matchedPetsByName] = await Promise.all([
+          sbGet(`clients?select=id,name,email&archived=eq.false&name=ilike.*${enc}*&limit=50`),
+          sbGet(`pets?select=id,name,client_id,clients(id,name,email)&archived=eq.false&name=ilike.*${enc}*&limit=50`)
+        ]);
+
+        if (!Array.isArray(matchedClients) || !Array.isArray(matchedPetsByName)) {
+          throw new Error('Unexpected response from database.');
+        }
+
+        // Pull pets belonging to any matched client
+        let petsFromClients = [];
+        if (matchedClients.length) {
+          const clientIds = matchedClients.map(c => c.id);
+          petsFromClients = await sbGet(
+            `pets?select=id,name,client_id,clients(id,name,email)&archived=eq.false&client_id=in.(${clientIds.join(',')})`
+          );
+          if (!Array.isArray(petsFromClients)) throw new Error('Unexpected response from database.');
+        }
+
+        // Merge + dedupe by pet id
+        const petMap = {};
+        [...matchedPetsByName, ...petsFromClients].forEach(p => { petMap[p.id] = p; });
+        const matchedPets = Object.values(petMap);
+
         if (!matchedPets.length) {
           tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No results found.</td></tr>';
           return;
         }
-        const petIds = matchedPets.map(p => p.id);
-        const petById = {};
-        matchedPets.forEach(p => { petById[p.id] = p; });
 
-        // Step 2: pull vaccinations with a due date for just those pets — no row cap needed here
-        // since the pet list is already narrowed by the search term.
+        const petIds = matchedPets.map(p => p.id);
         const rows = await sbGet(
           `vaccinations?select=id,pet_id,vaccine_name,next_due,reminder_2w_sent,reminder_1w_sent` +
           `&pet_id=in.(${petIds.join(',')})&next_due=not.is.null&order=next_due.asc`
         );
+        if (!Array.isArray(rows)) throw new Error('Unexpected response from database.');
+
         if (!rows.length) {
           tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No results found.</td></tr>';
           return;
         }
+
         tbody.innerHTML = rows.map(r => {
-          const pet    = petById[r.pet_id] || {};
-          const client = pet.clients        || {};
+          const pet    = petMap[r.pet_id] || {};
+          const client = pet.clients       || {};
           const hasEmail = !!client.email;
           return `<tr>
             <td><strong>${pet.name || '—'}</strong></td>
