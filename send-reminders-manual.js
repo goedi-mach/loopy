@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     const sentField   = type === '2w' ? 'reminder_2w_sent' : 'reminder_1w_sent';
 
     const vaxRows = await sbFetch(
-      `vaccinations?id=eq.${vaccinationId}&select=id,vaccine_name,next_due,pets(name,clients(name,email))`
+      `vaccinations?id=eq.${vaccinationId}&select=id,vaccine_name,next_due,pets(name,clients(id,name,email))`
     );
     const vax = vaxRows?.[0];
     if (!vax) return res.status(404).json({ error: 'Vaccination not found' });
@@ -88,11 +88,44 @@ export default async function handler(req, res) {
     const subject = `${fillTemplate(enTpl.subject, vars)} / ${fillTemplate(esTpl.subject, vars)}`;
     const body    = `${fillTemplate(enTpl.body, vars)}\n\n---\n\n${fillTemplate(esTpl.body, vars)}`;
 
-    await fetch('https://api.resend.com/emails', {
+    const sendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: FROM_EMAIL, to: client.email, subject, text: body })
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: client.email,
+        subject,
+        text: body,
+        tags: [
+          { name: 'client_id',       value: String(client.id) },
+          { name: 'email_type',      value: `${templateKey}${suffix}` },
+          { name: 'vaccination_id',  value: String(vaccinationId) },
+        ],
+      })
     });
+
+    if (!sendRes.ok) {
+      const errBody = await sendRes.json().catch(() => ({}));
+      const errMsg  = errBody.message || `Resend error (${sendRes.status})`;
+
+      // Log the failure so it surfaces in the Failures tab, and don't mark as sent.
+      await fetch(`${SUPABASE_URL}/rest/v1/email_send_failures`, {
+        method: 'POST',
+        headers: {
+          apikey:         SUPABASE_SERVICE_KEY,
+          Authorization:  `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          client_id: client.id,
+          email:     client.email,
+          context:   `${templateKey}${suffix}`,
+          error:     errMsg,
+        })
+      });
+
+      return res.status(502).json({ error: errMsg });
+    }
 
     await sbPatch(`vaccinations?id=eq.${vaccinationId}`, { [sentField]: true });
 

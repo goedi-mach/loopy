@@ -67,15 +67,23 @@ export async function POST(request) {
   }
 
   if (TRACKED_EVENTS.includes(event.type)) {
-    const emailId  = event.data?.email_id;
-    const to       = Array.isArray(event.data?.to) ? event.data.to[0] : event.data?.to;
-    const clientId = emailId ? await lookupClientId(emailId) : null;
+    const emailId = event.data?.email_id;
+    const to      = Array.isArray(event.data?.to) ? event.data.to[0] : event.data?.to;
+
+    // Resend echoes tags back as a flat object on webhook events (not the
+    // {name,value} array shape used when sending). Prefer these — they're
+    // free — and only fall back to the log-table lookup for emails sent
+    // before tagging was added.
+    const tags      = event.data?.tags || {};
+    const clientId  = tags.client_id || (emailId ? await lookupClientId(emailId) : null);
+    const emailType = tags.email_type || null;
 
     await sbInsert('email_events', {
       resend_email_id: emailId || null,
       event_type:       event.type.replace('email.', ''),
       client_id:        clientId,
       email:             to || null,
+      email_type:        emailType,
       raw_payload:       event,
     });
   }
