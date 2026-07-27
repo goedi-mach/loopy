@@ -632,6 +632,10 @@
               <option value="">Loading clinics…</option>
             </select>
           </div>
+          <div style="display:flex; flex-direction:column; gap:0.3rem; min-width:220px;">
+            <label style="font-size:0.78rem; font-weight:700; color:var(--text-muted);">Test Client ID (optional)</label>
+            <input type="text" id="testClientId" placeholder="e.g. bd580dd4-0732-..." onchange="onPostClinicEventChange()" style="padding:0.55rem 0.75rem; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.85rem;" />
+          </div>
           <button class="btn btn-primary" id="previewPostClinicBtn" onclick="previewPostClinicEmail()" style="background:var(--navy-mid);">👁 Preview Emails</button>
           <button class="btn btn-primary" id="sendPostClinicBtn" onclick="sendPostClinicEmail()" disabled title="Preview first">Send Post-Clinic Email</button>
         </div>
@@ -1498,6 +1502,7 @@
     const select = document.getElementById('postClinicEventSelect');
     const btn    = document.getElementById('previewPostClinicBtn');
     const val    = select.value;
+    const testClientId = document.getElementById('testClientId').value.trim() || null;
 
     if (!val) { showMsg('postClinicMsg', 'error', 'Please select a clinic event.'); return; }
 
@@ -1511,15 +1516,15 @@
       const res = await fetch('/api/send-postclinic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventDate, clinicType, preview: true })
+        body: JSON.stringify({ eventDate, clinicType, preview: true, testClientId })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Preview failed');
 
-      lastPreviewSelection = { eventDate, clinicType };
+      lastPreviewSelection = { eventDate, clinicType, testClientId };
       renderPreviewModal(data);
       document.getElementById('sendPostClinicBtn').disabled = false;
-      showMsg('postClinicMsg', 'success', '✓ Preview ready below.');
+      showMsg('postClinicMsg', 'success', testClientId ? '✓ Test preview ready below.' : '✓ Preview ready below.');
     } catch(e) {
       showMsg('postClinicMsg', 'error', 'Error: ' + e.message);
     } finally {
@@ -1572,11 +1577,14 @@
 
   async function sendPostClinicEmail() {
     if (!lastPreviewSelection) { showMsg('postClinicMsg', 'error', 'Please preview before sending.'); return; }
-    const { eventDate, clinicType } = lastPreviewSelection;
+    const { eventDate, clinicType, testClientId } = lastPreviewSelection;
     const btn = document.getElementById('sendPostClinicBtn');
 
     const fmt = new Date(eventDate + 'T12:00:00').toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-    if (!confirm(`Send post-clinic emails to everyone registered for ${clinicType} on ${fmt}?`)) return;
+    const confirmMsg = testClientId
+      ? `Send a TEST post-clinic email (using ${clinicType} on ${fmt} for date/booster context) to client ID ${testClientId} only?`
+      : `Send post-clinic emails to everyone registered for ${clinicType} on ${fmt}?`;
+    if (!confirm(confirmMsg)) return;
 
     btn.disabled = true;
 
@@ -1593,7 +1601,7 @@
         const res = await fetch('/api/send-postclinic', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ eventDate, clinicType, offset, batchSize: 40 })
+          body: JSON.stringify({ eventDate, clinicType, offset, batchSize: 40, testClientId })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Send failed');
