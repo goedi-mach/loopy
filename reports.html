@@ -828,6 +828,31 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
     return res.json();
   }
 
+  // Paginates through PostgREST's Range header to bypass the 1000-row db-max-rows cap.
+  // `path` should NOT include a `limit=` param — this controls paging itself.
+  async function sbGetAll(path, pageSize = 1000) {
+    let allRows = [];
+    let from = 0;
+    while (true) {
+      const to = from + pageSize - 1;
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        headers: {
+          ...authHeaders(),
+          'Accept': 'application/json',
+          'Range-Unit': 'items',
+          'Range': `${from}-${to}`
+        }
+      });
+      if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.removeItem('php_email'); window.location.href = 'login.html?expired=1'; return; }
+      if (!res.ok && res.status !== 206) throw new Error((await res.json().catch(() => ({}))).message || res.statusText);
+      const rows = await res.json();
+      allRows = allRows.concat(rows);
+      if (rows.length < pageSize) break; // last page
+      from += pageSize;
+    }
+    return allRows;
+  }
+
   // ── DATE DEFAULTS ──────────────────────────────────────────────
   function setDefaultDates() {
     const today = new Date();
@@ -872,18 +897,18 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
       // No direct event_id on vaccinations, so we filter by pet/client below if needed
 
       // Pull all vaccinations in range (select fields we need)
-      const vaxAll = await sbGet(
-        `vaccinations?select=id,vaccine_name,date_given,pet_id,administered_by${dateFrom ? `&date_given=gte.${dateFrom}` : ''}${dateTo ? `&date_given=lte.${dateTo}` : ''}&order=date_given.asc&limit=5000`
+      const vaxAll = await sbGetAll(
+        `vaccinations?select=id,vaccine_name,date_given,pet_id,administered_by${dateFrom ? `&date_given=gte.${dateFrom}` : ''}${dateTo ? `&date_given=lte.${dateTo}` : ''}&order=date_given.asc`
       );
 
       // Pull pets (for species + client linkage)
-      const petsAll = await sbGet('pets?select=id,client_id,species&limit=10000');
+      const petsAll = await sbGetAll('pets?select=id,client_id,species');
       const petMap  = {};
       petsAll.forEach(p => { petMap[p.id] = p; });
 
       // Pull clients in range (by event_date)
-      let clientPath = `clients?select=id,event_date${dateFrom ? `&event_date=gte.${dateFrom}` : ''}${dateTo ? `&event_date=lte.${dateTo}` : ''}&limit=10000`;
-      const clientsInRange = await sbGet(clientPath);
+      let clientPath = `clients?select=id,event_date${dateFrom ? `&event_date=gte.${dateFrom}` : ''}${dateTo ? `&event_date=lte.${dateTo}` : ''}`;
+      const clientsInRange = await sbGetAll(clientPath);
       const clientIdSet = new Set(clientsInRange.map(c => c.id));
 
       // Filter vaccinations to only those whose pet's client is in range
@@ -914,11 +939,11 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
       const totalPets    = petIds.length;
 
       // Microchips in range
-      const chipsAll = await sbGet(
+      const chipsAll = await sbGetAll(
         `pets?select=id,microchip_number,client_id${dateFrom || dateTo ? '&' : '?'}` +
         // We use clients.event_date as a proxy for when the chip was placed
         // Pull pets whose client visited in range and has a chip number
-        `microchip_number=not.is.null&limit=10000`
+        `microchip_number=not.is.null`
       );
       // Filter by client in range
       const chips = chipsAll.filter(p => clientIdSet.has(p.client_id));
@@ -1046,7 +1071,7 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
       const returningWrap = document.getElementById('returningWrap');
 
       // Always show overall stats
-      const allVaxDates = await sbGet('vaccinations?select=pet_id,date_given&limit=100000');
+      const allVaxDates = await sbGetAll('vaccinations?select=pet_id,date_given');
       const vaxDatesByClient = {};
       allVaxDates.forEach(v => {
         const cid = petMap[v.pet_id]?.client_id;
@@ -1071,11 +1096,11 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
         const evLabel  = evSel.options[evSel.selectedIndex].text;
 
         // Clients who got vaccines on this event date
-        const evVax = await sbGet(`vaccinations?select=pet_id&date_given=eq.${evDate}&limit=10000`);
+        const evVax = await sbGetAll(`vaccinations?select=pet_id&date_given=eq.${evDate}`);
         const evClientIds = [...new Set(evVax.map(v => petMap[v.pet_id]?.client_id).filter(Boolean))];
 
         // Of those, how many had a prior vaccination before this date
-        const priorVax = await sbGet(`vaccinations?select=pet_id&date_given=lt.${evDate}&limit=100000`);
+        const priorVax = await sbGetAll(`vaccinations?select=pet_id&date_given=lt.${evDate}`);
         const priorClientSet = new Set(priorVax.map(v => petMap[v.pet_id]?.client_id).filter(Boolean));
 
         let evNew = 0, evRet = 0;
@@ -1144,8 +1169,8 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
 
    // ── VACCINE WASTE ──
       console.log('eventsInRange:', eventsInRange);
-      const wasteRaw = await sbGet(
-        `vaccine_waste?select=vaccine_name,doses_wasted,event_id${eventsInRange.length ? `&event_id=in.(${eventsInRange.map(e=>e.id).join(',')})` : '&event_id=eq.null'}&order=vaccine_name.asc&limit=1000`
+      const wasteRaw = await sbGetAll(
+        `vaccine_waste?select=vaccine_name,doses_wasted,event_id${eventsInRange.length ? `&event_id=in.(${eventsInRange.map(e=>e.id).join(',')})` : '&event_id=eq.null'}&order=vaccine_name.asc`
       );
 
       const wasteWrap = document.getElementById('wasteWrap');
@@ -1306,14 +1331,13 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
       let path = `clients?select=zip&archived=eq.false`;
       if (dateFrom) path += `&event_date=gte.${dateFrom}`;
       if (dateTo)   path += `&event_date=lte.${dateTo}`;
-      path += `&limit=10000`;
-      const clients = await sbGet(path);
+      const clients = await sbGetAll(path);
 
       let filtered = clients;
       if (eventId) {
         const evSel = document.getElementById('eventFilter');
         const evDateStr = evSel.options[evSel.selectedIndex].text.split(' — ')[0];
-        const allInEvent = await sbGet(`clients?select=zip&event_date=eq.${evDateStr}&archived=eq.false&limit=10000`);
+        const allInEvent = await sbGetAll(`clients?select=zip&event_date=eq.${evDateStr}&archived=eq.false`);
         filtered = allInEvent;
       }
 
@@ -1459,8 +1483,8 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
       // For each pair, count clients at vaccine clinic vs those who returned for booster
       const rows = await Promise.all(pairs.map(async ({ vaccine, booster }) => {
         const [vcClients, bcClients] = await Promise.all([
-          sbGet(`clients?event_date=eq.${vaccine.event_date}&archived=eq.false&select=id&limit=5000`),
-          sbGet(`clients?event_date=eq.${booster.event_date}&archived=eq.false&select=id&limit=5000`)
+          sbGetAll(`clients?event_date=eq.${vaccine.event_date}&archived=eq.false&select=id`),
+          sbGetAll(`clients?event_date=eq.${booster.event_date}&archived=eq.false&select=id`)
         ]);
         const vcIds = new Set(vcClients.map(c => c.id));
         const bcIds = new Set(bcClients.map(c => c.id));
@@ -1530,7 +1554,7 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
 
   async function loadStaffDropdown() {
     try {
-      const rows = await sbGet('vaccinations?select=administered_by&administered_by=not.is.null&limit=5000');
+      const rows = await sbGetAll('vaccinations?select=administered_by&administered_by=not.is.null');
       const names = [...new Set(rows.map(r => r.administered_by).filter(Boolean))].sort();
       const sel = document.getElementById('staffSelect');
       names.forEach(name => {
@@ -1648,8 +1672,8 @@ if (res.status === 401) { localStorage.removeItem('php_token'); localStorage.rem
     lastLookupRows = [];
 
     try {
-      const vax = await sbGet(
-        `vaccinations?administered_by=eq.${encodeURIComponent(staff)}&select=id,vaccine_name,date_given,lot_number,administered_by,pet_id&order=date_given.asc&limit=5000`
+      const vax = await sbGetAll(
+        `vaccinations?administered_by=eq.${encodeURIComponent(staff)}&select=id,vaccine_name,date_given,lot_number,administered_by,pet_id&order=date_given.asc`
       );
 
       if (vax.length === 0) {
