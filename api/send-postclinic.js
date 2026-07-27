@@ -222,14 +222,32 @@ export default async function handler(req, res) {
       loadTemplate(t.template_es).then(r => { triggerTemplates[t.template_es] = r; }),
     ]));
 
-    // Pull ALL clients first (needed for full pet/vaccination context regardless of batch)
-    // Test mode: fetch just the one specified client, ignoring event_date matching.
-    const allClients = testClientId
-      ? await sbFetch(`clients?id=eq.${testClientId}&archived=eq.false&select=id,name,email,zip,preferred_language`)
-      : await sbFetch(
-          `clients?event_date=eq.${eventDate}&archived=eq.false` +
-          `&select=id,name,email,zip,preferred_language&order=id.asc&limit=5000`
-        );
+    // Determine who actually attended this clinic by checking who received a vaccine
+    // that day — NOT clients.event_date, which only reflects a client's original
+    // registration date and is never updated on return visits (it's also relied on
+    // by reports.html's new-vs-returning metric, so we deliberately don't touch it).
+    let allClients;
+    if (testClientId) {
+      allClients = await sbFetch(
+        `clients?id=eq.${testClientId}&archived=eq.false&select=id,name,email,zip,preferred_language`
+      );
+    } else {
+      const attendeeRows = await sbFetch(
+        `vaccinations?date_given=eq.${eventDate}&select=pet_id,pets(client_id)&limit=5000`
+      );
+      if (!Array.isArray(attendeeRows)) throw new Error('Could not determine clinic attendees');
+
+      const attendeeClientIds = [...new Set(
+        attendeeRows.map(r => r.pets?.client_id).filter(Boolean)
+      )];
+
+      allClients = attendeeClientIds.length
+        ? await sbFetch(
+            `clients?id=in.(${attendeeClientIds.join(',')})&archived=eq.false` +
+            `&select=id,name,email,zip,preferred_language&order=id.asc&limit=5000`
+          )
+        : [];
+    }
     if (!Array.isArray(allClients)) throw new Error('Could not load clients');
 
     if (!allClients.length) {
