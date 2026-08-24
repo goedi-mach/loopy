@@ -1015,14 +1015,32 @@
       if (!expDate) { showMsg('lotMsg', 'error', 'Please enter an expiration date.'); return; }
       if (expDate < new Date().toISOString().split('T')[0]) { showMsg('lotMsg', 'error', 'This lot is already expired.'); return; }
 
-      btn.disabled = true;
+            btn.disabled = true;
       btn.textContent = 'Saving…';
 
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory`, {
-          method:  'POST',
-          headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, manufacturer, active: true, exp_date: document.getElementById('newLotExpDate').value || null })       });
+        // Check for an existing row with this vaccine_type + lot_number (active or archived)
+        // so we update it instead of inserting a duplicate.
+        const existingRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/vaccine_inventory?vaccine_type=eq.${type}&lot_number=eq.${encodeURIComponent(lot)}&select=id`,
+          { headers: authHeaders() }
+        );
+        const existing = existingRes.ok ? await existingRes.json() : [];
+
+        let res;
+        if (existing.length) {
+          res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${existing[0].id}`, {
+            method:  'PATCH',
+            headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+            body:    JSON.stringify({ manufacturer, active: true, archived: false, deactivated_at: null, exp_date: expDate })
+          });
+        } else {
+          res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory`, {
+            method:  'POST',
+            headers: { ...authHeaders(), 'Prefer': 'return=representation' },
+            body:    JSON.stringify({ vaccine_type: type, label: VAX_LABELS[type], lot_number: lot, manufacturer, active: true, exp_date: expDate })
+          });
+        }
         if (!res.ok) throw new Error((await res.json()).message || 'Save failed');
         showMsg('lotMsg', 'success', `Lot saved for ${VAX_LABELS[type]}.`);
         document.getElementById('newLotType').value          = '';
