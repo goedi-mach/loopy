@@ -488,7 +488,10 @@
         <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:1rem;">
           Set the active lot number for each vaccine type. Discharge volunteers will see these automatically — no manual entry needed.
         </p>
-        <div id="lotMsg" class="msg"></div>
+                <div id="lotMsg" class="msg"></div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
+          <button class="btn btn-sm" id="sweepLotsBtn" onclick="sweepStaleLots()" style="border:1.5px solid var(--border);color:var(--text-muted);background:none;">🧹 Sweep Stale Lots (3+ mo)</button>
+        </div>
         <div id="lotTableWrap">
           <div class="empty-state">Loading…</div>
         </div>
@@ -1088,7 +1091,7 @@
       }
     }
 
-    async function archiveLot(id) {
+        async function archiveLot(id) {
       if (!confirm('Archive this lot? It will be hidden from the list. You can still view it with "Show archived".')) return;
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=eq.${id}`, {
@@ -1101,6 +1104,74 @@
         loadLots();
       } catch (err) {
         showMsg('lotMsg', 'error', err.message);
+      }
+    }
+
+    async function sweepStaleLots() {
+      const btn = document.getElementById('sweepLotsBtn');
+      btn.disabled = true;
+      btn.textContent = 'Checking…';
+      try {
+        const cutoff = new Date();
+        cutoff.setMonth(cutoff.getMonth() - 3);
+        const cutoffIso = cutoff.toISOString().slice(0, 10);
+
+        // Lots not yet archived, with when they were added
+        const lotsRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/vaccine_inventory?archived=eq.false&select=id,lot_number,active,created_at`,
+          { headers: authHeaders() }
+        );
+        const lots = await lotsRes.json();
+
+        // Lot numbers used in the last 3 months (Range header to bypass the 1000-row cap)
+        const vaxRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/vaccinations?select=lot_number&date_given=gte.${cutoffIso}&lot_number=not.is.null`,
+          { headers: { ...authHeaders(), 'Range': '0-9999' } }
+        );
+        const recentLots = new Set((await vaxRes.json()).map(v => v.lot_number));
+
+        const stale = lots.filter(l =>
+          l.created_at < cutoffIso && !recentLots.has(l.lot_number)
+        );
+
+        if (!stale.length) {
+          btn.disabled = false;
+          btn.textContent = '🧹 Sweep Stale Lots (3+ mo)';
+          showMsg('lotMsg', 'success', 'No stale lots found — everything looks current.');
+          return;
+        }
+
+        if (!confirm(`${stale.length} lot(s) haven't had a vaccination in 3+ months. Archive them now?`)) {
+          btn.disabled = false;
+          btn.textContent = '🧹 Sweep Stale Lots (3+ mo)';
+          return;
+        }
+
+        const staleActiveIds   = stale.filter(l => l.active).map(l => l.id);
+        const staleInactiveIds = stale.filter(l => !l.active).map(l => l.id);
+
+        if (staleActiveIds.length) {
+          await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=in.(${staleActiveIds.join(',')})`, {
+            method:  'PATCH',
+            headers: authHeaders(),
+            body:    JSON.stringify({ active: false, archived: true, deactivated_at: new Date().toISOString() })
+          });
+        }
+        if (staleInactiveIds.length) {
+          await fetch(`${SUPABASE_URL}/rest/v1/vaccine_inventory?id=in.(${staleInactiveIds.join(',')})`, {
+            method:  'PATCH',
+            headers: authHeaders(),
+            body:    JSON.stringify({ archived: true })
+          });
+        }
+
+        showMsg('lotMsg', 'success', `Archived ${stale.length} stale lot(s).`);
+        loadLots();
+      } catch (err) {
+        showMsg('lotMsg', 'error', err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🧹 Sweep Stale Lots (3+ mo)';
       }
     }
 
