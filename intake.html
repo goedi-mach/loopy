@@ -2004,6 +2004,8 @@ async function toggleArchivePet(petId, currentlyArchived) {
     document.getElementById('photoCaptureBtn').style.display = 'none';
     document.getElementById('photoRetakeBtn').style.display = 'none';
     document.getElementById('photoSaveBtn').style.display = 'none';
+    document.getElementById('photoSaveBtn').disabled = false;
+    document.getElementById('photoSaveBtn').textContent = '✓ Save Photo';
     document.getElementById('photoUploadLink').style.display = 'inline-block';
     startWebcam();
   }
@@ -2150,6 +2152,8 @@ async function toggleArchivePet(petId, currentlyArchived) {
     photoTargetPetId = null;
     document.getElementById('photoModalOverlay').style.display = 'none';
     document.getElementById('photoFileInput').value = '';
+    document.getElementById('photoSaveBtn').disabled = false;
+    document.getElementById('photoSaveBtn').textContent = '✓ Save Photo';
   }
 
   // ─── HELPERS ─────────────────────────────────────────────────── 
