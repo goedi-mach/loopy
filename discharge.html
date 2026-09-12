@@ -600,8 +600,8 @@
         <div class="card-body">
           <div style="display:flex; gap:0.4rem; margin-bottom:0.85rem; flex-wrap:wrap;">
   <button class="filter-btn" id="filterAll" onclick="setFilter('all')">All</button>
-  <button class="filter-btn" id="filterRegistered" onclick="setFilter('registered')">In Queue</button>
-  <button class="filter-btn" id="filterCheckedIn" onclick="setFilter('checked_in')">Checked In</button>
+  <button class="filter-btn" id="filterRegistered" onclick="setFilter('registered')">Registered</button>
+  <button class="filter-btn" id="filterDischarged" onclick="setFilter('discharged')">Discharged</button>
 </div>
           <div class="search-wrap">
             <input type="text" id="searchInput" placeholder="Name, email, or phone…"
@@ -1352,7 +1352,7 @@ async function loadRecentClients() {
     if (clinicType === 'Booster Clinic') {
       // Find the most recent completed vaccine clinic
       const pastEvents = await sbGet(
-        `events?notes=eq.Vaccine Clinic&completed=eq.true&order=event_date.desc&limit=1`
+        `events?clinic_type=eq.Vaccine Clinic&completed=eq.true&order=event_date.desc&limit=1`
       );
       if (!pastEvents.length) {
         list.innerHTML = '<li class="empty-state">No previous vaccine clinic found.</li>';
@@ -1377,17 +1377,12 @@ function renderClientList(clients) {
     list.innerHTML = '<li class="empty-state">No clients found.</li>';
     return;
   }
-  const statusLabel = { registered: 'In Queue', checked_in: 'Checked In', discharged: 'Discharged' };
-  // Build queue number map: position among non-archived, checked-in clients sorted by checked_in_at
-  const queueClients = clients.filter(c => !c.archived && c.checked_in_at);
-  queueClients.sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
-  const queuePos = {};
-  queueClients.forEach((c, i) => queuePos[c.id] = i + 1);
+const statusLabel = { registered: 'Registered', discharged: 'Discharged' };
 
   list.innerHTML = clients.map(c => `
     <li class="client-item" style="${c.archived ? 'opacity:0.45;' : ''}" onclick="selectClient(${JSON.stringify(c).replace(/\"/g,'&quot;')})">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="client-name">${queuePos[c.id] ? `<span style="color:var(--text-muted); font-size:0.8rem; margin-right:6px">#${queuePos[c.id]}</span>` : ''}${c.name}</div>
+        <div class="client-name">${c.name}</div>
         ${c.archived
           ? '<span class="badge" style="background:#e5e7eb;color:#6b7280">Archived</span>'
           : `<span class="badge badge-${c.status || 'registered'}">${statusLabel[c.status || 'registered']}</span>`}
@@ -1424,7 +1419,7 @@ async function loadEvents() {
           <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
             ${fmt(e.event_date)} · ${fmtTime(e.start_time)}${e.end_time ? ` – ${fmtTime(e.end_time)}` : ''}
           </div>
-          ${e.notes ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; font-style:italic">${e.notes}</div>` : ''}
+          ${e.clinic_type ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; font-style:italic">${e.clinic_type}</div>` : ''}
         </div>
         <button onclick="deleteEvent('${e.id}', '${e.location.replace(/'/g, "\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0;">✕ Delete</button>
       </div>
@@ -1436,7 +1431,7 @@ async function loadEvents() {
 
     // Set clinic type and default filter
     if (todayEvent) {
-      clinicType = todayEvent.notes || null;
+      clinicType = todayEvent.clinic_type || null;
       if (clinicType === 'Booster Clinic') {
         currentFilter = 'registered';
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1535,7 +1530,7 @@ function renderLangBadge(lang) {
       [client.phone, client.email, [client.street, client.city, client.state, client.zip].filter(Boolean).join(', ')].filter(Boolean).join(' · ') || 'No contact info';
     document.getElementById('clientSince').textContent    =
       'Client since ' + new Date(client.created_at).toLocaleDateString('en-US', { month:'short', year:'numeric' });
-const statusLabel = { registered: 'Registered', checked_in: 'Checked In', seen: 'Seen', discharged: 'Discharged' };
+const statusLabel = { registered: 'Registered', discharged: 'Discharged' };
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
@@ -2757,7 +2752,7 @@ if (savedToken) {
 (function(){
   const STEPS = [
     { target:'searchInput',   title:'Find a client',        body:'Search by name, phone, or email. Select a client to see their pets and record.',                 pos:'right' },
-    { target:'clientList',    title:'Queue order',          body:'Clients are numbered by arrival so discharge staff can work through them in order.',              pos:'right' },
+    { target:'clientList',    title:'Client list',          body:'Everyone registered for today\'s clinic appears here — filter by Registered or Discharged.',     pos:'right' },
     { target:'petList',       title:'Select a pet',         body:'Tap a pet to load their record. Vaccine and microchip logging are tied to the selected pet.',     pos:'left'  },
     { target:'microchipCard', title:'Log a microchip',      body:'Record whether the pet received a microchip today and enter the chip number if so.',              pos:'left'  },
     { target:'vaxCard',       title:'Log vaccines',         body:'Choose the vaccine, lot number, date given, and administering vet. Next due date is auto-filled.', pos:'left'  },

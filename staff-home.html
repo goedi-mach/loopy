@@ -837,11 +837,11 @@
     if (!patchEv.ok) throw new Error(`Failed to mark event complete (${patchEv.status}).`);
 
     const patchClients = await fetch(
-      `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&status=in.(checked_in,seen,discharged)&event_date=eq.${eventDate}`,
+      `${SUPABASE_URL}/rest/v1/clients?archived=eq.false&event_date=eq.${eventDate}`,
       {
         method:  'PATCH',
         headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
-        body:    JSON.stringify({ status: 'registered', checked_in_at: null, seen_at: null })
+        body:    JSON.stringify({ status: null, checked_in_at: null, seen_at: null })
       }
     );
     if (!patchClients.ok) throw new Error(`Failed to reset client statuses (${patchClients.status}).`);

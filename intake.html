@@ -397,6 +397,27 @@
     .badge.sn-yes { background: var(--green-light); color: var(--green); }
     .badge.sn-no { background: var(--amber-light); color: var(--amber); }
 
+    /* Vaccine history */
+    .vax-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .vax-table th {
+      text-align: left; padding: 0.5rem 0.75rem; background: var(--navy-light); color: var(--navy);
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.78rem;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .vax-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text); }
+    .vax-table tr:last-child td { border-bottom: none; }
+    .vax-table tr:hover td { background: #f8faff; }
+
+    .due-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    }
+    .due-row:last-child { border-bottom: none; }
+    .due-tag { font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.6rem; border-radius: 999px; white-space: nowrap; }
+    .due-tag.due-now   { background: var(--coral-light); color: var(--coral-dark); }
+    .due-tag.due-never { background: var(--amber-light); color: var(--amber); }
+    .due-tag.due-ok    { background: var(--green-light); color: var(--green); }
+
     /* Forms inside cards */
     .form-field { margin-bottom: 0.9rem; }
 
@@ -597,8 +618,8 @@
         <div class="card-body">
           <div style="display:flex; gap:0.4rem; margin-bottom:0.85rem; flex-wrap:wrap;">
   <button class="filter-btn" id="filterAll" onclick="setFilter('all')">All</button>
-  <button class="filter-btn" id="filterRegistered" onclick="setFilter('registered')">In Queue</button>
-  <button class="filter-btn" id="filterCheckedIn" onclick="setFilter('checked_in')">Checked In</button>
+  <button class="filter-btn" id="filterRegistered" onclick="setFilter('registered')">Registered</button>
+  <button class="filter-btn" id="filterDischarged" onclick="setFilter('discharged')">Discharged</button>
 </div>
           <div class="search-wrap">
             <input type="text" id="searchInput" placeholder="Name, email, or phone…"
@@ -808,7 +829,6 @@
                 <div style="font-size:0.83rem; color:var(--text-muted); margin-top:0.25rem" id="clientContact"></div>
               </div>
               <div style="display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem;">
-                <button id="checkinBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none" onclick="checkInClient()">✓ Check In</button>
                 <button id="editClientBtn" class="btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem; display:none; background:var(--navy-mid);" onclick="openEditClient()">✏️ Edit</button>
                 <a id="viewProfileBtn" href="#" style="display:none; font-size:0.8rem; padding:0.4rem 1rem; border-radius:999px; border:1.5px solid var(--navy); color:var(--navy); font-family:'Nunito',sans-serif; font-weight:700; text-decoration:none;">👤 Profile</a>
                 <button id="notesBtn" onclick="toggleNotesPill()" title="Notes &amp; flags" style="font-size:1rem; padding:0.4rem 0.6rem; border-radius:999px; border:1.5px solid #f0d97a; background:#fffbea; color:#92720a; cursor:pointer; display:none;">📝</button>
@@ -987,6 +1007,25 @@
               <input type="text" id="newPetColors" placeholder="e.g. Black & white, tabby" />
             </div>
             <button class="btn-primary" onclick="addPet()">Save Pet</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vaccine history -->
+      <div class="card" id="historyCard" style="display:none">
+        <div class="card-header">
+          <button class="section-toggle" onclick="toggleSection('historySection', 'histToggleIcon')">
+            <span>📋 Vaccine History</span>
+            <span class="toggle-icon" id="histToggleIcon">▼</span>
+          </button>
+        </div>
+        <div class="card-body collapsible" id="historySection">
+          <div id="vaxHistoryContent">
+            <div class="empty-state">Select a pet above to view its history.</div>
+          </div>
+          <div id="dueCheckWrap" style="margin-top:1rem; padding-top:1rem; border-top:1.5px dashed var(--border); display:none;">
+            <button class="btn-primary" style="background:var(--navy-mid);" onclick="checkWhatsDue()">🔍 What's Due?</button>
+            <div id="dueResults" style="margin-top:0.85rem;"></div>
           </div>
         </div>
       </div>
@@ -1172,7 +1211,7 @@ async function loadRecentClients() {
     if (clinicType === 'Booster Clinic') {
       // Find the most recent completed vaccine clinic
       const pastEvents = await sbGet(
-        `events?notes=eq.Vaccine Clinic&completed=eq.true&order=event_date.desc&limit=1`
+        `events?clinic_type=eq.Vaccine Clinic&completed=eq.true&order=event_date.desc&limit=1`
       );
       if (!pastEvents.length) {
         list.innerHTML = '<li class="empty-state">No previous vaccine clinic found.</li>';
@@ -1197,17 +1236,12 @@ function renderClientList(clients) {
     list.innerHTML = '<li class="empty-state">No clients found.</li>';
     return;
   }
-const statusLabel = { registered: 'In Queue', checked_in: 'Checked In', discharged: 'Discharged' };
-  // Build queue number map: position among non-archived, checked-in clients sorted by checked_in_at
-  const queueClients = clients.filter(c => !c.archived && c.checked_in_at);
-  queueClients.sort((a, b) => new Date(a.checked_in_at) - new Date(b.checked_in_at));
-  const queuePos = {};
-  queueClients.forEach((c, i) => queuePos[c.id] = i + 1);
+const statusLabel = { registered: 'Registered', discharged: 'Discharged' };
 
   list.innerHTML = clients.map(c => `
     <li class="client-item" style="${c.archived ? 'opacity:0.45;' : ''}" onclick="selectClient(${JSON.stringify(c).replace(/\"/g,'&quot;')})">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="client-name">${queuePos[c.id] ? `<span style="color:var(--text-muted); font-size:0.8rem; margin-right:6px">#${queuePos[c.id]}</span>` : ''}${c.name}</div>
+        <div class="client-name">${c.name}</div>
         ${c.archived
           ? '<span class="badge" style="background:#e5e7eb;color:#6b7280">Archived</span>'
           : `<span class="badge badge-${c.status || 'registered'}">${statusLabel[c.status || 'registered']}</span>`}
@@ -1224,7 +1258,8 @@ function openWalkin() {
   // Hide any currently loaded client profile
   document.getElementById('clientInfo').style.display = 'none';
   document.getElementById('petsCard').style.display = 'none';
-  ['checkinBtn','editClientBtn','viewProfileBtn','notesBtn','overflowBtn'].forEach(id => {
+  document.getElementById('historyCard').style.display = 'none';
+  ['editClientBtn','viewProfileBtn','notesBtn','overflowBtn'].forEach(id => {
     document.getElementById(id).style.display = 'none';
   });
   // Init after the canvas is visible so dimensions are correct
@@ -1347,8 +1382,7 @@ async function submitWalkin() {
       city:              document.getElementById('walkinCity').value.trim() || null,
       state:             document.getElementById('walkinState').value.trim().toUpperCase() || null,
       zip:               document.getElementById('walkinZip').value.trim() || null,
-      status:            'checked_in',
-      checked_in_at:     new Date().toISOString(),
+      status:            'registered',
       waiver_signature:  sigData
     });
 
@@ -1399,7 +1433,7 @@ async function loadEvents() {
           <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">
             ${fmt(e.event_date)} · ${fmtTime(e.start_time)}${e.end_time ? ` – ${fmtTime(e.end_time)}` : ''}
           </div>
-          ${e.notes ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; font-style:italic">${e.notes}</div>` : ''}
+          ${e.clinic_type ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem; font-style:italic">${e.clinic_type}</div>` : ''}
         </div>
         <button onclick="deleteEvent('${e.id}', '${e.location.replace(/'/g, "\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0;">✕ Delete</button>
       </div>
@@ -1411,7 +1445,7 @@ async function loadEvents() {
 
     // Set clinic type and default filter
     if (todayEvent) {
-      clinicType = todayEvent.notes || null;
+      clinicType = todayEvent.clinic_type || null;
       if (clinicType === 'Booster Clinic') {
         currentFilter = 'registered';
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1507,12 +1541,11 @@ function renderLangBadge(lang) {
     document.getElementById('clientName').textContent     = client.name;
     document.getElementById('clientContact').textContent  =
       [client.phone, client.email, client.address].filter(Boolean).join(' · ') || 'No contact info';
-const statusLabel = { registered: 'Registered', checked_in: 'Checked In', discharged: 'Discharged' };
+const statusLabel = { registered: 'Registered', discharged: 'Discharged' };
 const status = client.status || 'registered';
 document.getElementById('clientStatusBadge').innerHTML =
   `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
 document.getElementById('clientLangBadge').innerHTML = renderLangBadge(client.preferred_language);
-document.getElementById('checkinBtn').style.display   = (!client.archived && status === 'registered') ? 'block' : 'none';
 document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
 profileBtn.href = `client.html?id=${client.id}`;
@@ -1521,6 +1554,7 @@ document.getElementById('archiveClientBtn').style.display = 'block';
 document.getElementById('archiveClientBtn').textContent   = client.archived ? 'Unarchive' : 'Archive';
 document.getElementById('overflowBtn').style.display      = 'inline-block';
 document.getElementById('petsCard').style.display         = 'block';
+document.getElementById('historyCard').style.display      = 'block';
 document.getElementById('notesBtn').style.display         = 'block';
 document.getElementById('clientNotesField').value         = client.notes || '';
 document.getElementById('notesPillBody').style.display    = 'none';
@@ -1529,7 +1563,9 @@ document.getElementById('clientSnipInterest').checked     = client.snip_interest
 
     // Reset vaccine section
     clearSelectedPet();
-    
+    document.getElementById('vaxHistoryContent').innerHTML = '<div class="empty-state">Select a pet above to view its history.</div>';
+    document.getElementById('dueCheckWrap').style.display = 'none';
+    document.getElementById('dueResults').innerHTML = '';
 
     // Load pets
     await loadPets(client.id);
@@ -1591,13 +1627,101 @@ document.getElementById('clientSnipInterest').checked     = client.snip_interest
     document.querySelectorAll('.pet-card').forEach(el => el.classList.remove('selected'));
     document.getElementById(`pet-${pet.id}`).classList.add('selected');
 
-    document.getElementById('selectedPetName').textContent    = pet.name;
+    document.getElementById('dueResults').innerHTML = '';
+    await loadVaxHistory(pet.id, pet.name);
   }
 
 function clearSelectedPet() {
     selectedPetId  = null;
     selectedPetObj = null;
     document.querySelectorAll('.pet-card').forEach(el => el.classList.remove('selected'));
+  }
+
+  // ─── VACCINE HISTORY (read-only) ────────────────────────────────
+  async function loadVaxHistory(petId, petName) {
+    const content = document.getElementById('vaxHistoryContent');
+    const dueWrap = document.getElementById('dueCheckWrap');
+    content.innerHTML = '<div class="empty-state">Loading…</div>';
+    dueWrap.style.display = 'none';
+
+    try {
+      const records = await sbGet(`vaccinations?pet_id=eq.${petId}&order=date_given.desc`);
+      if (!records.length) {
+        content.innerHTML = `<div class="empty-state">No vaccines on record for ${petName}.</div>`;
+        dueWrap.style.display = 'block';
+        return;
+      }
+
+      const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+
+      content.innerHTML = `
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem">
+          Showing history for <strong>${petName}</strong>
+        </p>
+        <div style="overflow-x:auto">
+          <table class="vax-table">
+            <thead>
+              <tr><th>Vaccine</th><th>Lot #</th><th>Date Given</th><th>Next Due</th><th>Administered By</th></tr>
+            </thead>
+            <tbody>
+              ${records.map(r => `
+                <tr>
+                  <td><strong>${r.vaccine_name}</strong></td>
+                  <td>${r.lot_number || '—'}</td>
+                  <td>${fmt(r.date_given)}</td>
+                  <td>${fmt(r.next_due)}</td>
+                  <td>${r.administered_by || '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      dueWrap.style.display = 'block';
+    } catch (err) {
+      content.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
+    }
+  }
+
+  // ─── WHAT'S DUE? ─────────────────────────────────────────────────
+  const REQUIRED_VAX = {
+    dog: ['Rabies', 'DAPP', 'Lepto'],
+    cat: ['Rabies', 'FVRCP'],
+  };
+  const DUE_GRACE_DAYS = 30;
+
+  async function checkWhatsDue() {
+    if (!selectedPetObj) return;
+    const resultsEl = document.getElementById('dueResults');
+    resultsEl.innerHTML = '<div class="empty-state">Checking…</div>';
+
+    try {
+      const records = await sbGet(`vaccinations?pet_id=eq.${selectedPetId}&order=date_given.desc`);
+      const required = REQUIRED_VAX[selectedPetObj.species] || [];
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const rows = required.map(base => {
+        const latest = records.find(r => (r.vaccine_name || '').startsWith(base));
+        if (!latest) return { base, tag: 'due-never', label: 'Never given — needs initial dose' };
+        if (!latest.next_due) return { base, tag: 'due-now', label: `Last given ${latest.date_given} — no next-due date on record` };
+
+        const nextDue    = new Date(latest.next_due + 'T12:00:00');
+        const daysUntil  = Math.round((nextDue - today) / (1000 * 60 * 60 * 24));
+        const fmtDate    = nextDue.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+        if (daysUntil <= DUE_GRACE_DAYS) {
+          return { base, tag: 'due-now', label: daysUntil < 0 ? `Overdue since ${fmtDate}` : `Due now (due ${fmtDate})` };
+        }
+        return { base, tag: 'due-ok', label: `Not due until ${fmtDate}` };
+      });
+
+      resultsEl.innerHTML = rows.map(r => `
+        <div class="due-row"><strong>${r.base}</strong><span class="due-tag ${r.tag}">${r.label}</span></div>
+      `).join('');
+    } catch (err) {
+      resultsEl.innerHTML = `<div class="empty-state" style="color:#a00">Error: ${err.message}</div>`;
+    }
   }
 
   // ─── STATUS UPDATES ────────────────────────────────────────────
@@ -1649,22 +1773,6 @@ async function saveClientNotes() {
     showMsg('notesSaveMsg', 'error', err.message);
   }
 }
-  async function checkInClient() {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${currentClient.id}`, {
-        method:  'PATCH',
-        headers: { ...authHeaders(), 'Prefer': 'return=representation' },
-        body:    JSON.stringify({ status: 'checked_in', checked_in_at: new Date().toISOString() })
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message);
-      currentClient.status = 'checked_in';
-      document.getElementById('clientStatusBadge').innerHTML = '<span class="badge badge-checked_in">Checked In</span>';
-      document.getElementById('checkinBtn').style.display = 'none';
-      await loadRecentClients();
-    } catch (err) {
-      alert(err.message);
-    }
-  }
 
 
 
@@ -1765,7 +1873,6 @@ async function toggleArchiveClient() {
     currentClient.archived = archiving;
     document.getElementById('archiveClientBtn').textContent   = archiving ? 'Unarchive' : 'Archive';
     document.getElementById('editClientBtn').style.display    = archiving ? 'none' : 'block';
-    document.getElementById('checkinBtn').style.display       = 'none';
     document.getElementById('overflowMenu').style.display     = 'none';
     await loadRecentClients();
   } catch (err) {
@@ -1847,6 +1954,7 @@ function resetDetailPanel() {
     document.getElementById('detailEmpty').style.display = 'block';
     document.getElementById('clientInfo').style.display  = 'none';
     document.getElementById('petsCard').style.display    = 'none';
+    document.getElementById('historyCard').style.display = 'none';
   }
 
   function showMsg(el, type, text) {
@@ -1911,10 +2019,9 @@ if (savedToken) {
 (function(){
   const STEPS = [
     { target:'searchInput',   title:'Search clients',       body:'Search by name, phone, or email to find a returning client quickly.',                          pos:'right' },
-    { target:'clientList',    title:'Queue numbers',         body:'Clients are numbered by arrival order so staff always know who is next.',                        pos:'right' },
-    { target:'filterBar',     title:'Filter by status',     body:'Switch between In Queue, Checked In, and Archived to manage the clinic flow.',                  pos:'right' },
-    { target:'checkinBtn',    title:'Check in a client',    body:'When a pre-registered client arrives, select them and tap Check In to move them into the queue.', pos:'left' },
-    { target:'walkinCard',    title:'Walk-in registration', body:'Use this form to register a brand-new client and their pet on the spot. They are checked in automatically.', pos:'left' },
+    { target:'clientList',    title:'Client list',          body:'Everyone registered for today\'s clinic appears here.',                                          pos:'right' },
+    { target:'filterBar',     title:'Filter by status',     body:'Switch between Registered and Discharged to see who\'s still waiting.',                          pos:'right' },
+    { target:'walkinCard',    title:'Walk-in registration', body:'Use this form to register a brand-new client and their pet on the spot.', pos:'left' },
   ];
 
   let cur = 0;
