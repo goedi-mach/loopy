@@ -2842,7 +2842,8 @@ function setRadio(fieldName, index) {
     document.getElementById('photoSaveBtn').textContent = '✓ Save Photo';
   }
 
-  // ─── HELPERS ─────────────────────────────────────────────────── async function downloadCertFromHistory(record) {
+  // ─── HELPERS ───────────────────────────────────────────────────
+  async function downloadCertFromHistory(record) {
   lastRabiesRecord = { ...record, pet: selectedPetObj, client: currentClient };
   await downloadRabiesCert();
 }
