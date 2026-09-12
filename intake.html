@@ -1244,7 +1244,7 @@ const statusLabel = { registered: 'Registered', discharged: 'Discharged' };
         <div class="client-name">${c.name}</div>
         ${c.archived
           ? '<span class="badge" style="background:#e5e7eb;color:#6b7280">Archived</span>'
-          : `<span class="badge badge-${c.status || 'registered'}">${statusLabel[c.status || 'registered']}</span>`}
+          : (statusLabel[c.status] ? `<span class="badge badge-${c.status}">${statusLabel[c.status]}</span>` : '')}
       </div>
       <div class="client-meta">${[c.phone, c.email].filter(Boolean).join(' · ') || 'No contact info'}</div>
     </li>
@@ -1542,9 +1542,9 @@ function renderLangBadge(lang) {
     document.getElementById('clientContact').textContent  =
       [client.phone, client.email, client.address].filter(Boolean).join(' · ') || 'No contact info';
 const statusLabel = { registered: 'Registered', discharged: 'Discharged' };
-const status = client.status || 'registered';
+const status = client.status;
 document.getElementById('clientStatusBadge').innerHTML =
-  `<span class="badge badge-${status}">${statusLabel[status]}</span>`;
+  statusLabel[status] ? `<span class="badge badge-${status}">${statusLabel[status]}</span>` : '';
 document.getElementById('clientLangBadge').innerHTML = renderLangBadge(client.preferred_language);
 document.getElementById('editClientBtn').style.display = !client.archived ? 'block' : 'none';
 const profileBtn = document.getElementById('viewProfileBtn');
