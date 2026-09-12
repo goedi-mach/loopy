@@ -395,6 +395,14 @@
     .badge.cat { background: var(--coral-light); color: var(--coral-dark); }
     .badge.sn-yes { background: var(--green-light); color: var(--green); }
     .badge.sn-no { background: var(--amber-light); color: var(--amber); }
+
+    /* Pet photo */
+    .pet-photo-thumb {
+      width: 44px; height: 44px; border-radius: 10px; overflow: hidden; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--navy-light); font-size: 1.4rem;
+    }
+    .pet-photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .doc-item { display:flex; align-items:center; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--border); font-size:0.85rem; }
     .doc-item:last-child { border-bottom:none; }
     .doc-item a { color:var(--navy); text-decoration:none; font-weight:600; }
@@ -1076,6 +1084,33 @@
   </div><!-- /dash-body -->
 </div><!-- /dashScreen -->
 
+<!-- ── Pet Photo Capture Modal ── -->
+<div id="photoModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:16px; padding:1.5rem; max-width:420px; width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.25); font-family:'Nunito Sans',sans-serif;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <div style="font-family:'Nunito',sans-serif; font-weight:800; font-size:1rem; color:var(--navy);">📷 Photo — <span id="photoModalPetName"></span></div>
+      <button onclick="closePhotoModal()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#666; line-height:1;">✕</button>
+    </div>
+    <div id="photoModalMsg" class="msg"></div>
+
+    <div id="photoVideoWrap" style="background:#111; border-radius:10px; overflow:hidden; aspect-ratio:4/3; display:flex; align-items:center; justify-content:center;">
+      <video id="photoVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover; display:none;"></video>
+      <div id="photoVideoLoading" style="color:#aaa; font-size:0.85rem;">Starting camera…</div>
+    </div>
+    <canvas id="photoCanvas" style="display:none; width:100%; border-radius:10px;"></canvas>
+
+    <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoFileSelect(this)" />
+
+    <div id="photoModalActions" style="display:flex; gap:0.6rem; margin-top:1rem; flex-wrap:wrap; align-items:center;">
+      <button class="btn-primary" id="photoCaptureBtn" onclick="capturePhoto()" style="display:none;">📸 Capture</button>
+      <button class="btn-primary" id="photoRetakeBtn" onclick="retakePhoto()" style="display:none; background:var(--navy-mid);">↺ Retake</button>
+      <button class="btn-primary" id="photoSaveBtn" onclick="savePhoto()" style="display:none;">✓ Save Photo</button>
+      <button onclick="useFileUploadFallback()" id="photoUploadLink" style="background:none; border:none; color:var(--text-muted); font-size:0.82rem; text-decoration:underline; cursor:pointer; font-family:inherit;">Upload a photo instead</button>
+      <button onclick="closePhotoModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-family:inherit; font-size:0.88rem; margin-left:auto;">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ─── DOCUMENTS ────────────────────────────────────────────────
 
@@ -1575,9 +1610,10 @@ document.getElementById('notesPillBody').style.display    = 'none';
         <div class="pet-card" id="pet-${p.id}" style="${p.archived ? 'opacity:0.45;' : ''}"
           onclick="${p.archived ? '' : `selectPet(${JSON.stringify(p).replace(/"/g,'&quot;')})`}">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
+            <div style="display:flex; gap:0.6rem; align-items:flex-start;">
+              <div class="pet-photo-thumb" id="petThumb-${p.id}">${p.photo_updated_at ? `<img src="${SUPABASE_URL}/storage/v1/object/public/pet-photos/${p.id}.jpg?t=${new Date(p.photo_updated_at).getTime()}" alt="${p.name}" />` : (p.species === 'dog' ? '🐶' : p.species === 'cat' ? '🐱' : '🐾')}</div>
+              <div>
               <div class="pet-card-name">
-                ${p.species === 'dog' ? '🐶' : p.species === 'cat' ? '🐱' : '🐾'}
                 ${p.name}
                 <span class="badge ${p.species || ''}">${p.species || '?'}</span>
                 ${p.archived ? '<span class="badge" style="background:#e5e7eb;color:#6b7280">Archived</span>' : ''}
@@ -1595,8 +1631,10 @@ document.getElementById('notesPillBody').style.display    = 'none';
                   '<span>Microchip unknown</span>'}
                 ${p.microchip_number ? `<span># ${p.microchip_number}</span>` : ''}
               </div>
+              </div>
             </div>
             <div style="display:flex; gap:0.4rem; flex-shrink:0; margin-left:0.5rem;">
+              ${!p.archived ? `<button onclick="event.stopPropagation(); openPhotoModal('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">📷</button>` : ''}
               ${!p.archived ? `<button onclick="event.stopPropagation(); openEditPet(${JSON.stringify(p).replace(/"/g,'&quot;')})" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">✏️</button>` : ''}
               <button onclick="event.stopPropagation(); toggleArchivePet('${p.id}', ${p.archived})" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--border); background:none; color:var(--text-muted); cursor:pointer; font-family:inherit;">${p.archived ? 'Unarchive' : 'Archive'}</button>
               ${p.archived ? `<button onclick="event.stopPropagation(); deletePet('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="font-size:0.72rem; padding:0.2rem 0.6rem; border-radius:999px; border:1.5px solid var(--coral); background:none; color:var(--coral-dark); cursor:pointer; font-family:inherit;">Delete</button>` : ''}
@@ -2634,8 +2672,153 @@ function setRadio(fieldName, index) {
     }
   }
 
-  // ─── HELPERS ───────────────────────────────────────────────────
- async function downloadCertFromHistory(record) {
+  // ─── PET PHOTO CAPTURE ─────────────────────────────────────────
+  let photoStream = null;
+  let photoTargetPetId = null;
+  let photoBlob = null;
+
+  function openPhotoModal(petId, petName) {
+    photoTargetPetId = petId;
+    photoBlob = null;
+    document.getElementById('photoModalPetName').textContent = petName;
+    document.getElementById('photoModalOverlay').style.display = 'flex';
+    document.getElementById('photoCanvas').style.display = 'none';
+    document.getElementById('photoVideo').style.display = 'none';
+    document.getElementById('photoVideoLoading').style.display = 'block';
+    document.getElementById('photoVideoLoading').textContent = 'Starting camera…';
+    document.getElementById('photoFileInput').style.display = 'none';
+    document.getElementById('photoCaptureBtn').style.display = 'none';
+    document.getElementById('photoRetakeBtn').style.display = 'none';
+    document.getElementById('photoSaveBtn').style.display = 'none';
+    document.getElementById('photoUploadLink').style.display = 'inline-block';
+    startWebcam();
+  }
+
+  async function startWebcam() {
+    try {
+      photoStream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 800 } } });
+      const video = document.getElementById('photoVideo');
+      video.srcObject = photoStream;
+      video.style.display = 'block';
+      document.getElementById('photoVideoLoading').style.display = 'none';
+      document.getElementById('photoCaptureBtn').style.display = 'inline-block';
+    } catch (err) {
+      document.getElementById('photoVideoLoading').textContent = 'Camera unavailable — use "Upload a photo instead" below.';
+    }
+  }
+
+  function stopWebcam() {
+    if (photoStream) {
+      photoStream.getTracks().forEach(t => t.stop());
+      photoStream = null;
+    }
+  }
+
+  function drawToCanvas(source, canvas) {
+    const w = source.videoWidth || source.naturalWidth || source.width;
+    const h = source.videoHeight || source.naturalHeight || source.height;
+    const maxW = 800;
+    const scale = Math.min(1, maxW / w);
+    canvas.width  = w * scale;
+    canvas.height = h * scale;
+    canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+  }
+
+  function capturePhoto() {
+    const video  = document.getElementById('photoVideo');
+    const canvas = document.getElementById('photoCanvas');
+    drawToCanvas(video, canvas);
+    canvas.toBlob(blob => { photoBlob = blob; }, 'image/jpeg', 0.85);
+
+    video.style.display = 'none';
+    canvas.style.display = 'block';
+    document.getElementById('photoCaptureBtn').style.display = 'none';
+    document.getElementById('photoRetakeBtn').style.display = 'inline-block';
+    document.getElementById('photoSaveBtn').style.display = 'inline-block';
+    stopWebcam();
+  }
+
+  function retakePhoto() {
+    photoBlob = null;
+    document.getElementById('photoCanvas').style.display = 'none';
+    document.getElementById('photoRetakeBtn').style.display = 'none';
+    document.getElementById('photoSaveBtn').style.display = 'none';
+    document.getElementById('photoVideoLoading').style.display = 'block';
+    document.getElementById('photoVideoLoading').textContent = 'Starting camera…';
+    startWebcam();
+  }
+
+  function useFileUploadFallback() {
+    stopWebcam();
+    document.getElementById('photoVideo').style.display = 'none';
+    document.getElementById('photoVideoLoading').style.display = 'none';
+    document.getElementById('photoCaptureBtn').style.display = 'none';
+    document.getElementById('photoRetakeBtn').style.display = 'none';
+    document.getElementById('photoSaveBtn').style.display = 'none';
+    document.getElementById('photoUploadLink').style.display = 'none';
+    document.getElementById('photoFileInput').style.display = 'block';
+    document.getElementById('photoFileInput').click();
+  }
+
+  function handlePhotoFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('photoCanvas');
+      drawToCanvas(img, canvas);
+      canvas.toBlob(blob => { photoBlob = blob; }, 'image/jpeg', 0.85);
+      canvas.style.display = 'block';
+      document.getElementById('photoSaveBtn').style.display = 'inline-block';
+      document.getElementById('photoRetakeBtn').style.display = 'inline-block';
+    };
+    img.src = URL.createObjectURL(file);
+  }
+
+  async function savePhoto() {
+    if (!photoBlob || !photoTargetPetId) return;
+    const msg = document.getElementById('photoModalMsg');
+    const saveBtn = document.getElementById('photoSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pet-photos/${photoTargetPetId}.jpg`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('php_token')}`,
+          'Content-Type': 'image/jpeg',
+          'x-upsert': 'true'
+        },
+        body: photoBlob
+      });
+      if (!uploadRes.ok) throw new Error('Upload failed');
+
+      const nowIso = new Date().toISOString();
+      const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/pets?id=eq.${photoTargetPetId}`, {
+        method: 'PATCH',
+        headers: { ...authHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ photo_updated_at: nowIso })
+      });
+      if (!patchRes.ok) throw new Error('Could not save photo reference');
+
+      closePhotoModal();
+      if (currentClient) await loadPets(currentClient.id);
+    } catch (err) {
+      showMsg(msg, 'error', err.message);
+      saveBtn.disabled = false;
+      saveBtn.textContent = '✓ Save Photo';
+    }
+  }
+
+  function closePhotoModal() {
+    stopWebcam();
+    photoBlob = null;
+    photoTargetPetId = null;
+    document.getElementById('photoModalOverlay').style.display = 'none';
+    document.getElementById('photoFileInput').value = '';
+  }
+
+  // ─── HELPERS ─────────────────────────────────────────────────── async function downloadCertFromHistory(record) {
   lastRabiesRecord = { ...record, pet: selectedPetObj, client: currentClient };
   await downloadRabiesCert();
 }
