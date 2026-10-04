@@ -32,9 +32,11 @@ jobs:
             exit 1
           fi
 
-      - name: Check JavaScript files for syntax errors
+            - name: Check JavaScript files for syntax errors
         run: |
+          tmp=$(mktemp -d)
           for f in api/*.js api/webhooks/*.js auth.js send-reminders-manual.js; do
             echo "Checking $f"
-            node --check "$f"
+            cp "$f" "$tmp/check.mjs"
+            node --check "$tmp/check.mjs"
           done
