@@ -2479,7 +2479,7 @@ function setRadio(fieldName, index) {
     setText('Rabies Tag #',          r.rabies_tag_number  || '', 9);
     setText('Product Name',          r.product_name       || '', 9);
     setText('Vaccine Serial Number', r.lot_number         || '', 9);
-    setText('License Number', CONFIG.VET_LICENSE_ANA, 9);
+    setText('License Number', CONFIG.VET_LICENSE_VALBUENA, 9);
 
     const man = (r.manufacturer || '').toUpperCase().padEnd(3, ' ');
     setText('Manufacturer', man[0]);
