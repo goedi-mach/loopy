@@ -5,3 +5,5 @@ RabiesVacCert.pdf
 ana_signature.png
 certificates/
 node_modules/
+.env*
+config.js
