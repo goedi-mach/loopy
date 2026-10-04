@@ -1,0 +1,40 @@
+name: Build check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate config.js with dummy values
+        env:
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_ANON_KEY: dummy-anon-key
+          VET_LICENSE_VALBUENA: TEST-ONLY
+        run: node scripts/build-config.js
+
+      - name: Check config.js looks right
+        run: |
+          test -s config.js
+          grep -q "VET_LICENSE_VALBUENA" config.js
+          if grep -q "undefined" config.js; then
+            echo "config.js contains 'undefined'"
+            exit 1
+          fi
+
+      - name: Check JavaScript files for syntax errors
+        run: |
+          for f in api/*.js api/webhooks/*.js auth.js send-reminders-manual.js; do
+            echo "Checking $f"
+            node --check "$f"
+          done
