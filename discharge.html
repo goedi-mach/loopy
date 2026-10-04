@@ -973,7 +973,6 @@
             <label>Administered By</label>
             <select id="vaxAdmin">
               <option value="Dr. Ana Valbuena">Dr. Ana Valbuena</option>
-              <option value="Dr. Alexandra Friedman">Dr. Alexandra Friedman</option>
             </select>
           </div>
           <!-- ── RABIES-ONLY FIELDS ───────────────────────────────────── -->
@@ -2010,7 +2009,6 @@ showMsg(msg, 'success', `${vaccine_name} logged for ${selectedPetObj.name}!`);
       document.getElementById('vaxLot').value      = '';
       document.getElementById('vaxDate').value      = '';
       document.getElementById('vaxNextDue').value   = '';
-      document.getElementById('vaxAdmin').value     = '';
       document.getElementById('rabiesFields').style.display = 'none';
       ['rabiesTagNum','rabiesColors','rabiesProduct','rabiesMan'].forEach(id => document.getElementById(id).value = '');
       ['rabiesUSDA','rabiesDose'].forEach(id => document.getElementById(id).value = '');
