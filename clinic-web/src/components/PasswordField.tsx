@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import './PasswordField.css'
 
 type Props = {
   id: string
@@ -6,13 +7,21 @@ type Props = {
   placeholder: string
   value: string
   onChange: (value: string) => void
+  autoComplete?: 'new-password' | 'current-password'
 }
 
-export default function PasswordField({ id, label, placeholder, value, onChange }: Props) {
+export default function PasswordField({
+  id, label, placeholder, value, onChange, autoComplete = 'new-password',
+}: Props) {
   const [visible, setVisible] = useState(false)
+  const [capsOn, setCapsOn] = useState(false)
+
+  function checkCaps(e: React.KeyboardEvent) {
+    setCapsOn(e.getModifierState('CapsLock'))
+  }
 
   return (
-    <>
+    <div className="pw-field">
       <label htmlFor={id}>{label}</label>
       <div className="pw-wrap">
         <input
@@ -21,8 +30,10 @@ export default function PasswordField({ id, label, placeholder, value, onChange 
           type={visible ? 'text' : 'password'}
           value={value}
           placeholder={placeholder}
-          autoComplete="new-password"
+          autoComplete={autoComplete}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={checkCaps}
+          onKeyUp={checkCaps}
         />
         <button
           type="button"
@@ -33,6 +44,7 @@ export default function PasswordField({ id, label, placeholder, value, onChange 
           {visible ? 'Hide' : 'Show'}
         </button>
       </div>
-    </>
+      {capsOn && <div className="caps-warning">⚠ Caps Lock is on</div>}
+    </div>
   )
 }
