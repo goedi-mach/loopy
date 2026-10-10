@@ -1,21 +1,13 @@
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { clearSession } from './lib/auth'
 import './VolunteerHome.css'
 
 export default function VolunteerHome() {
   const navigate = useNavigate()
-
-  // Same check the old page did: no token means back to login.
-  // (This only checks that a token exists. Real protection comes from the database rules.)
-  if (!localStorage.getItem('php_token')) {
-    return <Navigate to="/login" replace />
-  }
-
   const email = localStorage.getItem('php_email')
 
   function signOut() {
-    localStorage.removeItem('php_token')
-    localStorage.removeItem('php_refresh_token')
-    localStorage.removeItem('php_email')
+    clearSession()
     navigate('/login')
   }
 
