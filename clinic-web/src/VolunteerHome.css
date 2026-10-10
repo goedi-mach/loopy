@@ -1,0 +1,92 @@
+.volunteer-page {
+  --coral: #f28b82;
+  --coral-dark: #d96b62;
+  --shadow-lg: 0 8px 32px rgba(26, 58, 143, 0.15);
+  --shadow: 0 2px 16px rgba(26, 58, 143, 0.1);
+  --radius: 12px;
+  --text-muted: #5a6380;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-mid) 100%);
+}
+
+.volunteer-page .card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 420px;
+  margin: 1rem;
+}
+
+.volunteer-page .card h2 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--navy);
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+
+.volunteer-page .subtitle {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.volunteer-page .user-label {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.volunteer-page .btn-mode {
+  display: block;
+  width: 100%;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 1.25rem 1rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: filter 0.15s, transform 0.1s;
+  margin-bottom: 1rem;
+}
+.volunteer-page .btn-mode:active { transform: scale(0.98); }
+.volunteer-page .btn-mode:hover { filter: brightness(0.92); }
+
+.volunteer-page .btn-mode-sub {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  opacity: 0.8;
+  margin-top: 0.3rem;
+}
+
+.volunteer-page .btn-intake { background: var(--navy); color: white; }
+.volunteer-page .btn-discharge { background: var(--coral); color: white; }
+
+.volunteer-page .sign-out {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-decoration: underline;
+}
+.volunteer-page .sign-out:hover { color: var(--navy); }
