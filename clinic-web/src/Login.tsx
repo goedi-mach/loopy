@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import PasswordField from './components/PasswordField'
 import './Login.css'
 
@@ -19,7 +20,14 @@ function pageForRole(role: string) {
   return role === 'staff' || role === 'admin' ? 'staff-home.html' : 'volunteer-home.html'
 }
 
+// Pages already rebuilt in React. Anything not listed here still lives in the old HTML site.
+
+const REACT_ROUTES: Record<string, string> = {
+  'volunteer-home.html': '/volunteer-home',
+}
+
 export default function Login() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -30,9 +38,13 @@ export default function Login() {
       : ''
   )
 
-  // On a real site, jump to the page. On localhost, just show where we would go.
+  // React pages: navigate inside the app.
+  // Not converted yet: on localhost just show where we would go, otherwise load the old page.
   function goTo(page: string) {
-    if (import.meta.env.DEV) {
+    const route = REACT_ROUTES[page]
+    if (route) {
+      navigate(route, { replace: true })
+    } else if (import.meta.env.DEV) {
       setDestination(page)
     } else {
       window.location.href = page
