@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { clearSession } from './lib/auth'
 import { request, sbGet } from './lib/api'
 import type { Client, EventRow } from './types'
+import ClientDetail from './ClientDetail'
 import './Intake.css'
 
 type Filter = 'all' | 'registered' | 'discharged'
@@ -47,7 +48,7 @@ export default function Intake() {
   const [clients, setClients] = useState<Client[]>([])
   const [listMsg, setListMsg] = useState('Loading…')
   const [query, setQuery] = useState('')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selected, setSelected] = useState<Client | null>(null)
   const [count, setCount] = useState<string | null>(null)
 
   const clinicType = todayEvent?.clinic_type || null
@@ -145,6 +146,12 @@ export default function Intake() {
     }
   }
 
+  // Keep the list and the detail panel in sync after an edit or archive
+  function handleUpdated(updated: Client) {
+    setSelected(updated)
+    setClients((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+  }
+
   function logout() {
     clearSession()
     navigate('/login')
@@ -216,9 +223,9 @@ export default function Intake() {
                 {clients.map((c) => (
                   <li
                     key={c.id}
-                    className={c.id === selectedId ? 'client-item selected' : 'client-item'}
+                    className={c.id === selected?.id ? 'client-item selected' : 'client-item'}
                     style={c.archived ? { opacity: 0.45 } : undefined}
-                    onClick={() => setSelectedId(c.id)}
+                    onClick={() => setSelected(c)}
                   >
                     <div className="client-row">
                       <div className="client-name">{c.name}</div>
@@ -240,14 +247,16 @@ export default function Intake() {
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-body">
-            <div className="empty-state">
-              {selectedId
-                ? 'Client details are coming in the next step.'
-                : 'Select a client to see their details.'}
+                <div>
+          {selected ? (
+            <ClientDetail key={selected.id} client={selected} onUpdated={handleUpdated} />
+          ) : (
+            <div className="card">
+              <div className="card-body">
+                <div className="empty-state">Select a client to see their details.</div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
