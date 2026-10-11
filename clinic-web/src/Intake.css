@@ -202,3 +202,76 @@
 .intake .badge-registered { background: var(--amber-light); color: var(--amber); }
 .intake .badge-discharged { background: var(--green-light); color: var(--green); }
 .intake .badge-archived { background: #e5e7eb; color: #6b7280; }
+/* ── Stage 2: client detail ── */
+.intake {
+  --coral: #f28b82;
+  --coral-light: #fde8e6;
+  --coral-dark: #d96b62;
+}
+.intake .card + .card { margin-top: 1.25rem; }
+.intake .client-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.intake .client-title { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.intake .client-big-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--navy); }
+.intake .client-contact { font-size: 0.83rem; color: var(--text-muted); margin-top: 0.25rem; }
+.intake .lang-badge { font-size: 0.7rem; font-weight: 800; font-family: 'Nunito', sans-serif; padding: 0.15rem 0.5rem; border-radius: 999px; letter-spacing: 0.04em; }
+.intake .lang-es { background: #fef3c7; color: #92400e; }
+.intake .lang-en { background: #dce6f9; color: #1a3a8f; }
+.intake .client-buttons { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+.intake .profile-link { font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 999px; border: 1.5px solid var(--navy); color: var(--navy); font-family: 'Nunito', sans-serif; font-weight: 700; text-decoration: none; }
+.intake .notes-btn { font-size: 1rem; padding: 0.4rem 0.6rem; border-radius: 999px; border: 1.5px solid #f0d97a; background: #fffbea; color: #92720a; cursor: pointer; }
+.intake .overflow-btn { font-size: 1rem; padding: 0.4rem 0.6rem; border-radius: 999px; border: 1.5px solid var(--border); background: none; color: var(--text-muted); cursor: pointer; }
+.intake .menu-wrap { position: relative; }
+.intake .overflow-menu { position: absolute; right: 0; top: calc(100% + 6px); background: white; border: 1.5px solid var(--border); border-radius: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); z-index: 100; min-width: 130px; overflow: hidden; }
+.intake .overflow-menu button { width: 100%; text-align: left; padding: 0.6rem 1rem; border: none; background: none; font-family: inherit; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); cursor: pointer; }
+.intake .overflow-menu button:hover { background: var(--navy-light); }
+
+.intake .notes-tray { margin-top: 0.75rem; background: #fffbea; border: 1.5px solid #f0d97a; border-radius: 12px; padding: 0.75rem; }
+.intake .snip-label { display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 0.6rem; font-size: 0.82rem; font-weight: 700; color: var(--navy); cursor: pointer; }
+.intake .notes-tray textarea { width: 100%; min-height: 72px; border: 1.5px solid #f0d97a; border-radius: 8px; background: white; font-family: 'Nunito Sans', sans-serif; font-size: 0.85rem; color: #5a4a00; resize: vertical; padding: 0.5rem; box-sizing: border-box; }
+.intake .notes-footer { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; margin-top: 0.35rem; }
+.intake .notes-msg { font-size: 0.78rem; color: var(--green); font-weight: 700; }
+.intake .save-notes-btn { font-size: 0.75rem; padding: 0.3rem 0.85rem; border-radius: 999px; border: none; background: #f0d97a; color: #5a4a00; font-family: 'Nunito', sans-serif; font-weight: 800; cursor: pointer; }
+
+/* forms */
+.intake .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 500px) { .intake .form-row { grid-template-columns: 1fr; } }
+.intake .form-field { margin-bottom: 0.9rem; }
+.intake .form-field label { display: block; font-size: 0.83rem; font-weight: 700; margin-bottom: 0.25rem; }
+.intake .form-field input,
+.intake .form-field select {
+  width: 100%; box-sizing: border-box; padding: 0.55rem 0.8rem; border: 1.5px solid var(--border);
+  border-radius: 8px; font-family: 'Nunito Sans', sans-serif; font-size: 0.9rem; color: var(--text); background: #f8faff;
+}
+.intake .form-field input:focus,
+.intake .form-field select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26, 58, 143, 0.12); background: white; }
+.intake .age-row { display: flex; gap: 0.5rem; }
+.intake .age-row input, .intake .age-row select { flex: 1; min-width: 0; }
+.intake .form-actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 0.25rem; }
+.intake .btn-primary { background: var(--navy); color: white; font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 700; padding: 0.6rem 1.4rem; border: none; border-radius: 999px; cursor: pointer; }
+.intake .btn-primary:hover { background: var(--navy-dark); }
+.intake .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.intake .btn-small { font-size: 0.8rem; padding: 0.4rem 1rem; background: var(--navy-mid); }
+.intake .btn-link { background: none; border: none; color: var(--text-muted); cursor: pointer; font-family: inherit; font-size: 0.88rem; }
+.intake .msg { padding: 0.65rem 0.9rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.75rem; }
+.intake .msg.error { background: var(--coral-light); color: #8b1a14; border: 1px solid var(--coral); }
+.intake .empty-state.error { color: #a00; }
+
+/* pets */
+.intake .pet-card { background: #f8faff; border: 1.5px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 0.85rem; }
+.intake .pet-card-top { display: flex; gap: 0.6rem; align-items: flex-start; }
+.intake .pet-photo-thumb { width: 44px; height: 44px; border-radius: 10px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--navy-light); font-size: 1.4rem; }
+.intake .pet-photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.intake .pet-info { flex: 1; min-width: 0; }
+.intake .pet-card-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem; color: var(--navy); display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.intake .pet-card-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+.intake .pet-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.intake .pill-btn { font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1.5px solid var(--border); background: none; color: var(--text-muted); cursor: pointer; font-family: inherit; }
+.intake .pet-edit-box { background: #f8faff; border: 1.5px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 0.85rem; }
+.intake .pet-edit-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--navy); margin-bottom: 0.75rem; }
+.intake .add-pet-btn { background: none; border: none; font-size: 0.85rem; font-weight: 700; color: var(--navy); cursor: pointer; font-family: inherit; padding: 0.25rem 0; }
+.intake .badge.dog { background: #dbeafe; color: #1e40af; }
+.intake .badge.cat { background: var(--coral-light); color: var(--coral-dark); }
+.intake .badge-male { background: #dbeafe; color: #1e40af; }
+.intake .badge-female { background: #fce7f3; color: #9d174d; }
+.intake .sn-yes { background: var(--green-light); color: var(--green); }
+.intake .sn-no { background: var(--amber-light); color: var(--amber); }
