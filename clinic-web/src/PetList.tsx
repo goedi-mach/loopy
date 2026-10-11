@@ -3,6 +3,7 @@ import { sbGet, sbPatch, sbPost } from './lib/api'
 import { emptyPet, formToPayload, petToForm, type PetFormValues } from './lib/petForm'
 import PetForm from './PetForm'
 import type { Pet } from './types'
+import VaccineHistory from './VaccineHistory'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 
@@ -15,6 +16,7 @@ export default function PetList({ clientId }: { clientId: string }) {
   const [addValues, setAddValues] = useState<PetFormValues>(emptyPet)
   const [formMsg, setFormMsg] = useState('')
   const [saving, setSaving] = useState(false)
+    const [selectedPetId, setSelectedPetId] = useState<string | null>(null)
 
   async function load() {
     try {
@@ -78,8 +80,9 @@ export default function PetList({ clientId }: { clientId: string }) {
       alert(err instanceof Error ? err.message : 'Could not update pet')
     }
   }
-
+  const selectedPet = pets?.find((p) => p.id === selectedPetId) || null
   return (
+        <>
     <div className="card pets-card">
       <div className="card-header"><span>🐾 Pets</span></div>
       <div className="card-body">
@@ -102,7 +105,12 @@ export default function PetList({ clientId }: { clientId: string }) {
               />
             </div>
           ) : (
-            <div key={p.id} className="pet-card" style={p.archived ? { opacity: 0.45 } : undefined}>
+            <div
+              key={p.id}
+              className={p.id === selectedPetId ? 'pet-card selected' : 'pet-card'}
+              style={p.archived ? { opacity: 0.45 } : { cursor: 'pointer' }}
+              onClick={() => !p.archived && setSelectedPetId(p.id)}
+            >
               <div className="pet-card-top">
                 <div className="pet-photo-thumb">
                   {p.photo_updated_at ? (
@@ -134,9 +142,9 @@ export default function PetList({ clientId }: { clientId: string }) {
                 </div>
                 <div className="pet-actions">
                   {!p.archived && (
-                    <button type="button" className="pill-btn" onClick={() => startEdit(p)}>✏️</button>
+                    <button type="button" className="pill-btn" onClick={(e) => { e.stopPropagation(); startEdit(p) }}>✏️</button>
                   )}
-                  <button type="button" className="pill-btn" onClick={() => toggleArchive(p)}>
+                    <button type="button" className="pill-btn" onClick={(e) => { e.stopPropagation(); toggleArchive(p) }}>
                     {p.archived ? 'Unarchive' : 'Archive'}
                   </button>
                 </div>
@@ -163,7 +171,9 @@ export default function PetList({ clientId }: { clientId: string }) {
             + Add a pet
           </button>
         )}
-      </div>
     </div>
+    </div>
+    {selectedPet && !selectedPet.archived && <VaccineHistory key={selectedPet.id} pet={selectedPet} />}
+    </>
   )
 }
