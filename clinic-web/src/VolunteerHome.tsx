@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { clearSession } from './lib/auth'
 import './VolunteerHome.css'
 
@@ -18,15 +18,15 @@ export default function VolunteerHome() {
 
       {email && <p className="user-label">👋 Signed in as {email}</p>}
 
-      <a href="/intake.html" className="btn-mode btn-intake">
+            <Link to="/intake" className="btn-mode btn-intake">
         🏥 Intake
         <span className="btn-mode-sub">Register clients &amp; check in</span>
-      </a>
+      </Link>
 
-      <a href="/discharge.html" className="btn-mode btn-discharge">
+      <Link to="/discharge" className="btn-mode btn-discharge">
         💉 Discharge
         <span className="btn-mode-sub">Log vaccines &amp; microchips</span>
-      </a>
+      </Link>
 
       <button type="button" className="sign-out" onClick={signOut}>
         Sign out

@@ -169,6 +169,9 @@ export default function ClientDetail({ client, onUpdated }: Props) {
                     {client.archived && <span className="badge badge-archived">Archived</span>}
                   </div>
                   <div className="client-contact">{contact || 'No contact info'}</div>
+                  <div className="client-since">
+                    Client since {new Date(client.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </div>
                 </div>
                 <div className="client-buttons">
                   {!client.archived && (
