@@ -294,3 +294,18 @@
 .intake .due-tag.due-now { background: var(--coral-light); color: var(--coral-dark); }
 .intake .due-tag.due-never { background: var(--amber-light); color: var(--amber); }
 .intake .due-tag.due-ok { background: var(--green-light); color: var(--green); }
+/* ── Stage 4a: walk-in ── */
+.intake .close-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #666; line-height: 1; }
+.intake .walkin-divider { margin: 0.75rem 0; border: none; border-top: 1px solid var(--border); }
+.intake .muted { font-weight: 400; color: var(--text-muted); }
+.intake .sig-box { border: 1.5px solid var(--border); border-radius: 8px; background: #f8faff; }
+.intake .sig-canvas { width: 100%; height: 120px; display: block; border-radius: 8px; touch-action: none; }
+.intake .sig-clear-row { display: flex; justify-content: flex-end; margin-top: 0.3rem; }
+.intake .btn-link.small { font-size: 0.75rem; text-decoration: underline; }
+.intake .dupe-warning { background: #fef3c7; border: 1.5px solid #d97706; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+.intake .dupe-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.88rem; color: #92400e; margin-bottom: 0.5rem; }
+.intake .dupe-item { background: white; border: 1.5px solid #d97706; border-radius: 8px; padding: 0.6rem 0.8rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.intake .dupe-name { font-weight: 700; font-size: 0.88rem; }
+.intake .dupe-meta { font-size: 0.78rem; color: var(--text-muted); }
+.intake .dupe-use { font-size: 0.75rem; padding: 0.3rem 0.75rem; border-radius: 999px; border: 1.5px solid #d97706; background: #d97706; color: white; cursor: pointer; font-family: inherit; font-weight: 700; white-space: nowrap; }
+.intake .dupe-dismiss { margin-top: 0.25rem; font-size: 0.78rem; background: none; border: none; color: #92400e; cursor: pointer; font-family: inherit; text-decoration: underline; }

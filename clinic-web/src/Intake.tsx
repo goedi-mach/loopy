@@ -5,6 +5,7 @@ import { request, sbGet } from './lib/api'
 import type { Client, EventRow } from './types'
 import ClientDetail from './ClientDetail'
 import './Intake.css'
+import WalkIn from './WalkIn'
 
 type Filter = 'all' | 'registered' | 'discharged'
 
@@ -50,6 +51,8 @@ export default function Intake() {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Client | null>(null)
   const [count, setCount] = useState<string | null>(null)
+  const [showWalkin, setShowWalkin] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   const clinicType = todayEvent?.clinic_type || null
 
@@ -87,7 +90,7 @@ export default function Intake() {
       }
     }
     loadCount()
-  }, [])
+  }, [reloadKey])
 
   // 3. Load the client list whenever the clinic or filter changes
   useEffect(() => {
@@ -124,7 +127,7 @@ export default function Intake() {
       }
     }
     loadList()
-  }, [eventsLoaded, clinicType, filter])
+  }, [eventsLoaded, clinicType, filter, reloadKey])
 
   async function search() {
     const q = query.trim()
@@ -150,6 +153,17 @@ export default function Intake() {
   function handleUpdated(updated: Client) {
     setSelected(updated)
     setClients((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+  }
+
+  function handleWalkinSaved(client: Client) {
+    setShowWalkin(false)
+    setSelected(client)
+    setReloadKey((k) => k + 1)
+  }
+
+  function handleUseExisting(client: Client) {
+    setShowWalkin(false)
+    setSelected(client)
   }
 
   function logout() {
@@ -192,6 +206,7 @@ export default function Intake() {
           <div className="card">
             <div className="card-header">
               <span>🔍 Search Clients</span>
+              <button type="button" className="btn-primary btn-small" onClick={() => setShowWalkin(true)}>+ Walk-in</button>
             </div>
             <div className="card-body">
               <div className="filter-row">
@@ -247,8 +262,14 @@ export default function Intake() {
           </div>
         </div>
 
-                <div>
-          {selected ? (
+                  <div>
+          {showWalkin ? (
+            <WalkIn
+              onSaved={handleWalkinSaved}
+              onUseExisting={handleUseExisting}
+              onClose={() => setShowWalkin(false)}
+            />
+          ) : selected ? (
             <ClientDetail key={selected.id} client={selected} onUpdated={handleUpdated} />
           ) : (
             <div className="card">
