@@ -66,7 +66,7 @@ export default function Landing() {
       <nav>
         <Link to="/" className="nav-brand">
           <img src="/logo.png" alt="PHP logo" />
-          PHP Clinic HQ - Pawkit
+          PHP Clinic HQ
         </Link>
         <div className="nav-right">
           <div className="lang-toggle">
