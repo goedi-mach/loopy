@@ -33,3 +33,13 @@ export async function refreshToken(): Promise<void> {
     console.warn('Token refresh failed:', err)
   }
 }
+
+export function getRole(): string | null {
+  try {
+    const token = localStorage.getItem('php_token')
+    if (!token) return null
+    return JSON.parse(atob(token.split('.')[1])).app_metadata?.role || null
+  } catch {
+    return null
+  }
+}
