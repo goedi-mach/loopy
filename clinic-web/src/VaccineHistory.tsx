@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { sbGet } from './lib/api'
+import { sbDelete, sbGet, sbPatch } from './lib/api'
 import type { Pet, Vaccination } from './types'
 
 const REQUIRED_VAX: Record<string, string[]> = {
@@ -31,20 +31,48 @@ function fmt(iso: string | null) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export default function VaccineHistory({ pet }: { pet: Pet }) {
+const isRabies = (r: Vaccination) => (r.vaccine_name || '').toLowerCase().startsWith('rabies')
+
+interface Props {
+  pet: Pet
+  editable?: boolean
+  refreshKey?: number
+}
+
+export default function VaccineHistory({ pet, editable, refreshKey = 0 }: Props) {
   const [open, setOpen] = useState(true)
   const [records, setRecords] = useState<Vaccination[] | null>(null)
   const [error, setError] = useState('')
   const [due, setDue] = useState<DueRow[] | null>(null)
+  const [localKey, setLocalKey] = useState(0)
+  const [editing, setEditing] = useState<Vaccination | null>(null)
+  const [edit, setEdit] = useState({ lot: '', tag: '', date: '', next: '' })
+  const [editMsg, setEditMsg] = useState('')
 
+  // New pet: clear everything
   useEffect(() => {
     setRecords(null)
     setDue(null)
+    setEditing(null)
     setError('')
-    sbGet<Vaccination[]>(`vaccinations?pet_id=eq.${pet.id}&order=date_given.desc`)
-      .then(setRecords)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Could not load vaccines'))
   }, [pet.id])
+
+  // Load (and reload after a log, edit, or delete)
+  useEffect(() => {
+    let cancelled = false
+    sbGet<Vaccination[]>(`vaccinations?pet_id=eq.${pet.id}&order=date_given.desc`)
+      .then((rows) => {
+        if (cancelled) return
+        setRecords(rows)
+        setError('')
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load vaccines')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [pet.id, refreshKey, localKey])
 
   function checkDue() {
     if (!records) return
@@ -69,6 +97,47 @@ export default function VaccineHistory({ pet }: { pet: Pet }) {
     setDue(rows)
   }
 
+  function startEdit(r: Vaccination) {
+    setEditing(r)
+    setEdit({
+      lot: r.lot_number || '',
+      tag: r.rabies_tag_number || r.serial_number || '',
+      date: r.date_given || '',
+      next: r.next_due || '',
+    })
+    setEditMsg('')
+  }
+
+  async function saveEdit() {
+    if (!editing) return
+    if (!edit.date) return setEditMsg('Date given is required.')
+    try {
+      const changes: Record<string, unknown> = {
+        lot_number: edit.lot.trim() || null,
+        date_given: edit.date,
+        next_due: edit.next || null,
+      }
+      if (isRabies(editing)) changes.rabies_tag_number = edit.tag.trim() || null
+      const rows = await sbPatch(`vaccinations?id=eq.${editing.id}`, changes)
+      if (!rows.length) throw new Error('Save was not allowed')
+      setEditing(null)
+      setLocalKey((k) => k + 1)
+    } catch (err) {
+      setEditMsg(err instanceof Error ? err.message : 'Save failed')
+    }
+  }
+
+  async function remove(r: Vaccination) {
+    if (!confirm(`Delete the ${r.vaccine_name} record? This cannot be undone.`)) return
+    try {
+      const rows = await sbDelete(`vaccinations?id=eq.${r.id}`)
+      if (!rows.length) throw new Error('Delete was not allowed for your account')
+      setLocalKey((k) => k + 1)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Delete failed')
+    }
+  }
+
   return (
     <div className="card">
       <div className="card-header">
@@ -84,12 +153,50 @@ export default function VaccineHistory({ pet }: { pet: Pet }) {
           {records && records.length === 0 && (
             <div className="empty-state">No vaccines on record for {pet.name}.</div>
           )}
+
+          {editing && (
+            <div className="edit-box">
+              <div className="pet-edit-title">Editing: {editing.vaccine_name}</div>
+              {editMsg && <div className="msg error">{editMsg}</div>}
+              <div className="edit-grid">
+                <div>
+                  <label>Lot #</label>
+                  <input value={edit.lot} onChange={(e) => setEdit({ ...edit, lot: e.target.value })} />
+                </div>
+                {isRabies(editing) && (
+                  <div>
+                    <label>Rabies Tag</label>
+                    <input value={edit.tag} onChange={(e) => setEdit({ ...edit, tag: e.target.value })} />
+                  </div>
+                )}
+                <div>
+                  <label>Date Given</label>
+                  <input type="date" value={edit.date} onChange={(e) => setEdit({ ...edit, date: e.target.value })} />
+                </div>
+                <div>
+                  <label>Next Due</label>
+                  <input type="date" value={edit.next} onChange={(e) => setEdit({ ...edit, next: e.target.value })} />
+                </div>
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn-primary btn-small" onClick={saveEdit}>Save</button>
+                <button type="button" className="btn-link" onClick={() => setEditing(null)}>Cancel</button>
+              </div>
+            </div>
+          )}
+
           {records && records.length > 0 && (
             <div className="table-wrap">
               <table className="vax-table">
                 <thead>
                   <tr>
-                    <th>Vaccine</th><th>Lot #</th><th>Date Given</th><th>Next Due</th><th>Administered By</th>
+                    <th>Vaccine</th>
+                    <th>Lot #</th>
+                    {editable && <th>Rabies Tag</th>}
+                    <th>Date Given</th>
+                    <th>Next Due</th>
+                    <th>Administered By</th>
+                    {editable && <th></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -97,15 +204,23 @@ export default function VaccineHistory({ pet }: { pet: Pet }) {
                     <tr key={r.id}>
                       <td><strong>{r.vaccine_name}</strong></td>
                       <td>{r.lot_number || '—'}</td>
+                      {editable && <td>{r.rabies_tag_number || r.serial_number || '—'}</td>}
                       <td>{fmt(r.date_given)}</td>
                       <td>{fmt(r.next_due)}</td>
                       <td>{r.administered_by || '—'}</td>
+                      {editable && (
+                        <td className="row-actions">
+                          <button type="button" className="pill-btn" onClick={() => startEdit(r)}>✏️</button>{' '}
+                          <button type="button" className="pill-btn danger" onClick={() => remove(r)}>✕</button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
+
           {records && (
             <div className="due-wrap">
               <button type="button" className="btn-primary btn-small" onClick={checkDue}>🔍 What's Due?</button>

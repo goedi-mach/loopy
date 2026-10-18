@@ -3,18 +3,39 @@ import ClientDetail from './ClientDetail'
 import ClientListCard from './components/ClientListCard'
 import ClinicBanner from './components/ClinicBanner'
 import ClinicNav from './components/ClinicNav'
+import DischargePanel from './DischargePanel'
 import { useClinicClients } from './hooks/useClinicClients'
+import { sbPatch } from './lib/api'
+import { getRole } from './lib/auth'
 import type { Client } from './types'
 import './Intake.css'
 
-// Discharge shares Intake's styles (they use the same ".intake" wrapper for now)
 export default function Discharge() {
   const list = useClinicClients()
   const [selected, setSelected] = useState<Client | null>(null)
+  const isAdmin = getRole() === 'admin'
 
   function handleUpdated(updated: Client) {
     setSelected(updated)
     list.updateClient(updated)
+  }
+
+  function handleDeleted() {
+    setSelected(null)
+    list.reload()
+  }
+
+  // Logging a vaccine marks the client Discharged
+  async function markDischarged() {
+    if (!selected || selected.status === 'discharged') return
+    try {
+      const rows: Client[] = await sbPatch(`clients?id=eq.${selected.id}`, { status: 'discharged' })
+      if (!rows.length) throw new Error('not allowed')
+      handleUpdated({ ...selected, ...rows[0] })
+      list.reload()
+    } catch (err) {
+      console.warn('Could not mark client discharged:', err)
+    }
   }
 
   return (
@@ -27,7 +48,14 @@ export default function Discharge() {
 
         <div>
           {selected ? (
-            <ClientDetail key={selected.id} client={selected} onUpdated={handleUpdated} />
+            <ClientDetail
+              key={selected.id}
+              client={selected}
+              onUpdated={handleUpdated}
+              allowDelete={isAdmin}
+              onDeleted={handleDeleted}
+              renderPet={(pet) => <DischargePanel key={pet.id} pet={pet} onLogged={markDischarged} />}
+            />
           ) : (
             <div className="card">
               <div className="card-body">

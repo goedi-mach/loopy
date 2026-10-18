@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { sbGet, sbPatch, sbPost } from './lib/api'
+import { useEffect, useState, type ReactNode } from 'react'
+import { sbDelete, sbGet, sbPatch, sbPost } from './lib/api'
 import { emptyPet, formToPayload, petToForm, type PetFormValues } from './lib/petForm'
 import PetForm from './PetForm'
 import type { Pet } from './types'
@@ -7,7 +7,13 @@ import VaccineHistory from './VaccineHistory'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 
-export default function PetList({ clientId }: { clientId: string }) {
+interface Props {
+  clientId: string
+  allowDelete?: boolean
+  renderSelected?: (pet: Pet) => ReactNode
+}
+
+export default function PetList({ clientId, allowDelete, renderSelected }: Props) {
   const [pets, setPets] = useState<Pet[] | null>(null)
   const [loadError, setLoadError] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -80,6 +86,17 @@ export default function PetList({ clientId }: { clientId: string }) {
       alert(err instanceof Error ? err.message : 'Could not update pet')
     }
   }
+    async function deletePet(p: Pet) {
+    if (!confirm(`Permanently delete ${p.name}?\n\nThis also deletes all of their vaccination records and cannot be undone.`)) return
+    try {
+      const rows = await sbDelete(`pets?id=eq.${p.id}`)
+      if (!rows.length) throw new Error('Delete was not allowed for your account')
+      if (selectedPetId === p.id) setSelectedPetId(null)
+      await load()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Delete failed')
+    }
+  }
   const selectedPet = pets?.find((p) => p.id === selectedPetId) || null
   return (
         <>
@@ -140,13 +157,18 @@ export default function PetList({ clientId }: { clientId: string }) {
                     {p.microchip_number && <span># {p.microchip_number}</span>}
                   </div>
                 </div>
-                <div className="pet-actions">
+                                <div className="pet-actions">
                   {!p.archived && (
                     <button type="button" className="pill-btn" onClick={(e) => { e.stopPropagation(); startEdit(p) }}>✏️</button>
                   )}
-                    <button type="button" className="pill-btn" onClick={(e) => { e.stopPropagation(); toggleArchive(p) }}>
+                  <button type="button" className="pill-btn" onClick={(e) => { e.stopPropagation(); toggleArchive(p) }}>
                     {p.archived ? 'Unarchive' : 'Archive'}
                   </button>
+                  {p.archived && allowDelete && (
+                    <button type="button" className="pill-btn danger" onClick={(e) => { e.stopPropagation(); deletePet(p) }}>
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -173,7 +195,9 @@ export default function PetList({ clientId }: { clientId: string }) {
         )}
     </div>
     </div>
-    {selectedPet && !selectedPet.archived && <VaccineHistory key={selectedPet.id} pet={selectedPet} />}
+        {selectedPet && !selectedPet.archived && (
+      renderSelected ? renderSelected(selectedPet) : <VaccineHistory key={selectedPet.id} pet={selectedPet} />
+    )}
     </>
   )
 }
