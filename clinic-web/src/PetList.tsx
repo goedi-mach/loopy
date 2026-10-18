@@ -10,7 +10,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 interface Props {
   clientId: string
   allowDelete?: boolean
-  renderSelected?: (pet: Pet) => ReactNode
+  renderSelected?: (pet: Pet, reload: () => Promise<void>) => ReactNode
 }
 
 export default function PetList({ clientId, allowDelete, renderSelected }: Props) {
@@ -196,7 +196,7 @@ export default function PetList({ clientId, allowDelete, renderSelected }: Props
     </div>
     </div>
         {selectedPet && !selectedPet.archived && (
-      renderSelected ? renderSelected(selectedPet) : <VaccineHistory key={selectedPet.id} pet={selectedPet} />
+      renderSelected ? renderSelected(selectedPet, load) : <VaccineHistory key={selectedPet.id} pet={selectedPet} />
     )}
     </>
   )
