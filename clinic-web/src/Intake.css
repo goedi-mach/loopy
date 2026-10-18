@@ -315,3 +315,22 @@
 .intake .quick-ref-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem; color: var(--navy); margin-bottom: 1rem; }
 .intake .quick-ref-item { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.87rem; margin-bottom: 0.75rem; }
 .intake .quick-ref-item:last-child { margin-bottom: 0; }
+/* ── Discharge stage 2 ── */
+.intake .msg.success { background: var(--green-light); color: var(--green); border: 1px solid #86efac; }
+.intake .pill-btn.danger { border-color: var(--coral); color: var(--coral-dark); }
+.intake .overflow-menu button.danger { color: var(--coral-dark); }
+.intake .btn-coral { background: var(--coral); color: white; font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 700; padding: 0.6rem 1.4rem; border: none; border-radius: 999px; cursor: pointer; }
+.intake .btn-coral:hover { background: var(--coral-dark); }
+.intake .btn-coral:disabled { opacity: 0.5; cursor: not-allowed; }
+.intake .rabies-box { margin-top: 1rem; padding-top: 1rem; border-top: 1.5px dashed var(--border); }
+.intake .rabies-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.82rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.75rem; }
+.intake .field-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; }
+.intake .field-note.warn { color: var(--amber); font-weight: 700; }
+.intake .field-note.ok { color: var(--green); font-weight: 700; }
+.intake .field-note.bad { color: #b91c1c; font-weight: 700; }
+.intake input[readonly] { background: #e9ecef; color: var(--text-muted); cursor: not-allowed; }
+.intake .edit-box { background: var(--navy-light); border-radius: 10px; padding: 0.75rem; margin-bottom: 0.85rem; }
+.intake .edit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem; margin: 0.6rem 0; }
+.intake .edit-grid label { font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 0.2rem; }
+.intake .edit-grid input { width: 100%; box-sizing: border-box; padding: 0.4rem 0.6rem; border: 1.5px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.85rem; }
+.intake .row-actions { white-space: nowrap; }

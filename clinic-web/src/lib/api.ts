@@ -60,7 +60,12 @@ export async function sbPatch<T = any>(path: string, data: unknown): Promise<T[]
   return res.json()
 }
 
-// Delete rows. `path` like 'events?id=eq.123'
-export async function sbDelete(path: string): Promise<void> {
-  await request(`/rest/v1/${path}`, { method: 'DELETE' })
+// Delete rows and return them. An empty array means nothing was deleted
+// (usually a database permission rule), so callers should check for that.
+export async function sbDelete<T = any>(path: string): Promise<T[]> {
+  const res = await request(`/rest/v1/${path}`, {
+    method: 'DELETE',
+    headers: { Prefer: 'return=representation' },
+  })
+  return res.json()
 }
