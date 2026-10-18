@@ -48,13 +48,15 @@ export default function Discharge() {
 
         <div>
           {selected ? (
-            <ClientDetail
+                        <ClientDetail
               key={selected.id}
               client={selected}
               onUpdated={handleUpdated}
               allowDelete={isAdmin}
               onDeleted={handleDeleted}
-              renderPet={(pet) => <DischargePanel key={pet.id} pet={pet} onLogged={markDischarged} />}
+              renderPet={(pet, reload) => (
+                <DischargePanel key={pet.id} pet={pet} onLogged={markDischarged} onPetChanged={reload} />
+              )}
             />
           ) : (
             <div className="card">
