@@ -43,6 +43,24 @@ export interface Vaccination {
   date_given: string | null
   next_due: string | null
   administered_by: string | null
+  rabies_tag_number: string | null
+  serial_number: string | null
+  colors_markings: string | null
+  product_name: string | null
+  manufacturer: string | null
+  usda_duration: string | null
+  dose_type: string | null
+  exp_date: string | null
+}
+
+export interface VaccineLot {
+  id: string
+  vaccine_type: string
+  label: string
+  lot_number: string
+  active: boolean
+  manufacturer: string | null
+  exp_date: string | null
 }
 
 export interface EventRow {
