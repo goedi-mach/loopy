@@ -17,7 +17,7 @@ interface Props {
   onUpdated: (c: Client) => void
   allowDelete?: boolean
   onDeleted?: () => void
-  renderPet?: (pet: Pet) => ReactNode
+  renderPet?: (pet: Pet, reload: () => Promise<void>) => ReactNode
 }
 
 export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted, renderPet }: Props) {
