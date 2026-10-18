@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
-import { sbPatch } from './lib/api'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { sbDelete, sbPatch } from './lib/api'
 import PetList from './PetList'
-import type { Client } from './types'
+import type { Client, Pet } from './types'
 
 const STATUS_LABEL: Record<string, string> = { registered: 'Registered', discharged: 'Discharged' }
 
@@ -15,9 +15,12 @@ function formatAddress(c: Client) {
 interface Props {
   client: Client
   onUpdated: (c: Client) => void
+  allowDelete?: boolean
+  onDeleted?: () => void
+  renderPet?: (pet: Pet) => ReactNode
 }
 
-export default function ClientDetail({ client, onUpdated }: Props) {
+export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted, renderPet }: Props) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '', email: '', street: '', city: '', state: '', zip: '' })
   const [editMsg, setEditMsg] = useState('')
@@ -86,7 +89,17 @@ export default function ClientDetail({ client, onUpdated }: Props) {
       alert(err instanceof Error ? err.message : 'Could not update client')
     }
   }
-
+  async function deleteClient() {
+    setMenuOpen(false)
+    if (!confirm(`Permanently delete ${client.name}?\n\nThis also deletes all of their pets and vaccination records and cannot be undone.`)) return
+    try {
+      const rows = await sbDelete(`clients?id=eq.${client.id}`)
+      if (!rows.length) throw new Error('Delete was not allowed for your account')
+      onDeleted?.()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Delete failed')
+    }
+  }
   async function saveSnip(checked: boolean) {
     try {
       await patchClient({ snip_interest: checked })
@@ -181,9 +194,12 @@ export default function ClientDetail({ client, onUpdated }: Props) {
                   <button type="button" className="notes-btn" title="Notes & flags" onClick={() => setNotesOpen(!notesOpen)}>📝</button>
                   <div className="menu-wrap" ref={menuRef}>
                     <button type="button" className="overflow-btn" onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
-                    {menuOpen && (
+                                        {menuOpen && (
                       <div className="overflow-menu">
                         <button type="button" onClick={toggleArchive}>{client.archived ? 'Unarchive' : 'Archive'}</button>
+                        {client.archived && allowDelete && (
+                          <button type="button" className="danger" onClick={deleteClient}>Delete</button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -216,7 +232,7 @@ export default function ClientDetail({ client, onUpdated }: Props) {
         </div>
       </div>
 
-      <PetList clientId={client.id} />
+            <PetList clientId={client.id} allowDelete={allowDelete} renderSelected={renderPet} />
     </>
   )
 }
