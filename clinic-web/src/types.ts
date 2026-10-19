@@ -72,3 +72,13 @@ export interface EventRow {
   clinic_type: string | null
   completed: boolean
 }
+
+export interface Attachment {
+  id: string
+  client_id: string
+  pet_id: string | null
+  storage_path: string
+  display_name: string
+  uploaded_by: string | null
+  uploaded_at: string
+}

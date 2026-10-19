@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { sbDelete, sbPatch } from './lib/api'
 import PetList from './PetList'
 import type { Client, Pet } from './types'
+import Documents from './Documents'
 
 const STATUS_LABEL: Record<string, string> = { registered: 'Registered', discharged: 'Discharged' }
 
@@ -18,9 +19,10 @@ interface Props {
   allowDelete?: boolean
   onDeleted?: () => void
   renderPet?: (pet: Pet, reload: () => Promise<void>) => ReactNode
+  showDocuments?: boolean
 }
 
-export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted, renderPet }: Props) {
+export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted, renderPet, showDocuments }: Props) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '', email: '', street: '', city: '', state: '', zip: '' })
   const [editMsg, setEditMsg] = useState('')
@@ -233,6 +235,7 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
       </div>
 
             <PetList clientId={client.id} allowDelete={allowDelete} renderSelected={renderPet} />
+            {showDocuments && <Documents clientId={client.id} />}
     </>
   )
 }

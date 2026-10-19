@@ -43,3 +43,14 @@ export function getRole(): string | null {
     return null
   }
 }
+
+
+export function getUserId(): string | null {
+  try {
+    const token = localStorage.getItem('php_token')
+    if (!token) return null
+    return JSON.parse(atob(token.split('.')[1])).sub || null
+  } catch {
+    return null
+  }
+}
