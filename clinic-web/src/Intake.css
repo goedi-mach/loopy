@@ -342,3 +342,10 @@
 .intake .btn-outline { font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 999px; border: 1.5px solid var(--border); background: none; color: var(--text-muted); cursor: pointer; font-family: inherit; font-weight: 700; }
 .intake .cert-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.85rem; }
 .intake .btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+/* ── Documents ── */
+.intake .doc-item { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.intake .doc-item:last-of-type { border-bottom: none; }
+.intake .doc-link { background: none; border: none; padding: 0; color: var(--navy); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.intake .doc-link:hover { text-decoration: underline; }
+.intake .doc-delete { background: none; border: none; color: var(--coral); cursor: pointer; font-size: 0.8rem; padding: 0 0.25rem; }
+.intake .upload-label { display: inline-block; cursor: pointer; }
