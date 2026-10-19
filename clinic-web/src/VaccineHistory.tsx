@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { sbDelete, sbGet, sbPatch } from './lib/api'
-import type { Pet, Vaccination } from './types'
+import { buildRabiesCert, certFilename, saveCertFile } from './lib/rabiesCert'
+import type { Client, Pet, Vaccination } from './types'
 
 const REQUIRED_VAX: Record<string, string[]> = {
   dog: ['Rabies', 'DAPP', 'Lepto'],
@@ -35,11 +36,12 @@ const isRabies = (r: Vaccination) => (r.vaccine_name || '').toLowerCase().starts
 
 interface Props {
   pet: Pet
+  client?: Client
   editable?: boolean
   refreshKey?: number
 }
 
-export default function VaccineHistory({ pet, editable, refreshKey = 0 }: Props) {
+export default function VaccineHistory({ pet, client, editable, refreshKey = 0 }: Props) {
   const [open, setOpen] = useState(true)
   const [records, setRecords] = useState<Vaccination[] | null>(null)
   const [error, setError] = useState('')
@@ -95,6 +97,17 @@ export default function VaccineHistory({ pet, editable, refreshKey = 0 }: Props)
       return { base, tag: 'due-ok', label: `Not due until ${fmt(latest.next_due)}` }
     })
     setDue(rows)
+  }
+
+  async function downloadCert(r: Vaccination) {
+    if (!client) return
+    try {
+      const { bytes, problems } = await buildRabiesCert(r, pet, client)
+      saveCertFile(bytes, certFilename(pet, r))
+      if (problems.length) alert(`Downloaded, but check the certificate:\n\n${problems.join('\n')}`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Certificate failed')
+    }
   }
 
   function startEdit(r: Vaccination) {
@@ -212,6 +225,9 @@ export default function VaccineHistory({ pet, editable, refreshKey = 0 }: Props)
                         <td className="row-actions">
                           <button type="button" className="pill-btn" onClick={() => startEdit(r)}>✏️</button>{' '}
                           <button type="button" className="pill-btn danger" onClick={() => remove(r)}>✕</button>
+                          {client && isRabies(r) && (
+                            <>{' '}<button type="button" className="pill-btn" onClick={() => downloadCert(r)}>⬇ cert</button></>
+                          )}
                         </td>
                       )}
                     </tr>
