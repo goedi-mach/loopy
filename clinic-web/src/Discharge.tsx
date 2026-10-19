@@ -55,7 +55,7 @@ export default function Discharge() {
               allowDelete={isAdmin}
               onDeleted={handleDeleted}
               renderPet={(pet, reload) => (
-                <DischargePanel key={pet.id} pet={pet} onLogged={markDischarged} onPetChanged={reload} />
+                <DischargePanel key={pet.id} pet={pet} client={selected} onLogged={markDischarged} onPetChanged={reload} />
               )}
             />
           ) : (

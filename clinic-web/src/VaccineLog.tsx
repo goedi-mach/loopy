@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react'
 import { sbGet, sbPost } from './lib/api'
 import { todayStr } from './lib/dates'
+import CertActions from './CertActions'
 import { DURATIONS, VACCINE_OPTIONS, calcNextDue } from './lib/vaccines'
-import type { Pet, Vaccination, VaccineLot } from './types'
+import type { Client, Pet, Vaccination, VaccineLot } from './types'
 
 const PRODUCT_BY_MFR: Record<string, string> = { MER: 'IMRAB 3', ELA: 'RABVAC 3' }
 
 interface Props {
   pet: Pet
+  client: Client
   onLogged: () => Promise<void> | void
 }
 
-export default function VaccineLog({ pet, onLogged }: Props) {
+export default function VaccineLog({ pet, client, onLogged }: Props) {
   const [lots, setLots] = useState<VaccineLot[]>([])
   const [lotsError, setLotsError] = useState('')
   const [open, setOpen] = useState(true)
@@ -26,6 +28,7 @@ export default function VaccineLog({ pet, onLogged }: Props) {
   const [dose, setDose] = useState('')
   const [msg, setMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
+  const [lastRabies, setLastRabies] = useState<Vaccination | null>(null)
 
   useEffect(() => {
     sbGet<VaccineLot[]>('vaccine_inventory?active=eq.true&order=lot_number.asc')
@@ -42,6 +45,7 @@ export default function VaccineLog({ pet, onLogged }: Props) {
     setDose('')
     setColors(pet.colors_markings || '')
     setMsg(null)
+    setLastRabies(null)
   }, [pet.id, pet.colors_markings])
 
   const options = VACCINE_OPTIONS[pet.species || ''] || []
@@ -100,6 +104,7 @@ export default function VaccineLog({ pet, onLogged }: Props) {
       }
       const rows = await sbPost<Vaccination>('vaccinations', payload)
       if (!rows.length) throw new Error('The vaccine record was not saved')
+      setLastRabies(vax.isRabies ? rows[0] : null)
 
       setMsg({ type: 'success', text: `${name} logged for ${pet.name}!` })
       // Clear the vaccine fields but keep the date for the next one
@@ -246,6 +251,7 @@ export default function VaccineLog({ pet, onLogged }: Props) {
               {saving ? 'Saving…' : 'Log Vaccine'}
             </button>
           </div>
+          {lastRabies && <CertActions record={lastRabies} pet={pet} client={client} />}
         </div>
       )}
     </div>
