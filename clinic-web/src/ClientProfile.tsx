@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import ClientDetail from './ClientDetail'
 import ClinicNav from './components/ClinicNav'
 import { sbGet } from './lib/api'
 import { getRole } from './lib/auth'
 import VaccineHistory from './VaccineHistory'
+import Documents from './Documents'
 import type { Client } from './types'
 import './Intake.css'
 
@@ -39,7 +40,7 @@ export default function ClientProfile() {
     <div className="intake">
       <ClinicNav />
       <div className="profile-main">
-        <a className="back-link" href="/records.html">← Back to Records</a>
+        <Link className="back-link" to="/records">← Back to Records</Link>
         {error && <div className="card"><div className="card-body"><div className="empty-state error">{error}</div></div></div>}
         {!client && !error && <div className="card"><div className="card-body"><div className="empty-state">Loading…</div></div></div>}
         {client && (
@@ -52,7 +53,19 @@ export default function ClientProfile() {
             showDocuments
             hideProfile
             editEventDate
-            renderPet={(pet) => <VaccineHistory key={pet.id} pet={pet} client={client} editable />}
+            showAttendance
+            renderPet={(pet) => (
+              <>
+                <VaccineHistory key={pet.id} pet={pet} client={client} editable />
+                <div className="print-links">
+                  🖨 Print {pet.name}'s record:{' '}
+                  <a href={`/client/${client.id}/print/${pet.id}?lang=en`} target="_blank" rel="noreferrer">English</a>
+                  {' · '}
+                  <a href={`/client/${client.id}/print/${pet.id}?lang=es`} target="_blank" rel="noreferrer">Español</a>
+                </div>
+                <Documents key={`docs-${pet.id}`} clientId={client.id} petId={pet.id} title={`${pet.name}'s Documents`} />
+              </>
+            )}
           />
         )}
       </div>
