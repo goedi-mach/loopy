@@ -26,7 +26,6 @@ export function useClinicClients() {
         )
         const ev = events[0] || null
         setTodayEvent(ev)
-        if (ev?.clinic_type === 'Booster Clinic') setFilter('registered')
       } catch (err) {
         setListMsg(`Error: ${err instanceof Error ? err.message : 'could not load events'}`)
       } finally {
