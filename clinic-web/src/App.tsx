@@ -9,6 +9,7 @@ import Discharge from './Discharge'
 import ClientProfile from './ClientProfile'
 import PrintRecord from './PrintRecord'
 import Records from './Records'
+import Registration from './Registration'
 
 export default function App() {
   return (
@@ -65,6 +66,8 @@ export default function App() {
             </RequireAuth>
           }
         />
+        <Route path="/registration" element={<Registration />} />
+        <Route path="/registration.html" element={<Registration />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
