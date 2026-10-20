@@ -7,6 +7,7 @@ import RequireAuth from './components/RequireAuth'
 import Intake from './Intake'
 import Discharge from './Discharge'
 import ClientProfile from './ClientProfile'
+import PrintRecord from './PrintRecord'
 
 export default function App() {
   return (
@@ -44,6 +45,14 @@ export default function App() {
           element={
             <RequireAuth>
               <ClientProfile />
+            </RequireAuth>
+          }
+        />
+                <Route
+          path="/client/:id/print/:petId"
+          element={
+            <RequireAuth>
+              <PrintRecord />
             </RequireAuth>
           }
         />
