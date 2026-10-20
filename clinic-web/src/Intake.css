@@ -365,3 +365,5 @@
 .intake .small { font-size: 0.78rem; }
 .intake .signed-yes { color: var(--green); font-weight: 700; }
 .intake .warning-bar { background: var(--amber-light); color: #92400e; padding: 0.6rem 1.5rem; font-size: 0.85rem; font-weight: 700; border-bottom: 1px solid var(--amber); }
+.intake .print-links { margin: -0.5rem 0 1.25rem; font-size: 0.85rem; font-weight: 700; }
+.intake .print-links a { color: var(--navy); }
