@@ -3,6 +3,7 @@ import { sbDelete, sbPatch } from './lib/api'
 import PetList from './PetList'
 import type { Client, Pet } from './types'
 import Documents from './Documents'
+import { Link } from 'react-router-dom'
 
 const STATUS_LABEL: Record<string, string> = { registered: 'Registered', discharged: 'Discharged' }
 
@@ -20,9 +21,10 @@ interface Props {
   onDeleted?: () => void
   renderPet?: (pet: Pet, reload: () => Promise<void>) => ReactNode
   showDocuments?: boolean
+  hideProfile?: boolean
 }
 
-export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted, renderPet, showDocuments }: Props) {
+export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted, renderPet, showDocuments, hideProfile }: Props) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '', email: '', street: '', city: '', state: '', zip: '' })
   const [editMsg, setEditMsg] = useState('')
@@ -192,7 +194,7 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
                   {!client.archived && (
                     <button type="button" className="btn-primary btn-small" onClick={openEdit}>✏️ Edit</button>
                   )}
-                  <a className="profile-link" href={`/client.html?id=${client.id}`}>👤 Profile</a>
+                  {!hideProfile && <Link className="profile-link" to={`/client/${client.id}`}>👤 Profile</Link>}
                   <button type="button" className="notes-btn" title="Notes & flags" onClick={() => setNotesOpen(!notesOpen)}>📝</button>
                   <div className="menu-wrap" ref={menuRef}>
                     <button type="button" className="overflow-btn" onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
