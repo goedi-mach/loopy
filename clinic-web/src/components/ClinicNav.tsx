@@ -1,10 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { clearSession, getRole } from '../lib/auth'
 
-export default function ClinicNav({ active }: { active: 'intake' | 'discharge' }) {
+export default function ClinicNav({ active }: { active?: 'intake' | 'discharge' }) {
   const navigate = useNavigate()
   const email = localStorage.getItem('php_email')
   const isStaff = ['staff', 'admin'].includes(getRole() || '')
+  const title = active === 'intake' ? 'Intake' : active === 'discharge' ? 'Discharge' : 'Client Profile'
 
   function logout() {
     clearSession()
@@ -13,7 +14,7 @@ export default function ClinicNav({ active }: { active: 'intake' | 'discharge' }
 
   return (
     <nav className="topnav">
-      <div className="topnav-brand">🐾 {active === 'intake' ? 'Intake' : 'Discharge'} — People Helping Pets</div>
+      <div className="topnav-brand">🐾 {title} — People Helping Pets</div>
       <div className="topnav-right">
         {email && <div className="topnav-user">👋 {email}</div>}
         <Link to="/intake" className={active === 'intake' ? 'nav-link active' : 'nav-link'}>🏥 Intake</Link>
