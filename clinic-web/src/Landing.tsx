@@ -100,7 +100,7 @@ export default function Landing() {
             </h1>
             <p className="hero-sub">{c.sub}</p>
             <div className="hero-ctas">
-              <a href="/registration.html" className="btn-hero-primary">{c.register}</a>
+                <Link to="/registration" className="btn-hero-primary">{c.register}</Link>
               <a href="https://peoplehelpingpets.org/upcoming-clinics/" className="btn-hero-secondary">
                 {c.clinics}
               </a>
