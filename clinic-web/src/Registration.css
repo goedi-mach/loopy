@@ -1,0 +1,64 @@
+.registration {
+  --navy: #1a3a8f;
+  --navy-dark: #122a6e;
+  --navy-light: #dce6f9;
+  --coral: #f28b82;
+  --coral-light: #fde8e6;
+  --coral-dark: #d96b62;
+  --amber: #d97706;
+  --text: #1a1a2e;
+  --text-muted: #5a6380;
+  --border: #c8d3ec;
+  --bg: #f4f7fe;
+  font-family: 'Nunito Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+.registration *, .registration *::before, .registration *::after { box-sizing: border-box; }
+.registration .reg-header { background: white; color: var(--navy); padding: 2rem 1.5rem 1.75rem; text-align: center; border-bottom: 2px solid #c2d0ea; }
+.registration .reg-logo { width: 110px; height: auto; display: block; margin: 0 auto 0.75rem; }
+.registration .reg-header h1 { font-family: 'Nunito', sans-serif; font-size: clamp(1.35rem, 4vw, 1.9rem); font-weight: 800; line-height: 1.25; margin: 0; }
+.registration .reg-header .sub { display: block; font-weight: 600; font-size: 0.85em; opacity: 0.65; font-style: italic; margin-top: 0.2rem; }
+.registration .reg-header .org { margin: 0.6rem 0 0; font-size: 0.9rem; opacity: 0.6; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+.registration main { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+.registration .reg-card { background: white; border-radius: 12px; box-shadow: 0 2px 16px rgba(26, 58, 143, 0.1); padding: 1.75rem 1.5rem; margin-bottom: 1.5rem; border: 1.5px solid rgba(26, 58, 143, 0.07); }
+.registration .reg-title { font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 800; color: var(--navy); margin-bottom: 1.25rem; padding-bottom: 0.65rem; border-bottom: 2.5px solid var(--navy-light); }
+.registration .reg-field { display: block; margin-bottom: 1.1rem; }
+.registration .lbl { display: block; font-size: 0.87rem; font-weight: 700; margin-bottom: 0.3rem; }
+.registration .es { font-weight: 500; color: var(--text-muted); font-style: italic; }
+.registration .req { color: var(--amber); margin-left: 2px; }
+.registration input:not([type='radio']), .registration select { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.95rem; color: var(--text); background: #f8faff; }
+.registration input:focus, .registration select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26, 58, 143, 0.15); background: white; }
+.registration .reg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.registration .reg-row.three { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 560px) { .registration .reg-row, .registration .reg-row.three { grid-template-columns: 1fr; } }
+.registration .reg-age { display: flex; gap: 0.5rem; }
+.registration .reg-radios { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.35rem; }
+.registration .reg-radios label { display: flex; align-items: center; gap: 0.4rem; font-weight: 600; cursor: pointer; }
+.registration .reg-radios input { width: 1.1rem; height: 1.1rem; accent-color: var(--navy); }
+.registration .reg-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center; }
+.registration .reg-tab { padding: 0.35rem 1rem; border-radius: 999px; font-size: 0.84rem; font-weight: 700; border: 2px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-family: 'Nunito', sans-serif; }
+.registration .reg-tab.active { border-color: var(--navy); background: var(--navy); color: white; }
+.registration .reg-add { background: none; border: 2px dashed var(--coral); color: var(--coral-dark); font-family: 'Nunito', sans-serif; font-size: 0.84rem; font-weight: 700; padding: 0.35rem 1rem; border-radius: 999px; cursor: pointer; }
+.registration .reg-add:hover { background: var(--coral-light); }
+.registration .reg-waiver { font-size: 0.82rem; line-height: 1.7; max-height: 220px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 8px; padding: 1rem; background: #f8faff; margin-bottom: 1.25rem; }
+.registration .reg-waiver p { margin: 0 0 0.75rem; }
+.registration .reg-waiver p:last-child { margin-bottom: 0; }
+.registration .reg-sig { border: 2px solid var(--border); border-radius: 8px; background: white; touch-action: none; }
+.registration .reg-sig.signed { border-color: var(--navy); }
+.registration .reg-sig.error { border-color: var(--coral-dark); }
+.registration .reg-sig canvas { display: block; width: 100%; height: 140px; border-radius: 6px; cursor: crosshair; }
+.registration .reg-hint { font-size: 0.75rem; color: var(--text-muted); margin: 0.35rem 0 0; font-style: italic; }
+.registration .reg-clear { margin-top: 0.5rem; background: none; border: 1.5px solid var(--border); border-radius: 6px; padding: 0.3rem 0.85rem; font-size: 0.8rem; color: var(--text-muted); cursor: pointer; }
+.registration .reg-clear:hover { border-color: var(--coral-dark); color: var(--coral-dark); }
+.registration .reg-error { background: var(--coral-light); border: 1.5px solid var(--coral); color: #8b1a14; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-weight: 600; line-height: 1.5; white-space: pre-line; }
+.registration .reg-submit-area { text-align: center; }
+.registration .reg-submit { background: var(--coral); color: white; font-family: 'Nunito', sans-serif; font-size: 1.05rem; font-weight: 800; padding: 0.9rem 2.5rem; border: none; border-radius: 999px; cursor: pointer; box-shadow: 0 4px 18px rgba(242, 139, 130, 0.4); }
+.registration .reg-submit:hover { background: var(--coral-dark); }
+.registration .reg-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.registration .reg-note { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem; font-style: italic; line-height: 1.6; }
+.registration .reg-done { text-align: center; }
+.registration .reg-done .big { font-size: 3rem; }
+.registration .reg-done h2 { font-family: 'Nunito', sans-serif; color: var(--navy); margin: 0.5rem 0 1rem; }
+.registration .reg-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }

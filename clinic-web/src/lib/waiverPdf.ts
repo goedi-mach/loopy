@@ -8,6 +8,7 @@ const EN = [
   'I understand that vaccines and other services carry some risk. Mild side effects can include soreness, lethargy, or fever, while serious reactions are rare but possible and may require immediate veterinary attention.',
   'I release and hold harmless People Helping Pets, including its directors, officers, volunteers, veterinarians, staff, and representatives, from liability for any injury, harm, or damage to me, my pet, or my personal property related to services provided at the Clinic.',
   'I understand that photos or videos may be taken at Clinic events, and I give permission for People Helping Pets to use images of me, my pet, or others accompanying me for educational or promotional purposes. Anyone who does not wish to be photographed should let staff know at check-in.',
+  'I agree to receive email reminders from People Helping Pets regarding upcoming vaccinations for my pet(s). These reminders are sent as a courtesy and do not replace my responsibility to seek timely veterinary care.',
 ]
 
 const ES = [
@@ -17,6 +18,7 @@ const ES = [
   'Entiendo que las vacunas y otros servicios conllevan algunos riesgos. Los efectos secundarios leves pueden incluir dolor en el sitio de aplicación, letargo o fiebre, mientras que las reacciones graves son poco comunes pero posibles y pueden requerir atención veterinaria inmediata.',
   'Libero y eximo de responsabilidad a People Helping Pets, incluyendo a sus directores, oficiales, voluntarios, veterinarios, personal y representantes, por cualquier lesión, daño o perjuicio a mí, a mi mascota o a mi propiedad personal relacionado con los servicios proporcionados en la Clínica.',
   'Entiendo que se pueden tomar fotos o videos durante los eventos de la Clínica, y doy permiso a People Helping Pets para utilizar imágenes mías, de mi mascota o de cualquier persona que me acompañe con fines educativos o promocionales. Las personas que no deseen ser fotografiadas deben informar al personal al momento del registro.',
+  'Acepto recibir recordatorios por correo electrónico de People Helping Pets sobre las vacunas próximas de mi(s) mascota(s). Estos recordatorios se envían como cortesía y no reemplazan mi responsabilidad de buscar atención veterinaria oportuna.',
 ]
 
 export interface WaiverVisit {
