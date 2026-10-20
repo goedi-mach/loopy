@@ -8,6 +8,7 @@ import Intake from './Intake'
 import Discharge from './Discharge'
 import ClientProfile from './ClientProfile'
 import PrintRecord from './PrintRecord'
+import Records from './Records'
 
 export default function App() {
   return (
@@ -45,6 +46,14 @@ export default function App() {
           element={
             <RequireAuth>
               <ClientProfile />
+            </RequireAuth>
+          }
+        />
+                <Route
+          path="/records"
+          element={
+            <RequireAuth>
+              <Records />
             </RequireAuth>
           }
         />
