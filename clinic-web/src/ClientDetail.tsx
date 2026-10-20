@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { sbDelete, sbPatch } from './lib/api'
 import Documents from './Documents'
+import Attendance from './Attendance'
 import PetList from './PetList'
 import type { Client, Pet } from './types'
 
@@ -23,6 +24,7 @@ interface Props {
   showDocuments?: boolean
   hideProfile?: boolean
   editEventDate?: boolean
+  showAttendance?: boolean
 }
 
 export default function ClientDetail({
@@ -34,6 +36,7 @@ export default function ClientDetail({
   showDocuments,
   hideProfile,
   editEventDate,
+  showAttendance,
 }: Props) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
@@ -266,6 +269,7 @@ export default function ClientDetail({
       </div>
 
       <PetList clientId={client.id} allowDelete={allowDelete} renderSelected={renderPet} />
+      {showAttendance && <Attendance client={client} />}
       {showDocuments && <Documents clientId={client.id} />}
     </>
   )
