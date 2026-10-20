@@ -32,6 +32,8 @@ export interface Pet {
   microchip_number: string | null
   colors_markings: string | null
   archived: boolean
+  archive_reason: string | null
+  archive_note: string | null
   photo_updated_at: string | null
 }
 

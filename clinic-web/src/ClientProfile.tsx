@@ -51,6 +51,7 @@ export default function ClientProfile() {
             onDeleted={() => navigate('/intake')}
             showDocuments
             hideProfile
+            editEventDate
             renderPet={(pet) => <VaccineHistory key={pet.id} pet={pet} client={client} editable />}
           />
         )}
