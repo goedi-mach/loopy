@@ -349,3 +349,9 @@
 .intake .doc-link:hover { text-decoration: underline; }
 .intake .doc-delete { background: none; border: none; color: var(--coral); cursor: pointer; font-size: 0.8rem; padding: 0 0.25rem; }
 .intake .upload-label { display: inline-block; cursor: pointer; }
+/* ── Client profile ── */
+.intake .profile-main { max-width: 860px; margin: 0 auto; padding: 1.75rem 1.25rem 4rem; }
+.intake .back-link { display: inline-block; color: var(--navy); text-decoration: none; font-size: 0.85rem; font-weight: 700; margin-bottom: 1.25rem; opacity: 0.7; }
+.intake .back-link:hover { opacity: 1; }
+.intake .copy-id { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--navy); color: white; border: none; border-radius: 999px; padding: 0.55rem 1rem; font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(26, 58, 143, 0.25); z-index: 50; }
+.intake .copy-id.copied { background: var(--green); }
