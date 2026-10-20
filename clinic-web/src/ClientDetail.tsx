@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { sbDelete, sbPatch } from './lib/api'
+import Documents from './Documents'
 import PetList from './PetList'
 import type { Client, Pet } from './types'
-import Documents from './Documents'
-import { Link } from 'react-router-dom'
 
 const STATUS_LABEL: Record<string, string> = { registered: 'Registered', discharged: 'Discharged' }
 
@@ -22,11 +22,30 @@ interface Props {
   renderPet?: (pet: Pet, reload: () => Promise<void>) => ReactNode
   showDocuments?: boolean
   hideProfile?: boolean
+  editEventDate?: boolean
 }
 
-export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted, renderPet, showDocuments, hideProfile }: Props) {
+export default function ClientDetail({
+  client,
+  onUpdated,
+  allowDelete,
+  onDeleted,
+  renderPet,
+  showDocuments,
+  hideProfile,
+  editEventDate,
+}: Props) {
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ name: '', phone: '', email: '', street: '', city: '', state: '', zip: '' })
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    street: '',
+    city: '',
+    state: '',
+    zip: '',
+    event_date: '',
+  })
   const [editMsg, setEditMsg] = useState('')
   const [notesOpen, setNotesOpen] = useState(false)
   const [notes, setNotes] = useState(client.notes || '')
@@ -61,6 +80,7 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
       city: client.city || '',
       state: client.state || '',
       zip: client.zip || '',
+      event_date: client.event_date || '',
     })
     setEditMsg('')
     setEditing(true)
@@ -78,6 +98,7 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
         city: form.city.trim() || null,
         state: form.state.trim().toUpperCase() || null,
         zip: form.zip.trim() || null,
+        ...(editEventDate ? { event_date: form.event_date || null } : {}),
       })
       setEditing(false)
     } catch (err) {
@@ -93,6 +114,7 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
       alert(err instanceof Error ? err.message : 'Could not update client')
     }
   }
+
   async function deleteClient() {
     setMenuOpen(false)
     if (!confirm(`Permanently delete ${client.name}?\n\nThis also deletes all of their pets and vaccination records and cannot be undone.`)) return
@@ -104,6 +126,7 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
       alert(err instanceof Error ? err.message : 'Delete failed')
     }
   }
+
   async function saveSnip(checked: boolean) {
     try {
       await patchClient({ snip_interest: checked })
@@ -164,6 +187,12 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
                 <label>ZIP</label>
                 <input maxLength={10} value={form.zip} onChange={(e) => set('zip', e.target.value)} />
               </div>
+              {editEventDate && (
+                <div className="form-field">
+                  <label>Clinic Date</label>
+                  <input type="date" value={form.event_date} onChange={(e) => set('event_date', e.target.value)} />
+                </div>
+              )}
               <div className="form-actions">
                 <button type="submit" className="btn-primary">Save</button>
                 <button type="button" className="btn-link" onClick={() => setEditing(false)}>Cancel</button>
@@ -198,7 +227,7 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
                   <button type="button" className="notes-btn" title="Notes & flags" onClick={() => setNotesOpen(!notesOpen)}>📝</button>
                   <div className="menu-wrap" ref={menuRef}>
                     <button type="button" className="overflow-btn" onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
-                                        {menuOpen && (
+                    {menuOpen && (
                       <div className="overflow-menu">
                         <button type="button" onClick={toggleArchive}>{client.archived ? 'Unarchive' : 'Archive'}</button>
                         {client.archived && allowDelete && (
@@ -236,8 +265,8 @@ export default function ClientDetail({ client, onUpdated, allowDelete, onDeleted
         </div>
       </div>
 
-            <PetList clientId={client.id} allowDelete={allowDelete} renderSelected={renderPet} />
-            {showDocuments && <Documents clientId={client.id} />}
+      <PetList clientId={client.id} allowDelete={allowDelete} renderSelected={renderPet} />
+      {showDocuments && <Documents clientId={client.id} />}
     </>
   )
 }
