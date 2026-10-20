@@ -14,6 +14,7 @@ export default function Discharge() {
   const list = useClinicClients()
   const [selected, setSelected] = useState<Client | null>(null)
   const isAdmin = getRole() === 'admin'
+  const [warning, setWarning] = useState('')
 
   function handleUpdated(updated: Client) {
     setSelected(updated)
@@ -26,15 +27,17 @@ export default function Discharge() {
   }
 
   // Logging a vaccine marks the client Discharged
-  async function markDischarged() {
+    async function markDischarged() {
     if (!selected || selected.status === 'discharged') return
     try {
       const rows: Client[] = await sbPatch(`clients?id=eq.${selected.id}`, { status: 'discharged' })
       if (!rows.length) throw new Error('not allowed')
       handleUpdated({ ...selected, ...rows[0] })
       list.reload()
+      setWarning('')
     } catch (err) {
       console.warn('Could not mark client discharged:', err)
+      setWarning('The vaccine was saved, but the client could not be marked Discharged. Please tell an admin.')
     }
   }
 
@@ -42,6 +45,7 @@ export default function Discharge() {
     <div className="intake">
       <ClinicNav active="discharge" />
       <ClinicBanner event={list.todayEvent} />
+      {warning && <div className="warning-bar">{warning}</div>}
 
       <div className="dash-body">
         <ClientListCard list={list} selectedId={selected?.id ?? null} onSelect={setSelected} />
