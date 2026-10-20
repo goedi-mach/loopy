@@ -6,20 +6,27 @@ import type { Attachment } from './types'
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const MAX_MB = 10
 
-export default function Documents({ clientId }: { clientId: string }) {
+interface Props {
+  clientId: string
+  petId?: string
+  title?: string
+}
+
+export default function Documents({ clientId, petId, title }: Props) {
   const [docs, setDocs] = useState<Attachment[] | null>(null)
   const [open, setOpen] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [msg, setMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
 
   useEffect(() => {
-    sbGet<Attachment[]>(`attachments?client_id=eq.${clientId}&pet_id=is.null&order=uploaded_at.desc`)
+    const filter = petId ? `pet_id=eq.${petId}` : `client_id=eq.${clientId}&pet_id=is.null`
+    sbGet<Attachment[]>(`attachments?${filter}&order=uploaded_at.desc`)
       .then(setDocs)
       .catch((err) => {
         setDocs([])
         setMsg({ type: 'error', text: err instanceof Error ? err.message : 'Could not load documents' })
       })
-  }, [clientId])
+  }, [clientId, petId])
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
     const input = e.target
@@ -33,7 +40,8 @@ export default function Documents({ clientId }: { clientId: string }) {
     setUploading(true)
     setMsg(null)
     const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
-    const path = `clients/${clientId}/${Date.now()}_${safeName}`
+    const folder = petId ? `pets/${petId}` : `clients/${clientId}`
+    const path = `${folder}/${Date.now()}_${safeName}`
     try {
       await request(`/storage/v1/object/attachments/${path}`, {
         method: 'POST',
@@ -43,7 +51,7 @@ export default function Documents({ clientId }: { clientId: string }) {
       try {
         const rows = await sbPost<Attachment>('attachments', {
           client_id: clientId,
-          pet_id: null,
+          pet_id: petId ?? null,
           storage_path: `attachments/${path}`,
           display_name: file.name,
           uploaded_by: getUserId(),
@@ -97,7 +105,7 @@ export default function Documents({ clientId }: { clientId: string }) {
     <div className="card">
       <div className="card-header">
         <button type="button" className="section-toggle" onClick={() => setOpen(!open)}>
-          <span>📎 Documents</span>
+          <span>📎 {title || 'Documents'}</span>
           <span className={open ? 'toggle-icon open' : 'toggle-icon'}>▼</span>
         </button>
       </div>
