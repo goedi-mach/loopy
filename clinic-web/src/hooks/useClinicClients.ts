@@ -75,7 +75,7 @@ export function useClinicClients() {
           }
           eventDate = past[0].event_date
         }
-        let path = `clients?archived=eq.false&event_date=eq.${eventDate}&order=created_at.asc&limit=200`
+        let path = `clients?select=id,name,email,phone,address,created_at,status,archived,event_date,street,city,state,zip,notes,snip_interest,preferred_language&archived=eq.false&event_date=eq.${eventDate}&order=created_at.asc&limit=200`
         if (filter !== 'all') path += `&status=eq.${filter}`
         const rows: Client[] = await sbGet(path)
         setClients(rows)

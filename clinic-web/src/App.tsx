@@ -6,6 +6,7 @@ import VolunteerHome from './VolunteerHome'
 import RequireAuth from './components/RequireAuth'
 import Intake from './Intake'
 import Discharge from './Discharge'
+import ClientProfile from './ClientProfile'
 
 export default function App() {
   return (
@@ -35,6 +36,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Discharge />
+            </RequireAuth>
+          }
+        />
+                <Route
+          path="/client/:id"
+          element={
+            <RequireAuth>
+              <ClientProfile />
             </RequireAuth>
           }
         />
