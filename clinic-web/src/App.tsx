@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Landing from './Landing'
 import Login from './Login'
 import SetPassword from './SetPassword'
@@ -18,6 +18,12 @@ import MergeClients from './MergeClients'
 import UserManagement from './UserManagement'
 import Reminders from './Reminders'
 
+// Old invite/reset links point at /set-password.html. Keep the "#access_token=…" part when redirecting.
+function SetPasswordRedirect() {
+  const l = useLocation()
+  return <Navigate to={{ pathname: '/set-password', search: l.search, hash: l.hash }} replace />
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -25,6 +31,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<div className="login-page"><Login /></div>} />
         <Route path="/set-password" element={<div className="set-password-page"><SetPassword /></div>} />
+        <Route path="/set-password.html" element={<SetPasswordRedirect />} />
         <Route
           path="/volunteer-home"
           element={
