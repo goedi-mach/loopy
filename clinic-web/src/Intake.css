@@ -492,3 +492,14 @@
 .sh-modal-title { font-family: 'Nunito', sans-serif; font-size: 1.05rem; font-weight: 800; color: #1a3a8f; margin-bottom: 1.1rem; }
 .sh-modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
 .sh-modal-actions > * { flex: 1; }
+/* ── Staff home: close-out ── */
+.intake .sh-stale { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; background: #fef3c7; border: 1.5px solid #d97706; border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.intake .sh-stale-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; color: #92400e; }
+.intake .sh-stale-text { font-size: 0.83rem; color: #92400e; margin-top: 0.25rem; }
+.intake .sh-stale button { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem; padding: 0.5rem 1.1rem; border-radius: 999px; border: none; background: #d97706; color: white; cursor: pointer; white-space: nowrap; }
+.sh-modal-sub { font-size: 0.85rem; color: #6b7280; margin: -0.6rem 0 1rem; }
+.sh-waste-row { display: grid; grid-template-columns: 1fr 90px 36px; gap: 0.5rem; margin-bottom: 0.5rem; }
+.sh-waste-row select, .sh-waste-row input { padding: 0.5rem 0.65rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background: white; min-width: 0; }
+.sh-waste-row button { border: 1.5px solid #e2e8f0; border-radius: 8px; background: none; color: #6b7280; cursor: pointer; }
+.sh-add-row { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.83rem; padding: 0.35rem 0.9rem; border-radius: 999px; border: 1.5px dashed #cbd5e1; background: none; color: #1a3a8f; cursor: pointer; margin-top: 0.25rem; }
+.sh-cancel { display: block; margin: 0.75rem auto 0; background: none; border: none; color: #6b7280; font-size: 0.8rem; text-decoration: underline; cursor: pointer; }
