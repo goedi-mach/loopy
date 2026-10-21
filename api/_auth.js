@@ -28,7 +28,7 @@ export async function requireRole(req, res, roles = ['staff', 'admin']) {
   }
 
   const role = user?.app_metadata?.role;
-  if (!roles.includes(role)) {
+  if (roles !== 'any' && !roles.includes(role)) {
     res.status(403).json({ error: 'You do not have permission to do this.' });
     return null;
   }
