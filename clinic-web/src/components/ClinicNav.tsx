@@ -1,13 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { clearSession, getRole } from '../lib/auth'
 
-type Active = 'intake' | 'discharge' | 'records' | 'reports'
+type Active = 'intake' | 'discharge' | 'records' | 'reports' | 'staff'
 
 const TITLES: Record<Active, string> = {
   intake: 'Intake',
   discharge: 'Discharge',
   records: 'Records',
   reports: 'Reports',
+  staff: 'Staff',
 }
 
 export default function ClinicNav({ active }: { active?: Active }) {
@@ -32,7 +33,7 @@ export default function ClinicNav({ active }: { active?: Active }) {
         <Link to="/discharge" className={cls('discharge')}>💉 Discharge</Link>
         <Link to="/records" className={cls('records')}>📋 Records</Link>
         {isStaff && <Link to="/reports" className={cls('reports')}>📊 Reports</Link>}
-        {isStaff && <a href="/staff-home.html" className="nav-link">🏠 Staff Home</a>}
+        {isStaff && <Link to="/staff-home" className={cls('staff')}>🏠 Staff Home</Link>}
         <button type="button" className="btn-logout" onClick={logout}>Sign Out</button>
       </div>
     </nav>
