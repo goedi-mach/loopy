@@ -241,4 +241,146 @@ export default function ReminderTriggers() {
         <button className="rm-btn rm-btn-green" onClick={() => openModal(null)}>+ New Trigger</button>
       </div>
       {err && <div className="rm-msg error">{err}</div>}
-      <div
+      <div className="rm-table-wrap">
+        <table className="rm-table">
+          <thead>
+            <tr><th>Name</th><th>Event</th><th>Conditions</th><th>Templates</th><th>Active</th><th></th></tr>
+          </thead>
+          <tbody>
+            {rows === null ? (
+              <tr><td colSpan={6} className="rm-empty">Loading…</td></tr>
+            ) : rows.length === 0 ? (
+              <tr><td colSpan={6} className="rm-empty">No triggers yet. Click + New Trigger to create one.</td></tr>
+            ) : (
+              rows.map(t => {
+                const c = t.conditions || {};
+                const conds: string[] = [];
+                if (c.has_intact_pet) conds.push('Has intact pet');
+                if (c.has_microchip) conds.push('Has microchip');
+                if (c.zip?.length) conds.push(`ZIP: ${c.zip.join(', ')}`);
+                return (
+                  <tr key={t.id}>
+                    <td>
+                      <div style={{ fontWeight: 700 }}>{t.name}</div>
+                      {t.description && <div className="rm-small">{t.description}</div>}
+                    </td>
+                    <td className="rm-small">{EVENTS[t.event] || t.event}</td>
+                    <td className="rm-small">
+                      {conds.length ? conds.map(x => <div key={x}>{x}</div>) : <span>Everyone</span>}
+                    </td>
+                    <td className="rm-small rm-mono">{t.template_en}<br />{t.template_es}</td>
+                    <td>
+                      <label className="rm-toggle">
+                        <input type="checkbox" checked={t.active} onChange={e => toggle(t, e.target.checked)} />
+                        <span>{t.active ? 'On' : 'Off'}</span>
+                      </label>
+                    </td>
+                    <td><button className="rm-btn rm-btn-ghost rm-btn-sm" onClick={() => openModal(t)}>✏️ Edit</button></td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {open && (
+        <div className="rm-modal-bg">
+          <div className="rm-modal rm-modal-form">
+            <div className="rm-modal-head">
+              <div className="rm-modal-title">{editing ? 'Edit Trigger' : 'New Trigger'}</div>
+              <button className="rm-x" onClick={() => setOpen(false)} aria-label="Close">✕</button>
+            </div>
+            <div className="rm-modal-scroll">
+              {modalMsg && <div className={'rm-msg-inline ' + modalMsg.type}>{modalMsg.text}</div>}
+
+              <div className="rm-two">
+                <div className="rm-field">
+                  <label>Trigger Name *</label>
+                  <input value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Tree House S/N Program" />
+                </div>
+                <div className="rm-field">
+                  <label>Send After *</label>
+                  <select value={form.event} onChange={e => setF('event', e.target.value)}>
+                    {Object.entries(EVENT_OPTIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="rm-field" style={{ marginTop: '.75rem' }}>
+                <label>Description</label>
+                <input value={form.description} onChange={e => setF('description', e.target.value)} placeholder="What does this trigger do?" />
+              </div>
+
+              <div className="rm-conds">
+                <div className="rm-conds-title">Conditions — only send if…</div>
+                <label className="rm-check">
+                  <input type="checkbox" checked={form.intact} onChange={e => setF('intact', e.target.checked)} />
+                  <span>Client has at least one pet that is <strong>not confirmed spayed/neutered</strong></span>
+                </label>
+                <label className="rm-check">
+                  <input type="checkbox" checked={form.chip} onChange={e => setF('chip', e.target.checked)} />
+                  <span>Client has at least one pet with a <strong>microchip on record</strong></span>
+                </label>
+                <label className="rm-check">
+                  <input type="checkbox" checked={form.zipOn} onChange={e => setF('zipOn', e.target.checked)} />
+                  <span>Client lives in specific <strong>ZIP codes</strong></span>
+                </label>
+                {form.zipOn && (
+                  <div className="rm-field" style={{ marginLeft: '1.5rem' }}>
+                    <input value={form.zips} onChange={e => setF('zips', e.target.value)} placeholder="60651, 60639" />
+                    <div className="rm-small">Comma-separated 5-digit ZIP codes</div>
+                  </div>
+                )}
+                <div className="rm-small" style={{ marginTop: '.6rem' }}>
+                  All checked conditions must be true. Leave all unchecked to send to everyone.
+                </div>
+              </div>
+
+              <div className="rm-two">
+                <div className="rm-field">
+                  <label>English Template ID *</label>
+                  <input className="rm-mono" value={form.tplEn} onChange={e => setF('tplEn', e.target.value)} placeholder="e.g. tree_house_snip_en" />
+                </div>
+                <div className="rm-field">
+                  <label>Spanish Template ID *</label>
+                  <input className="rm-mono" value={form.tplEs} onChange={e => setF('tplEs', e.target.value)} placeholder="e.g. tree_house_snip_es" />
+                </div>
+              </div>
+
+              <div className="rm-editor">
+                <div className="rm-editor-head">
+                  <span>✏️ Email Content</span>
+                  <button className="rm-btn rm-btn-ghost rm-btn-sm" onClick={() => loadTemplates()}>Load / Refresh</button>
+                </div>
+                <div className="rm-two rm-pad">
+                  <div className="rm-field">
+                    <label>🇺🇸 English — section heading</label>
+                    <input value={form.enSubject} onChange={e => setF('enSubject', e.target.value)} />
+                    <label>Body</label>
+                    <textarea rows={6} value={form.enBody} onChange={e => setF('enBody', e.target.value)} />
+                  </div>
+                  <div className="rm-field">
+                    <label>🇲🇽 Español — encabezado de sección</label>
+                    <input value={form.esSubject} onChange={e => setF('esSubject', e.target.value)} />
+                    <label>Cuerpo</label>
+                    <textarea rows={6} value={form.esBody} onChange={e => setF('esBody', e.target.value)} />
+                  </div>
+                </div>
+                <div className="rm-small" style={{ padding: '0 1rem .75rem' }}>
+                  Variables: <code>{'{{owner_name}}'}</code> <code>{'{{clinic_date}}'}</code> <code>{'{{snip_link}}'}</code> <code>{'{{chip_links}}'}</code> <code>{'{{website_link}}'}</code>
+                </div>
+              </div>
+            </div>
+            <div className="rm-modal-foot">
+              <button className="rm-btn rm-btn-ghost" onClick={() => setOpen(false)} disabled={saving}>Cancel</button>
+              <button className="rm-btn rm-btn-green" onClick={save} disabled={saving}>
+                {saving ? 'Saving…' : 'Save Trigger'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

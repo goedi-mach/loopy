@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import ClinicNav from './components/ClinicNav'
 import CloseOutDialog from './CloseOutDialog'
 import EventsCard, { type ClinicEvent } from './EventsCard'
@@ -10,8 +11,8 @@ import './Intake.css'
 
 const TOOLS = [
   { href: '/tools/reminders.html', icon: '📬', label: 'Reminders', sub: 'Email templates & send history' },
-  { href: '/tools/batch-certs.html', icon: '📄', label: 'Batch Certificates', sub: 'Download all rabies certs by date' },
-  { href: '/tools/merge-clients.html', icon: '👯', label: 'Merge Tool', sub: 'Merge duplicate client records' },
+  { to: '/tools/batch-certs', icon: '📄', label: 'Batch Certificates', sub: 'Download all rabies certs by date' },
+  { to: '/tools/merge-clients', icon: '👯', label: 'Merge Tool', sub: 'Merge duplicate client records' },
 ]
 
 const longDate = (d: string) =>
@@ -115,19 +116,26 @@ export default function StaffHome() {
 
         <div className="sh-section">Tools</div>
         <div className="sh-tiles">
-          {TOOLS.map((t) => (
-            <a key={t.href} href={t.href} className="sh-tile">
-              <div className="sh-tile-icon">{t.icon}</div>
-              <div className="sh-tile-label">{t.label}</div>
-              <div className="sh-tile-sub">{t.sub}</div>
-            </a>
-          ))}
-          {isAdmin && (
-            <a href="/tools/user-management.html" className="sh-tile">
+            {TOOLS.map((t) => {
+            const body = (
+              <>
+                <div className="sh-tile-icon">{t.icon}</div>
+                <div className="sh-tile-label">{t.label}</div>
+                <div className="sh-tile-sub">{t.sub}</div>
+              </>
+            )
+            return t.to ? (
+              <Link key={t.label} to={t.to} className="sh-tile">{body}</Link>
+            ) : (
+              <a key={t.label} href={t.href} className="sh-tile">{body}</a>
+            )
+          })}
+            {isAdmin && (
+            <Link to="/tools/user-management" className="sh-tile">
               <div className="sh-tile-icon">👥</div>
               <div className="sh-tile-label">User Management</div>
               <div className="sh-tile-sub">Invite users & manage roles</div>
-            </a>
+            </Link>
           )}
         </div>
 
