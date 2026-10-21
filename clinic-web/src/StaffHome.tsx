@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import ClinicNav from './components/ClinicNav'
 import CloseOutDialog from './CloseOutDialog'
 import EventsCard, { type ClinicEvent } from './EventsCard'
+import LotsCard from './LotsCard'
 import { request, sbGet } from './lib/api'
 import { getRole } from './lib/auth'
 import { todayStr } from './lib/dates'
@@ -132,6 +133,8 @@ export default function StaffHome() {
 
         <div className="sh-section">Clinic Events</div>
         <EventsCard reloadKey={reloadKey} onComplete={setClosing} onEmail={sendEmail} />
+        <div className="sh-section sh-section-gap">Vaccine Lot Management</div>
+        <LotsCard />
       </div>
 
       {closing && (

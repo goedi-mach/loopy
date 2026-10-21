@@ -503,3 +503,11 @@
 .sh-waste-row button { border: 1.5px solid #e2e8f0; border-radius: 8px; background: none; color: #6b7280; cursor: pointer; }
 .sh-add-row { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.83rem; padding: 0.35rem 0.9rem; border-radius: 999px; border: 1.5px dashed #cbd5e1; background: none; color: #1a3a8f; cursor: pointer; margin-top: 0.25rem; }
 .sh-cancel { display: block; margin: 0.75rem auto 0; background: none; border: none; color: #6b7280; font-size: 0.8rem; text-decoration: underline; cursor: pointer; }
+/* ── Staff home: lots ── */
+.intake .sh-section-gap { margin-top: 1.75rem; }
+.intake .sh-sweep { display: flex; justify-content: flex-end; margin-bottom: 0.75rem; }
+.intake .sh-toggle { text-align: right; margin-top: 0.5rem; }
+.intake .sh-linkbtn { background: none; border: none; font-size: 0.78rem; color: var(--text-muted); text-decoration: underline; cursor: pointer; }
+.intake .sh-mono { font-family: monospace; }
+.intake .sh-pill.off { background: #eef0f4; color: var(--text-muted); }
+.intake .sh-pill.bad { background: #fdecea; color: #b3261e; margin-left: 0.4rem; }
