@@ -99,8 +99,15 @@ export default function ReminderManual() {
     setSendingId(r.vax.id + type);
     setMsg({ type: 'info', text: `Sending ${label} reminder for ${petName}…` });
     try {
-      await apiPost('/api/send-reminder-manual', { vaccinationId: r.vax.id, type });
-      setMsg({ type: 'success', text: `✓ ${label} reminder sent for ${petName}.` });
+            const out = await apiPost<{ ok: boolean; warning?: string }>('/api/send-reminder-manual', {
+        vaccinationId: r.vax.id,
+        type,
+      });
+      setMsg(
+        out.warning
+          ? { type: 'error', text: `${label} reminder emailed for ${petName}. WARNING: ${out.warning}` }
+          : { type: 'success', text: `✓ ${label} reminder sent for ${petName}.` }
+      );
       setRefresh(n => n + 1);
     } catch (e: any) {
       setMsg({ type: 'error', text: 'Error: ' + (e.message || e) });
