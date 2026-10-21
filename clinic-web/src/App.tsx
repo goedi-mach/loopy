@@ -12,6 +12,7 @@ import Records from './Records'
 import Registration from './Registration'
 import Reports from './Reports'
 import RequireRole from './components/RequireRole'
+import StaffHome from './StaffHome'
 
 export default function App() {
   return (
@@ -71,6 +72,17 @@ export default function App() {
             </RequireAuth>
           }
         />
+                <Route
+          path="/staff-home"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['staff', 'admin']}>
+                <StaffHome />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route path="/staff-home.html" element={<Navigate to="/staff-home" replace />} />
                 <Route
           path="/client/:id/print/:petId"
           element={

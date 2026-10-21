@@ -453,3 +453,42 @@
 .intake .rep-badge { background: var(--navy-light); color: var(--navy); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.82rem; padding: 0.3rem 0.85rem; border-radius: 999px; }
 .intake .rep-badge.bad { background: #fdecea; color: #b3261e; }
 .intake .rep-lookup-bars { max-width: 520px; margin-bottom: 1.25rem; }
+/* ── Staff home ── */
+.intake .sh-section { font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 0 0 0.75rem; }
+.intake .sh-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+.intake .sh-tile { display: block; background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.1rem 1.3rem; border: 1.5px solid rgba(26, 58, 143, 0.07); text-decoration: none; color: inherit; transition: transform 0.12s, border-color 0.12s; }
+.intake .sh-tile:hover { transform: translateY(-2px); border-color: var(--navy); }
+.intake .sh-tile-icon { font-size: 1.6rem; margin-bottom: 0.35rem; }
+.intake .sh-tile-label { font-family: 'Nunito', sans-serif; font-weight: 800; color: var(--navy); }
+.intake .sh-tile-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; }
+.intake .sh-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+.intake .sh-tab { font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; padding: 0.3rem 1rem; border-radius: 999px; border: 1.5px solid var(--border); background: white; color: var(--text-muted); cursor: pointer; }
+.intake .sh-tab.active { background: var(--navy); color: white; border-color: var(--navy); }
+.intake .sh-event { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; padding: 0.85rem 0; border-bottom: 1px solid var(--border); }
+.intake .sh-event-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.92rem; color: var(--navy); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.intake .sh-event-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+.intake .sh-event-type { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; font-style: italic; }
+.intake .sh-pill { font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 999px; }
+.intake .sh-pill.done { background: var(--green-light, #e6f4ec); color: var(--green); }
+.intake .sh-pill.warn { background: var(--amber-light, #fef3c7); color: var(--amber); }
+.intake .sh-event-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.intake .sh-mini { font-size: 0.72rem; padding: 0.2rem 0.7rem; border-radius: 999px; border: 1.5px solid var(--border); background: none; color: var(--text-muted); cursor: pointer; font-family: inherit; font-weight: 700; }
+.intake .sh-mini.green { border-color: var(--green); color: var(--green); }
+.intake .sh-mini.navy { border-color: var(--navy); color: var(--navy); }
+.intake .sh-mini.red { color: var(--coral-dark, #d96b62); }
+.intake .sh-more { text-align: center; margin-top: 0.75rem; }
+.intake .sh-more button { background: none; border: none; font-size: 0.78rem; color: var(--text-muted); text-decoration: underline; cursor: pointer; }
+.intake .sh-add { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1.5px dashed var(--border); }
+.intake .sh-add-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem; color: var(--navy); margin-bottom: 0.75rem; }
+.intake .sh-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 560px) { .intake .sh-row { grid-template-columns: 1fr; } }
+.intake .sh-field { margin-bottom: 0.75rem; }
+.intake .sh-field label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem; }
+.intake .sh-field input, .intake .sh-field select { width: 100%; box-sizing: border-box; padding: 0.5rem 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Nunito Sans', sans-serif; font-size: 0.9rem; background: white; color: var(--text); }
+.intake .sh-field input:focus, .intake .sh-field select:focus { outline: none; border-color: var(--navy); }
+.intake .sh-success { background: var(--green-light, #e6f4ec); color: var(--green); font-weight: 700; font-size: 0.85rem; padding: 0.5rem 0.9rem; border-radius: 8px; margin-bottom: 0.75rem; }
+.sh-modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.sh-modal { background: white; border-radius: 16px; padding: 1.75rem; max-width: 460px; width: 92%; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); }
+.sh-modal-title { font-family: 'Nunito', sans-serif; font-size: 1.05rem; font-weight: 800; color: #1a3a8f; margin-bottom: 1.1rem; }
+.sh-modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+.sh-modal-actions > * { flex: 1; }
