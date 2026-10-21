@@ -170,7 +170,11 @@ export default function ReminderTriggers() {
       return fail('Template IDs may only use lowercase letters, numbers and underscores.');
     if (enId === esId) return fail('English and Spanish need different template IDs.');
 
-    const conditions: Conditions = {};
+        // Keep any conditions this form doesn't manage (clinic_type, preferred_language, has_upcoming_due).
+    const conditions: Conditions = { ...(editing?.conditions || {}) };
+    delete conditions.has_intact_pet;
+    delete conditions.has_microchip;
+    delete conditions.zip;
     if (form.intact) conditions.has_intact_pet = true;
     if (form.chip) conditions.has_microchip = true;
     if (form.zipOn) {
@@ -258,6 +262,9 @@ export default function ReminderTriggers() {
                 if (c.has_intact_pet) conds.push('Has intact pet');
                 if (c.has_microchip) conds.push('Has microchip');
                 if (c.zip?.length) conds.push(`ZIP: ${c.zip.join(', ')}`);
+                  Object.entries(c)
+                  .filter(([k]) => !['has_intact_pet', 'has_microchip', 'zip'].includes(k))
+                  .forEach(([k, v]) => conds.push(`${k}: ${String(v)}`));
                 return (
                   <tr key={t.id}>
                     <td>
