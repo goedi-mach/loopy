@@ -5,6 +5,8 @@ import { downloadCsv } from './lib/csv'
 import { fmtShort, todayStr } from './lib/dates'
 import './Intake.css'
 import ReportExtras from './ReportExtras'
+import VaccineLookup from './VaccineLookup'
+import { Link } from 'react-router-dom'
 
 interface VaxRow {
   id: string
@@ -209,7 +211,7 @@ export default function Reports() {
       <div className="records-main">
         <div className="records-head">
           <div className="page-title">📊 Reports & Statistics</div>
-          <a className="reminder-link" href="/tools/batch-certs.html">📄 Batch Certificates</a>
+          <Link className="reminder-link" to="/tools/batch-certs">📄 Batch Certificates</Link>
         </div>
 
         <div className="controls">
@@ -313,6 +315,7 @@ export default function Reports() {
         </div>
         <p className="field-note">Pets and Clients totals add up each clinic's counts, so someone seen at two clinics is counted twice. The stat cards above count each person once.</p>
         <ReportExtras range={range} events={events} />
+        <VaccineLookup />
       </div>
     </div>
   )
