@@ -4,6 +4,7 @@ import { request, sbGetAll } from './lib/api'
 import { downloadCsv } from './lib/csv'
 import { fmtShort, todayStr } from './lib/dates'
 import './Intake.css'
+import ReportExtras from './ReportExtras'
 
 interface VaxRow {
   id: string
@@ -17,6 +18,7 @@ interface EventLite {
   event_date: string
   location: string | null
   clinic_type: string | null
+  completed: boolean
 }
 interface PerDate {
   date: string
@@ -87,12 +89,13 @@ export default function Reports() {
   const [result, setResult] = useState<Result | null>(null)
   const [error, setError] = useState('')
   const [running, setRunning] = useState(false)
+  const [range, setRange] = useState<{ from: string; to: string; eventDate: string | null } | null>(null)
 
   async function run() {
     setRunning(true)
     setError('')
     try {
-      const evs = await sbGetAll<EventLite>('events?select=id,event_date,location,clinic_type&order=event_date.desc')
+      const evs = await sbGetAll<EventLite>('events?select=id,event_date,location,clinic_type,completed&order=event_date.desc,id.asc')
       setEvents(evs)
 
       // Picking one event overrides the date range with that event's date
@@ -104,7 +107,7 @@ export default function Reports() {
 
       const [vax, chipRes] = await Promise.all([
         sbGetAll<VaxRow>(
-          `vaccinations?select=id,vaccine_name,date_given,pet_id,pets(id,client_id,species)${vaxFilter}&order=date_given.asc`
+          `vaccinations?select=id,vaccine_name,date_given,pet_id,pets(id,client_id,species)${vaxFilter}&order=date_given.asc,id.asc`
         ),
         request(`/rest/v1/pets?select=id,clients!inner(id)&microchip_number=not.is.null${clientFilter}`, {
           method: 'HEAD',
@@ -165,6 +168,7 @@ export default function Reports() {
             clients: d.clients.size,
           })),
       })
+    setRange({ from, to, eventDate: picked ? picked.event_date : null })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not run the report')
     } finally {
@@ -308,6 +312,7 @@ export default function Reports() {
           )}
         </div>
         <p className="field-note">Pets and Clients totals add up each clinic's counts, so someone seen at two clinics is counted twice. The stat cards above count each person once.</p>
+        <ReportExtras range={range} events={events} />
       </div>
     </div>
   )
