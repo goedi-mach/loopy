@@ -17,7 +17,7 @@ type Variant = {
   html: string;
 };
 type Preview = { totalRecipients: number; skipped: number; variants: Variant[] };
-type SendRes = { sent: number; skipped: number; done: boolean; nextOffset: number; totalClients?: number };
+type SendRes = { sent: number; skipped: number; done: boolean; nextOffset: number; totalClients?: number; logFailures?: number; };
 type Msg = { type: 'success' | 'error' | 'info'; text: string } | null;
 type Previewed = { eventId: string; eventDate: string; clinicType: string; testClientId: string | null };
 
@@ -111,6 +111,7 @@ export default function ReminderPostClinic() {
     let offset = 0;
     let totalSent = 0;
     let totalSkipped = 0;
+    let totalLogFail = 0;
     let done = false;
     let rounds = 0;
 
@@ -130,6 +131,7 @@ export default function ReminderPostClinic() {
 
         totalSent += data.sent || 0;
         totalSkipped += data.skipped || 0;
+        totalLogFail += data.logFailures || 0;
         done = !!data.done;
         if (!done && !(data.nextOffset > offset)) {
           throw new Error('The server did not advance to the next batch.');
@@ -140,9 +142,13 @@ export default function ReminderPostClinic() {
           text: `${totalSent} sent so far${data.totalClients ? ` of ~${data.totalClients}` : ''}…`,
         });
       }
-      setMsg({
-        type: 'success',
-        text: `✓ Done! Sent to ${totalSent} client${totalSent === 1 ? '' : 's'}. Skipped ${totalSkipped} (no email on file).`,
+           setMsg({
+        type: totalLogFail ? 'error' : 'success',
+        text:
+          `✓ Done! Sent to ${totalSent} client${totalSent === 1 ? '' : 's'}. Skipped ${totalSkipped}.` +
+          (totalLogFail
+            ? ` WARNING: ${totalLogFail} emails went out but could not be logged. Do not re-run this clinic until that is fixed, or those people will be emailed twice.`
+            : ''),
       });
     } catch (e: any) {
       setMsg({
