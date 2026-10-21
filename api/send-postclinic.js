@@ -1,3 +1,5 @@
+import { requireRole } from './_auth.js';
+
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY       = process.env.RESEND_API_KEY;
@@ -9,7 +11,21 @@ const SNIP_LINK       = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDF
 const LOWCOST_LINK    = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf';
 const WEBSITE_LINK    = 'https://peoplehelpingpets.org';
 
-// ─── SUPABASE HELPER ───────────────────────────────────────────
+const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// ─── SMALL HELPERS ─────────────────────────────────────────────
+// Anything that came from a client/pet record must be escaped before it goes into HTML.
+const esc = s => String(s ?? '')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+// Today's date in Chicago as YYYY-MM-DD (not UTC).
+function chicagoToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+}
+
+// ─── SUPABASE HELPERS ──────────────────────────────────────────
 async function sbFetch(path) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
@@ -17,7 +33,20 @@ async function sbFetch(path) {
       Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`
     }
   });
-  return res.json();
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.message || `Database error (${res.status})`);
+  return data;
+}
+
+// Fetch rows where `column` is in a long list of ids, in chunks so the URL stays short.
+async function fetchByIds(table, column, ids, query) {
+  const out = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100);
+    const rows = await sbFetch(`${table}?${column}=in.(${chunk.join(',')})&${query}`);
+    out.push(...rows);
+  }
+  return out;
 }
 
 // ─── TEMPLATE VARIABLE SUBSTITUTION ───────────────────────────
@@ -37,7 +66,7 @@ async function loadTriggers(event) {
 
 // ─── LOAD A SINGLE EMAIL TEMPLATE ─────────────────────────────
 async function loadTemplate(id) {
-  const rows = await sbFetch(`email_templates?id=eq.${id}&select=id,subject,body`);
+  const rows = await sbFetch(`email_templates?id=eq.${encodeURIComponent(id)}&select=id,subject,body`);
   return Array.isArray(rows) && rows[0] ? rows[0] : null;
 }
 
@@ -54,10 +83,11 @@ async function getMainTemplates(prefix) {
 
 // ─── CONDITION EVALUATOR ───────────────────────────────────────
 // Supported conditions (all are optional; omitting one means "no restriction"):
-//   has_intact_pet  — true: client has any pet with altered = 'no' or 'unknown'
-//   has_microchip   — true: client has any pet with a microchip_number
-//   zip             — array of ZIP strings: client's ZIP must be in the list
-//   clinic_type     — 'Vaccine Clinic' | 'Booster Clinic' (matches the event's clinicType)
+//   has_intact_pet     — true: client has any pet with altered = 'no' or 'unknown'
+//   has_microchip      — true: client has any pet with a microchip_number
+//   has_upcoming_due   — true: a pet's next due date falls before the next booster clinic
+//   zip                — array of ZIP strings: client's ZIP must be in the list
+//   clinic_type        — 'Vaccine Clinic' | 'Booster Clinic' (matches the event's clinicType)
 //   preferred_language — 'en' | 'es'
 function evaluateConditions(conditions, client, clientPets, clinicType, hasUpcomingDue) {
   if (!conditions || Object.keys(conditions).length === 0) return true;
@@ -120,21 +150,21 @@ function buildTriggerBlock(tplEn, tplEs, vars, includeChipList) {
 // ─── NEXT BOOSTER CLINIC ───────────────────────────────────────
 async function getNextBoosterClinic(afterDate) {
   const records = await sbFetch(
-    `events?clinic_type=eq.Booster Clinic&completed=eq.false&event_date=gt.${afterDate}&order=event_date.asc&limit=1`
+    `events?clinic_type=eq.Booster%20Clinic&completed=eq.false&event_date=gt.${afterDate}&order=event_date.asc&limit=1`
   );
   if (!Array.isArray(records) || !records.length) return null;
   const e    = records[0];
   const date = new Date(e.event_date + 'T12:00:00');
+  const loc  = esc(e.location);
   return {
     date: e.event_date, // raw ISO date string, used for due-date cutoff comparisons
-    en: `${date.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' })} at ${e.location}`,
-    es: `${date.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} en ${e.location}`,
+    en: `${date.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' })} at ${loc}`,
+    es: `${date.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} en ${loc}`,
   };
 }
 
 // ─── DUE DATE BLOCK ────────────────────────────────────────────
-function buildDueDates(pets, vaccinations) {
-  const today = new Date().toISOString().split('T')[0];
+function buildDueDates(pets, vaccinations, today) {
   const byPet = {};
   vaccinations.forEach(v => {
     if (!v.next_due || v.next_due <= today) return;
@@ -159,10 +189,10 @@ function buildDueDates(pets, vaccinations) {
   const fmtEs = d => d.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' });
 
   const enLines = lines.map(l =>
-    `<li><strong>${l.petName}:</strong> ${l.items.map(i => `${i.name} due ${fmtEn(i.due)}`).join(' · ')}</li>`
+    `<li><strong>${esc(l.petName)}:</strong> ${l.items.map(i => `${esc(i.name)} due ${fmtEn(i.due)}`).join(' · ')}</li>`
   ).join('');
   const esLines = lines.map(l =>
-    `<li><strong>${l.petName}:</strong> ${l.items.map(i => `${i.name} vence ${fmtEs(i.due)}`).join(' · ')}</li>`
+    `<li><strong>${esc(l.petName)}:</strong> ${l.items.map(i => `${esc(i.name)} vence ${fmtEs(i.due)}`).join(' · ')}</li>`
   ).join('');
 
   return {
@@ -201,14 +231,32 @@ async function sendBatch(items) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { eventDate, clinicType, preview, offset = 0, batchSize = 40, testClientId } = req.body;
-  if (!eventDate) return res.status(400).json({ error: 'eventDate is required' });
+  // Only signed-in staff/admin may preview or send.
+  const caller = await requireRole(req, res, ['staff', 'admin']);
+  if (!caller) return;
+
+  const body = req.body || {};
+  const { eventDate, clinicType, preview, testClientId } = body;
+  const offset    = Number.isInteger(body.offset) && body.offset >= 0 ? body.offset : 0;
+  const batchSize = Math.min(Math.max(parseInt(body.batchSize, 10) || 40, 1), 100);
+
+  if (typeof eventDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
+    return res.status(400).json({ error: 'eventDate must look like YYYY-MM-DD' });
+  }
+  if (typeof clinicType !== 'string' || !/^[\w \-]{1,40}$/.test(clinicType)) {
+    return res.status(400).json({ error: 'clinicType is missing or invalid' });
+  }
+  if (testClientId && !UUID_RE.test(testClientId)) {
+    return res.status(400).json({ error: 'testClientId is not a valid client ID' });
+  }
 
   const isBooster  = clinicType === 'Booster Clinic';
   const prefix     = isBooster ? 'postclinic_booster' : 'postclinic_vaccine';
   const triggerEvent = isBooster ? 'post_booster' : 'post_clinic';
 
   try {
+    const today = chicagoToday();
+
     // Load main templates and active triggers in parallel
     const [tpl, triggers] = await Promise.all([
       getMainTemplates(prefix),
@@ -224,8 +272,7 @@ export default async function handler(req, res) {
 
     // Determine who actually attended this clinic by checking who received a vaccine
     // that day — NOT clients.event_date, which only reflects a client's original
-    // registration date and is never updated on return visits (it's also relied on
-    // by reports.html's new-vs-returning metric, so we deliberately don't touch it).
+    // registration date and is never updated on return visits.
     let allClients;
     if (testClientId) {
       allClients = await sbFetch(
@@ -235,56 +282,55 @@ export default async function handler(req, res) {
       const attendeeRows = await sbFetch(
         `vaccinations?date_given=eq.${eventDate}&select=pet_id,pets(client_id)&limit=5000`
       );
-      if (!Array.isArray(attendeeRows)) throw new Error('Could not determine clinic attendees');
-
       const attendeeClientIds = [...new Set(
         attendeeRows.map(r => r.pets?.client_id).filter(Boolean)
       )];
 
       allClients = attendeeClientIds.length
-        ? await sbFetch(
-            `clients?id=in.(${attendeeClientIds.join(',')})&archived=eq.false` +
-            `&select=id,name,email,zip,preferred_language&order=id.asc&limit=5000`
-          )
+        ? await fetchByIds('clients', 'id', attendeeClientIds,
+            'archived=eq.false&select=id,name,email,zip,preferred_language')
         : [];
     }
     if (!Array.isArray(allClients)) throw new Error('Could not load clients');
 
+    // One fixed order for the whole run, so offsets always mean the same thing.
+    allClients.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
     if (!allClients.length) {
-      return res.status(200).json({ ok: true, sent: 0, skipped: 0, done: true, totalClients: 0 });
+      return res.status(200).json({
+        ok: true, preview: !!preview, sent: 0, skipped: 0, done: true,
+        nextOffset: null, totalClients: 0, totalRecipients: 0, variants: [],
+      });
     }
 
-    const clientIds = allClients.map(c => c.id);
+    // Who has already received this clinic's email? (Test mode ignores the log so you can resend to a test client.)
+    let alreadySentSet = new Set();
+    if (!testClientId) {
+      const logged = await sbFetch(
+        `postclinic_email_log?event_date=eq.${eventDate}&clinic_type=eq.${encodeURIComponent(clinicType)}` +
+        `&select=client_id&limit=10000`
+      );
+      alreadySentSet = new Set(logged.map(r => r.client_id));
+    }
 
-    // Find who's already received this exact clinic's post-clinic email (skip them on real sends)
-    // Test mode bypasses this so you can resend to the same test client repeatedly.
-    const alreadySent = (preview || testClientId) ? [] : await sbFetch(
-      `postclinic_email_log?event_date=eq.${eventDate}&clinic_type=eq.${encodeURIComponent(clinicType)}` +
-      `&client_id=in.(${clientIds.join(',')})&select=client_id`
-    );
-    const alreadySentSet = new Set(
-      Array.isArray(alreadySent) ? alreadySent.map(r => r.client_id) : []
-    );
+    // This call's slice of the FULL list. People already emailed are skipped inside the slice,
+    // so a batch never shifts the list under the next batch's offset.
+    const slice = preview ? allClients : allClients.slice(offset, offset + batchSize);
+    const clients = preview ? allClients : slice.filter(c => !alreadySentSet.has(c.id));
+    const alreadySentInSlice = slice.length - clients.length;
 
-    const eligibleClients = preview ? allClients : allClients.filter(c => !alreadySentSet.has(c.id));
+    // Pets and future vaccinations only for the clients we're actually processing
+    const clientIds = clients.map(c => c.id);
+    const pets = clientIds.length
+      ? await fetchByIds('pets', 'client_id', clientIds,
+          'archived=eq.false&select=id,client_id,name,microchip_number,altered')
+      : [];
 
-    // The slice we'll actually process and send to in this invocation (real sends only — preview always processes everyone)
-    const clients = preview ? allClients : eligibleClients.slice(offset, offset + batchSize);
-
-    // Pull pets (altered + microchip_number needed for condition evaluation)
-    const pets = await sbFetch(
-      `pets?client_id=in.(${clientIds.join(',')})&archived=eq.false` +
-      `&select=id,client_id,name,microchip_number,altered&limit=5000`
-    );
-    if (!Array.isArray(pets)) throw new Error('Could not load pets');
-
-    // Pull future vaccinations for due-date block
     const petIds = pets.map(p => p.id);
-    const today  = new Date().toISOString().split('T')[0];
-    const vaccinations = petIds.length ? await sbFetch(
-      `vaccinations?pet_id=in.(${petIds.join(',')})&next_due=gt.${today}` +
-      `&select=pet_id,vaccine_name,next_due&limit=5000`
-    ) : [];
+    const vaccinations = petIds.length
+      ? await fetchByIds('vaccinations', 'pet_id', petIds,
+          `next_due=gt.${today}&select=pet_id,vaccine_name,next_due`)
+      : [];
 
     // Group pets by client
     const petsByClient = {};
@@ -298,25 +344,25 @@ export default async function handler(req, res) {
 
     const clinicDate = new Date(eventDate + 'T12:00:00');
 
-    let sent = 0, skipped = 0;
+    let sent = 0, skipped = 0, logFailures = 0;
     const failedEmails = [];
-    const previewVariants = preview ? new Map() : null; // key: sorted trigger ids -> { html, subject, triggerNames, sampleClient }
-
-    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const previewVariants = preview ? new Map() : null;
     const sendQueue = [];
 
     for (const client of clients) {
       if (!client.email || !EMAIL_RE.test(client.email.trim())) { skipped++; continue; }
 
-      const firstName  = (client.name || 'there').split(' ')[0];
-      const clientPets = petsByClient[client.id] || [];
-      const dueDates   = buildDueDates(clientPets, Array.isArray(vaccinations) ? vaccinations : []);
+      const rawFirstName = (client.name || 'there').split(' ')[0];
+      const firstName    = esc(rawFirstName);
+      const clientPets   = petsByClient[client.id] || [];
+      const dueDates     = buildDueDates(clientPets, vaccinations, today);
+
       // Only counts as "upcoming due" if the pet's next due date falls on or before
       // the next scheduled booster clinic — not just any future date.
       const boosterCutoff = nextBooster?.date || null;
       const hasUpcomingDue = boosterCutoff
         ? clientPets.some(p =>
-            (Array.isArray(vaccinations) ? vaccinations : []).some(
+            vaccinations.some(
               v => v.pet_id === p.id && v.next_due && v.next_due > today && v.next_due <= boosterCutoff
             )
           )
@@ -326,7 +372,7 @@ export default async function handler(req, res) {
       const chipLinks = clientPets
         .filter(p => p.microchip_number)
         .map(p =>
-          `<li><strong>${p.name}:</strong> <a href="https://nano.fitracking.com/register/chip?id=${p.microchip_number}&petId=" style="color:#1a3a8f;">Register chip ${p.microchip_number}</a></li>`
+          `<li><strong>${esc(p.name)}:</strong> <a href="https://nano.fitracking.com/register/chip?id=${encodeURIComponent(p.microchip_number)}&petId=" style="color:#1a3a8f;">Register chip ${esc(p.microchip_number)}</a></li>`
         ).join('');
 
       const baseVars = {
@@ -348,9 +394,11 @@ export default async function handler(req, res) {
       // Evaluate each trigger and build conditional blocks
       let extraBlocksEn = '';
       let extraBlocksEs = '';
+      const firedTriggerIds = [];
 
       for (const trigger of triggers) {
         if (!evaluateConditions(trigger.conditions, client, clientPets, clinicType, hasUpcomingDue)) continue;
+        firedTriggerIds.push(trigger.id);
 
         const tplEn = triggerTemplates[trigger.template_en];
         const tplEs = triggerTemplates[trigger.template_es];
@@ -365,7 +413,9 @@ export default async function handler(req, res) {
       const enBody    = fill(tpl[`${prefix}_en`]?.body,    baseVars);
       const esHeading = fill(tpl[`${prefix}_es`]?.subject, baseVars);
       const esBody    = fill(tpl[`${prefix}_es`]?.body,    baseVars);
-      const subject   = fill(tpl[`${prefix}_subject`]?.subject, baseVars);
+      // The subject line is plain text, so it gets the unescaped name and no line breaks.
+      const subject   = fill(tpl[`${prefix}_subject`]?.subject, { ...baseVars, owner_name: rawFirstName })
+        .replace(/[\r\n]+/g, ' ');
 
       const html = `
 <!DOCTYPE html>
@@ -393,16 +443,13 @@ export default async function handler(req, res) {
 </html>`;
 
       if (preview) {
-        const firedTriggerIds = triggers
-          .filter(t => evaluateConditions(t.conditions, client, clientPets, clinicType, hasUpcomingDue))
-          .map(t => t.id)
-          .sort();
-        const variantKey = firedTriggerIds.join(',') || '__none__';
+        const sortedIds  = [...firedTriggerIds].sort();
+        const variantKey = sortedIds.join(',') || '__none__';
 
         if (!previewVariants.has(variantKey)) {
           previewVariants.set(variantKey, {
-            triggerIds:   firedTriggerIds,
-            triggerNames: triggers.filter(t => firedTriggerIds.includes(t.id)).map(t => t.name),
+            triggerIds:   sortedIds,
+            triggerNames: triggers.filter(t => sortedIds.includes(t.id)).map(t => t.name),
             sampleClient: client.name,
             recipientCount: 1,
             subject,
@@ -414,7 +461,6 @@ export default async function handler(req, res) {
         continue; // do not actually send in preview mode
       }
 
-      // Queue for batch sending — actual send happens after this loop
       sendQueue.push({
         client, subject, html,
         tags: [
@@ -437,8 +483,11 @@ export default async function handler(req, res) {
             html:    item.html,
             tags:    item.tags,
           })));
+          sent += chunk.length;
 
-          await Promise.all(chunk.map((item, idx) =>
+          // Record who was emailed. If a log write fails, count it so staff are warned
+          // (a re-run could email that person again).
+          const logged = await Promise.all(chunk.map((item, idx) =>
             fetch(`${SUPABASE_URL}/rest/v1/postclinic_email_log`, {
               method: 'POST',
               headers: {
@@ -453,9 +502,13 @@ export default async function handler(req, res) {
                 clinic_type:     clinicType,
                 resend_email_id: resendIds[idx] || null,
               })
-            })
+            }).then(r => r.ok).catch(() => false)
           ));
-          sent += chunk.length;
+          const failedLogs = logged.filter(ok => !ok).length;
+          if (failedLogs) {
+            logFailures += failedLogs;
+            console.error(`${failedLogs} email log write(s) failed for ${eventDate} ${clinicType}`);
+          }
         } catch (batchErr) {
           console.error(`Batch send failed for ${chunk.length} client(s): ${batchErr.message}`);
           skipped += chunk.length;
@@ -478,7 +531,7 @@ export default async function handler(req, res) {
                 clinic_type: clinicType,
                 error:       batchErr.message,
               })
-            })
+            }).catch(() => {})
           ));
         }
       }
@@ -490,12 +543,13 @@ export default async function handler(req, res) {
         preview: true,
         totalRecipients: clients.filter(c => c.email).length,
         skipped: clients.filter(c => !c.email).length,
+        alreadySentCount: allClients.filter(c => alreadySentSet.has(c.id)).length,
         variants: Array.from(previewVariants.values()),
       });
     }
 
     const nextOffset = offset + batchSize;
-    const done = preview ? true : nextOffset >= eligibleClients.length;
+    const done = nextOffset >= allClients.length;
 
     return res.status(200).json({
       ok: true,
@@ -503,8 +557,9 @@ export default async function handler(req, res) {
       skipped,
       done,
       nextOffset: done ? null : nextOffset,
-      totalClients: eligibleClients.length,
-      alreadySentCount: alreadySentSet.size,
+      totalClients: allClients.length,
+      alreadySentCount: alreadySentInSlice,
+      logFailures,
       failedEmails,
     });
   } catch (err) {
