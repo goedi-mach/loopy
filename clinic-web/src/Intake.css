@@ -426,3 +426,30 @@
 .intake .rep-legend-row strong { margin-left: auto; }
 .intake .rep-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .intake .rep-total td { font-weight: 800; color: var(--navy); background: #f8faff; }
+/* ── Reports stage 2 ── */
+.intake .mono { font-family: monospace; font-weight: 700; }
+.intake .rep-sub { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+.intake .rep-nvr-boxes { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.intake .rep-nvr-box { flex: 1; min-width: 120px; border-radius: 10px; padding: 0.85rem 1rem; }
+.intake .rep-nvr-box.new { background: var(--navy-light); color: var(--navy); }
+.intake .rep-nvr-box.ret { background: var(--green-light); color: var(--green); }
+.intake .rep-nvr-num { font-family: 'Nunito', sans-serif; font-size: 1.6rem; font-weight: 800; }
+.intake .rep-split-bar { height: 12px; border-radius: 999px; overflow: hidden; background: var(--green-light); }
+.intake .rep-split-bar > div { height: 100%; background: var(--navy); }
+.intake .rep-event-block { margin-top: 1.25rem; padding-top: 1rem; border-top: 1.5px dashed var(--border); }
+.intake .rep-zip-row { display: grid; grid-template-columns: 70px 1fr 40px 40px; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+.intake .rep-waste-total { margin-bottom: 1rem; color: var(--text-muted); font-size: 0.85rem; }
+.intake .rep-waste-total strong { font-family: 'Nunito', sans-serif; font-size: 1.5rem; color: var(--coral-dark); margin-right: 0.4rem; }
+.intake .records-main > .card + .card { margin-top: 1.25rem; }
+/* ── Reports: vaccine lookup ── */
+.intake .rep-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
+.intake .rep-tab { font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 0.4rem 1.1rem; border-radius: 999px; border: 1.5px solid var(--border); background: white; color: var(--text-muted); cursor: pointer; }
+.intake .rep-tab.active { background: var(--navy); color: white; border-color: var(--navy); }
+.intake .rep-tab:hover:not(.active) { border-color: var(--navy); color: var(--navy); }
+.intake .rep-lookup-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.1rem; }
+.intake .rep-lookup-row input[type='text'], .intake .rep-lookup-row select { padding: 0.45rem 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Nunito Sans', sans-serif; font-size: 0.88rem; color: var(--text); background: white; min-width: 240px; }
+.intake .rep-lookup-row input[type='text']:focus, .intake .rep-lookup-row select:focus { outline: none; border-color: var(--navy); }
+.intake .rep-lookup-meta { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.intake .rep-badge { background: var(--navy-light); color: var(--navy); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.82rem; padding: 0.3rem 0.85rem; border-radius: 999px; }
+.intake .rep-badge.bad { background: #fdecea; color: #b3261e; }
+.intake .rep-lookup-bars { max-width: 520px; margin-bottom: 1.25rem; }
