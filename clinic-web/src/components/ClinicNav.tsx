@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { clearSession, getRole } from '../lib/auth'
 
-type Active = 'intake' | 'discharge' | 'records' | 'reports' | 'staff'
+type Active = 'intake' | 'discharge' | 'records' | 'reports' | 'staff' | 'batch' | 'merge'
 
 const TITLES: Record<Active, string> = {
   intake: 'Intake',
@@ -9,6 +9,8 @@ const TITLES: Record<Active, string> = {
   records: 'Records',
   reports: 'Reports',
   staff: 'Staff',
+  batch: 'Batch Certificates',
+  merge: 'Merge Tool',
 }
 
 export default function ClinicNav({ active }: { active?: Active }) {

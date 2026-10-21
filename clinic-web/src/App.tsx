@@ -13,6 +13,8 @@ import Registration from './Registration'
 import Reports from './Reports'
 import RequireRole from './components/RequireRole'
 import StaffHome from './StaffHome'
+import BatchCerts from './BatchCerts'
+import MergeClients from './MergeClients'
 
 export default function App() {
   return (
@@ -83,6 +85,28 @@ export default function App() {
           }
         />
         <Route path="/staff-home.html" element={<Navigate to="/staff-home" replace />} />
+                <Route
+          path="/tools/batch-certs"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['staff', 'admin']}>
+                <BatchCerts />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/tools/merge-clients"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['staff', 'admin']}>
+                <MergeClients />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route path="/tools/batch-certs.html" element={<Navigate to="/tools/batch-certs" replace />} />
+        <Route path="/tools/merge-clients.html" element={<Navigate to="/tools/merge-clients" replace />} />
                 <Route
           path="/client/:id/print/:petId"
           element={
