@@ -15,6 +15,7 @@ import RequireRole from './components/RequireRole'
 import StaffHome from './StaffHome'
 import BatchCerts from './BatchCerts'
 import MergeClients from './MergeClients'
+import UserManagement from './UserManagement'
 
 export default function App() {
   return (
@@ -105,6 +106,17 @@ export default function App() {
             </RequireAuth>
           }
         />
+                <Route
+          path="/tools/user-management"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['admin']}>
+                <UserManagement />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route path="/tools/user-management.html" element={<Navigate to="/tools/user-management" replace />} />
         <Route path="/tools/batch-certs.html" element={<Navigate to="/tools/batch-certs" replace />} />
         <Route path="/tools/merge-clients.html" element={<Navigate to="/tools/merge-clients" replace />} />
                 <Route

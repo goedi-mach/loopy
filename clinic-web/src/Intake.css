@@ -582,3 +582,10 @@
 .intake .mc-danger:disabled { opacity: 0.45; cursor: default; }
 .intake .mc-success { text-align: center; padding: 3rem 2rem; }
 .intake .mc-success-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.35rem; color: var(--green); margin-top: 0.5rem; }
+/* ── Tools: user management ── */
+.intake .um-badge { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; }
+.intake .um-badge.admin { background: #ede9fe; color: #6d28d9; }
+.intake .um-badge.staff { background: var(--navy-light); color: var(--navy); }
+.intake .um-badge.volunteer { background: var(--amber-light, #fef3c7); color: var(--amber); }
+.intake .um-select { border: 1.5px solid var(--border); background: #f8faff; color: var(--text); border-radius: 8px; padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+.intake .um-you { font-size: 0.72rem; color: var(--text-muted); }
