@@ -16,6 +16,7 @@ import StaffHome from './StaffHome'
 import BatchCerts from './BatchCerts'
 import MergeClients from './MergeClients'
 import UserManagement from './UserManagement'
+import Reminders from './Reminders'
 
 export default function App() {
   return (
@@ -116,6 +117,17 @@ export default function App() {
             </RequireAuth>
           }
         />
+                <Route
+          path="/tools/reminders"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['staff', 'admin']}>
+                <Reminders />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route path="/tools/reminders.html" element={<Navigate to="/tools/reminders" replace />} />
         <Route path="/tools/user-management.html" element={<Navigate to="/tools/user-management" replace />} />
         <Route path="/tools/batch-certs.html" element={<Navigate to="/tools/batch-certs" replace />} />
         <Route path="/tools/merge-clients.html" element={<Navigate to="/tools/merge-clients" replace />} />
