@@ -69,3 +69,25 @@ export async function sbDelete<T = any>(path: string): Promise<T[]> {
   })
   return res.json()
 }
+
+
+// Read every row of a large query, 1000 at a time (the server caps each response).
+// `path` must not contain its own `limit=`.
+export async function sbGetAll<T = any>(path: string, pageSize = 1000): Promise<T[]> {
+  const all: T[] = []
+  for (let from = 0; ; from += pageSize) {
+    const res = await request(`/rest/v1/${path}`, {
+      headers: {
+        Accept: 'application/json',
+        Prefer: 'count=exact',
+        'Range-Unit': 'items',
+        Range: `${from}-${from + pageSize - 1}`,
+      },
+    })
+    const rows: T[] = await res.json()
+    all.push(...rows)
+    const total = Number((res.headers.get('content-range') || '').split('/')[1])
+    if (rows.length < pageSize || (!isNaN(total) && all.length >= total)) break
+  }
+  return all
+}

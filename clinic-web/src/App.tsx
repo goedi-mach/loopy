@@ -10,6 +10,8 @@ import ClientProfile from './ClientProfile'
 import PrintRecord from './PrintRecord'
 import Records from './Records'
 import Registration from './Registration'
+import Reports from './Reports'
+import RequireRole from './components/RequireRole'
 
 export default function App() {
   return (
@@ -55,6 +57,17 @@ export default function App() {
           element={
             <RequireAuth>
               <Records />
+            </RequireAuth>
+          }
+        />
+
+                <Route
+          path="/reports"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['staff', 'admin']}>
+                <Reports />
+              </RequireRole>
             </RequireAuth>
           }
         />
