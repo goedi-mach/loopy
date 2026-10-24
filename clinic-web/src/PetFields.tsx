@@ -76,7 +76,13 @@ export default function PetFields({ values, onChange }: Props) {
       <div className="form-row">
         <div className="form-field">
           <label>Microchip Number</label>
-          <input value={values.microchip_number} onChange={(e) => set('microchip_number', e.target.value)} placeholder="985112345678901" />
+                    <input
+            value={values.microchip_number}
+            inputMode="numeric"
+            maxLength={15}
+            onChange={(e) => set('microchip_number', e.target.value.replace(/\D/g, '').slice(0, 15))}
+            placeholder="985112345678901"
+          />
         </div>
         <div className="form-field">
           <label>Colors / Markings</label>
