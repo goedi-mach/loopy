@@ -4,8 +4,7 @@ import Login from './Login'
 import SetPassword from './SetPassword'
 import VolunteerHome from './VolunteerHome'
 import RequireAuth from './components/RequireAuth'
-import Intake from './Intake'
-import Discharge from './Discharge'
+import Clinic from './Clinic'
 import ClientProfile from './ClientProfile'
 import PrintRecord from './PrintRecord'
 import Records from './Records'
@@ -41,10 +40,10 @@ export default function App() {
           }
         />
                 <Route
-          path="/intake"
+          path="/clinic"
           element={
             <RequireAuth>
-              <Intake />
+              <Clinic />
             </RequireAuth>
           }
         />
@@ -52,7 +51,7 @@ export default function App() {
           path="/discharge"
           element={
             <RequireAuth>
-              <Discharge />
+              <Navigate to="/clinic" replace />
             </RequireAuth>
           }
         />
@@ -94,6 +93,7 @@ export default function App() {
           }
         />
         <Route path="/staff-home.html" element={<Navigate to="/staff-home" replace />} />
+        <Route path="/intake" element={<Navigate to="/clinic" replace />} />
                 <Route
           path="/tools/batch-certs"
           element={
