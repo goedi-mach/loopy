@@ -497,6 +497,15 @@
 .intake .sh-field label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem; }
 .intake .sh-field input, .intake .sh-field select { width: 100%; box-sizing: border-box; padding: 0.5rem 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Nunito Sans', sans-serif; font-size: 0.9rem; background: white; color: var(--text); }
 .intake .sh-field input:focus, .intake .sh-field select:focus { outline: none; border-color: var(--navy); }
+.intake select:not(.um-select) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  background-size: 1rem;
+}
 .intake .sh-success { background: var(--green-light, #e6f4ec); color: var(--green); font-weight: 700; font-size: 0.85rem; padding: 0.5rem 0.9rem; border-radius: 8px; margin-bottom: 0.75rem; }
 .sh-modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .sh-modal { background: white; border-radius: 16px; padding: 1.75rem; max-width: 460px; width: 92%; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); }
