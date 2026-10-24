@@ -334,6 +334,8 @@
 .intake .rabies-box { margin-top: 1rem; padding-top: 1rem; border-top: 1.5px dashed var(--border); }
 .intake .rabies-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.82rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.75rem; }
 .intake .field-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; }
+.intake .rabies-box .field-note { margin: 0.5rem 0 0; line-height: 1.5; }
+.intake .rabies-box p.field-note:last-of-type { margin-bottom: 1rem; }
 .intake .field-note.warn { color: var(--amber); font-weight: 700; }
 .intake .field-note.ok { color: var(--green); font-weight: 700; }
 .intake .field-note.bad { color: #b91c1c; font-weight: 700; }
