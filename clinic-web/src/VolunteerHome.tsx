@@ -18,14 +18,9 @@ export default function VolunteerHome() {
 
       {email && <p className="user-label">👋 Signed in as {email}</p>}
 
-            <Link to="/intake" className="btn-mode btn-intake">
-        🏥 Intake
-        <span className="btn-mode-sub">Register clients &amp; check in</span>
-      </Link>
-
-      <Link to="/discharge" className="btn-mode btn-discharge">
-        💉 Discharge
-        <span className="btn-mode-sub">Log vaccines &amp; microchips</span>
+            <Link to="/clinic" className="btn-mode btn-intake">
+        🏥 Clinic
+        <span className="btn-mode-sub">Register, vaccinate &amp; discharge</span>
       </Link>
 
       <button type="button" className="sign-out" onClick={signOut}>

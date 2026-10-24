@@ -86,7 +86,7 @@ export default function LotsCard() {
 
   const deactivate = (id: string) =>
     change(
-      'Deactivate this lot? Discharge volunteers will no longer see it.',
+      'Deactivate this lot? Clinic volunteers will no longer see it. You can reactivate it later if needed.',
       id,
       { active: false, archived: true, deactivated_at: new Date().toISOString() },
       'Lot deactivated.'
@@ -203,7 +203,7 @@ export default function LotsCard() {
       <div className="card-header"><span>💉 Active Vaccine Lots</span></div>
       <div className="card-body">
         <p className="field-note">
-          Set the active lot number for each vaccine type. Discharge volunteers will see these automatically, so there is no manual entry.
+          Set the active lot number for each vaccine type. Clinic volunteers will see these automatically, so there is no manual entry.
         </p>
 
         {msg && <div className={msg.type === 'error' ? 'warning-bar' : 'sh-success'}>{msg.text}</div>}
