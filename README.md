@@ -55,7 +55,6 @@ Sign-in uses Supabase Auth. Each user has a role in their JWT (`app_metadata.rol
 | `/` | everyone | Landing page |
 | `/registration` | public | Bilingual client and pet registration with waiver signature |
 | `/login`, `/set-password` | everyone | Sign-in and invite password setup |
-| `/volunteer-home` | signed in | Volunteer home |
 | `/clinic` | signed in | Single clinic-day page: walk-ins, check-in, vaccine and microchip logging, print-record links, attendance history |
 | `/client/:id` | signed in | Client profile: inline editing, vaccination history, waiver PDF, certificates |
 | `/client/:id/print/:petId` | signed in | Printable pet record |
@@ -67,7 +66,7 @@ Sign-in uses Supabase Auth. Each user has a role in their JWT (`app_metadata.rol
 | `/tools/merge-clients` | staff, admin | Merge duplicate client records |
 | `/tools/user-management` | admin | Invite users and set roles |
 
-`/intake` and `/discharge` redirect to `/clinic`. Old `.html` URLs (for example `/records.html`) redirect to their React routes.
+`/intake` and `/discharge` redirect to `/clinic`. The old `/volunteer-home` page was removed; volunteers now land on `/clinic` after signing in, and old links redirect there. Old `.html` URLs (for example `/records.html`) redirect to their React routes.
 
 ---
 

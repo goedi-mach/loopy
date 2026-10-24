@@ -17,13 +17,13 @@ function getRoleFromToken(token: string) {
 }
 
 function pageForRole(role: string) {
-  return role === 'staff' || role === 'admin' ? 'staff-home.html' : 'volunteer-home.html'
+  return role === 'staff' || role === 'admin' ? 'staff-home.html' : 'clinic.html'
 }
 
 // Pages already rebuilt in React. Anything not listed here still lives in the old HTML site.
 
 const REACT_ROUTES: Record<string, string> = {
-  'volunteer-home.html': '/volunteer-home',
+  'clinic.html': '/clinic',
 }
 
 export default function Login() {
