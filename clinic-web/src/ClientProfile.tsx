@@ -49,7 +49,7 @@ export default function ClientProfile() {
             client={client}
             onUpdated={setClient}
             allowDelete={isAdmin}
-            onDeleted={() => navigate('/intake')}
+            onDeleted={() => navigate('/clinic')}
             showDocuments
             hideProfile
             editEventDate
