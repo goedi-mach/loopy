@@ -36,8 +36,8 @@ export default function Attendance({ client }: { client: Client }) {
     }
     try {
       // The signature image itself is NOT loaded here (it is large); only whether one exists
-      const rows = await sbGet<Array<{ id: string; event_date: string | null; waiver_signed_at: string | null; has_sig: string | null }>>(
-        `clients?or=(${conds.join(',')})&order=event_date.desc.nullslast&select=id,event_date,waiver_signed_at,has_sig:waiver_signature.not.is.null`
+      const rows = await sbGet<Array<{ id: string; event_date: string | null; waiver_signed_at: string | null }>>(
+          `clients?or=(${conds.join(',')})&order=event_date.desc.nullslast&select=id,event_date,waiver_signed_at`
       )
       setVisits(rows.map((r) => ({ id: r.id, event_date: r.event_date, waiver_signed_at: r.waiver_signed_at, signed: !!r.waiver_signed_at })))
     } catch (err) {
