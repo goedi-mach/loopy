@@ -6,7 +6,7 @@
     { "source": "/index.html", "destination": "/", "permanent": false },
     { "source": "/login.html", "destination": "/login", "permanent": false },
     { "source": "/set-password.html", "destination": "/set-password", "permanent": false },
-    { "source": "/volunteer-home.html", "destination": "/volunteer-home", "permanent": false },
+    { "source": "/volunteer-home.html", "destination": "/clinic", "permanent": false },
     { "source": "/intake.html", "destination": "/intake", "permanent": false },
     { "source": "/discharge.html", "destination": "/discharge", "permanent": false },
     { "source": "/records.html", "destination": "/records", "permanent": false },

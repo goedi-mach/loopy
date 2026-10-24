@@ -8,6 +8,7 @@ import { useClinicClients } from './hooks/useClinicClients'
 import { sbPatch } from './lib/api'
 import { getRole } from './lib/auth'
 import type { Client } from './types'
+import HelpButton from './components/HelpButton'
 import WalkIn from './WalkIn'
 import './Intake.css'
 
@@ -116,6 +117,7 @@ export default function Clinic() {
           )}
         </div>
       </div>
+      <HelpButton />
     </div>
   )
 }

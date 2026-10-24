@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import Landing from './Landing'
 import Login from './Login'
 import SetPassword from './SetPassword'
-import VolunteerHome from './VolunteerHome'
 import RequireAuth from './components/RequireAuth'
 import Clinic from './Clinic'
 import ClientProfile from './ClientProfile'
@@ -31,14 +30,7 @@ export default function App() {
         <Route path="/login" element={<div className="login-page"><Login /></div>} />
         <Route path="/set-password" element={<div className="set-password-page"><SetPassword /></div>} />
         <Route path="/set-password.html" element={<SetPasswordRedirect />} />
-        <Route
-          path="/volunteer-home"
-          element={
-            <RequireAuth>
-              <div className="volunteer-page"><VolunteerHome /></div>
-            </RequireAuth>
-          }
-        />
+        <Route path="/volunteer-home" element={<Navigate to="/clinic" replace />} />
                 <Route
           path="/clinic"
           element={
