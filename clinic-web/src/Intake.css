@@ -243,7 +243,16 @@
   border-radius: 8px; font-family: 'Nunito Sans', sans-serif; font-size: 0.9rem; color: var(--text); background: #f8faff;
 }
 .intake .form-field input:focus,
-.intake .form-field select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26, 58, 143, 0.12); background: white; }
+.intake .form-field select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26, 58, 143, 0.12); background-color: white; }
+.intake .form-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  background-size: 1rem;
+}
 .intake .age-row { display: flex; gap: 0.5rem; }
 .intake .age-row input, .intake .age-row select { flex: 1; min-width: 0; }
 .intake .form-actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 0.25rem; }
@@ -325,6 +334,8 @@
 .intake .rabies-box { margin-top: 1rem; padding-top: 1rem; border-top: 1.5px dashed var(--border); }
 .intake .rabies-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.82rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.75rem; }
 .intake .field-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; }
+.intake .rabies-box .field-note { margin: 0.5rem 0 0; line-height: 1.5; }
+.intake .rabies-box p.field-note:last-of-type { margin-bottom: 1rem; }
 .intake .field-note.warn { color: var(--amber); font-weight: 700; }
 .intake .field-note.ok { color: var(--green); font-weight: 700; }
 .intake .field-note.bad { color: #b91c1c; font-weight: 700; }
