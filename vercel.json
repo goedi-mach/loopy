@@ -1,6 +1,21 @@
 {
-  "buildCommand": "node scripts/build-config.js",
-  "outputDirectory": ".",
+  "installCommand": "npm install --prefix clinic-web",
+  "buildCommand": "npm --prefix clinic-web run build",
+  "outputDirectory": "clinic-web/dist",
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": false },
+    { "source": "/login.html", "destination": "/login", "permanent": false },
+    { "source": "/set-password.html", "destination": "/set-password", "permanent": false },
+    { "source": "/volunteer-home.html", "destination": "/volunteer-home", "permanent": false },
+    { "source": "/intake.html", "destination": "/intake", "permanent": false },
+    { "source": "/discharge.html", "destination": "/discharge", "permanent": false },
+    { "source": "/records.html", "destination": "/records", "permanent": false },
+    { "source": "/reports.html", "destination": "/reports", "permanent": false },
+    { "source": "/staff-home.html", "destination": "/staff-home", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
   "crons": [
     {
       "path": "/api/send-reminders",
