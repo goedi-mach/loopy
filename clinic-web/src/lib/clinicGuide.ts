@@ -45,7 +45,7 @@ export const CLINIC_GUIDE: Record<GuideLang, Guide> = {
           'Check each pet the same way with the pencil button.',
           'Notes for the next volunteer go in the notes button, then **Save notes**.',
         ],
-        note: 'Not on the list? Search again by phone or email. Still nothing: press **+ Walk-in**, fill in the name (required), contact details and address, and have the client sign the waiver. If you see “Possible duplicate” and it is the same person, press **Use this client**. Then add pets with **Add a pet**.',
+        note: 'Not on the list? Search again by phone or email. Still nothing: press **+ Walk-in**, fill in the name (required), contact details, address and the first pet, and have the client sign the waiver. Press **Save & Check In**. If you see “Possible duplicate” and it is the same person, press **Use this client**. Extra pets go in with **Add a pet**.',
       },
       {
         heading: 'Discharge: log vaccines and print the record',
@@ -102,7 +102,7 @@ export const CLINIC_GUIDE: Record<GuideLang, Guide> = {
           'Revise cada mascota igual, con el botón del lápiz.',
           'Las notas para el siguiente voluntario van en el botón de notas, luego **Save notes**.',
         ],
-        note: '¿No aparece en la lista? Busque otra vez por teléfono o correo. Si sigue sin aparecer, presione **+ Walk-in**, llene el nombre (obligatorio), los datos de contacto y la dirección, y pida al cliente que firme la exención (waiver). Si sale “Possible duplicate” y es la misma persona, presione **Use this client**. Luego agregue las mascotas con **Add a pet**.',
+        note: '¿No aparece en la lista? Busque otra vez por teléfono o correo. Si sigue sin aparecer, presione **+ Walk-in**, llene el nombre (obligatorio), los datos de contacto, la dirección y la primera mascota, y pida al cliente que firme la exención (waiver). Presione **Save & Check In**. Si sale “Possible duplicate” y es la misma persona, presione **Use this client**. Las demás mascotas se agregan con **Add a pet**.',
       },
       {
         heading: 'Salida: registrar vacunas e imprimir el registro',

@@ -2,24 +2,22 @@
 
 Clinic management web app for [People Helping Pets](https://peoplehelpingpets.org), a Chicago nonprofit that runs free bilingual (English/Spanish) vaccine clinics for cats and dogs in underserved neighborhoods.
 
-Live at **clinic.phpchi.org**.
-
 Pawkit covers the whole clinic day and what comes after: client and pet registration, vaccine and microchip logging, rabies certificates, event close-out, follow-up and reminder emails, and reporting.
 
 ---
 
 ## Tech stack
 
-| Layer | Tool |
-| --- | --- |
-| Frontend | React 19 + TypeScript, built with Vite (`clinic-web/`) |
-| Routing | React Router |
-| Database, auth, storage | [Supabase](https://supabase.com) (Postgres + RLS, Auth, Storage) |
-| Hosting + backend | [Vercel](https://vercel.com) (static site + serverless functions in `api/`) |
-| Email | [Resend](https://resend.com), with signed webhooks verified by `svix` |
-| Translation | DeepL (free tier), used for Spanish breed/color fields on rabies certificates |
-| PDFs | `pdf-lib` (certificates and waivers, generated in the browser) |
-| Signatures | `signature_pad` (waiver capture) |
+| Layer                   | Tool                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| Frontend                | React 19 + TypeScript, built with Vite (`clinic-web/`)                        |
+| Routing                 | React Router                                                                  |
+| Database, auth, storage | [Supabase](https://supabase.com) (Postgres + RLS, Auth, Storage)              |
+| Hosting + backend       | [Vercel](https://vercel.com) (static site + serverless functions in `api/`)   |
+| Email                   | [Resend](https://resend.com), with signed webhooks verified by `svix`         |
+| Translation             | DeepL (free tier), used for Spanish breed/color fields on rabies certificates |
+| PDFs                    | `pdf-lib` (certificates and waivers, generated in the browser)                |
+| Signatures              | `signature_pad` (waiver capture)                                              |
 
 ---
 
@@ -50,21 +48,21 @@ package.json           root dependencies for the serverless functions (svix)
 
 Sign-in uses Supabase Auth. Each user has a role in their JWT (`app_metadata.role`): **volunteer**, **staff**, or **admin**.
 
-| Route | Who | Purpose |
-| --- | --- | --- |
-| `/` | everyone | Landing page |
-| `/registration` | public | Bilingual client and pet registration with waiver signature |
-| `/login`, `/set-password` | everyone | Sign-in and invite password setup |
-| `/clinic` | signed in | Single clinic-day page: walk-ins, check-in, vaccine and microchip logging, print-record links, attendance history |
-| `/client/:id` | signed in | Client profile: inline editing, vaccination history, waiver PDF, certificates |
-| `/client/:id/print/:petId` | signed in | Printable pet record |
-| `/records` | signed in | Searchable client and pet database |
-| `/reports` | staff, admin | Analytics (vaccines, species, ZIP demographics, return rates, waste) |
-| `/staff-home` | staff, admin | Events, vaccine lot inventory, clinic stats |
-| `/tools/reminders` | staff, admin | Email templates, triggers, manual sends, failures and bounces |
-| `/tools/batch-certs` | staff, admin | Generate rabies certificates in bulk |
-| `/tools/merge-clients` | staff, admin | Merge duplicate client records |
-| `/tools/user-management` | admin | Invite users and set roles |
+| Route                      | Who          | Purpose                                                                                                           |
+| -------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `/`                        | everyone     | Landing page                                                                                                      |
+| `/registration`            | public       | Bilingual client and pet registration with waiver signature                                                       |
+| `/login`, `/set-password`  | everyone     | Sign-in and invite password setup                                                                                 |
+| `/clinic`                  | signed in    | Single clinic-day page: walk-ins, check-in, vaccine and microchip logging, print-record links, attendance history |
+| `/client/:id`              | signed in    | Client profile: inline editing, vaccination history, waiver PDF, certificates                                     |
+| `/client/:id/print/:petId` | signed in    | Printable pet record                                                                                              |
+| `/records`                 | signed in    | Searchable client and pet database                                                                                |
+| `/reports`                 | staff, admin | Analytics (vaccines, species, ZIP demographics, return rates, waste)                                              |
+| `/staff-home`              | staff, admin | Events, vaccine lot inventory, clinic stats                                                                       |
+| `/tools/reminders`         | staff, admin | Email templates, triggers, manual sends, failures and bounces                                                     |
+| `/tools/batch-certs`       | staff, admin | Generate rabies certificates in bulk                                                                              |
+| `/tools/merge-clients`     | staff, admin | Merge duplicate client records                                                                                    |
+| `/tools/user-management`   | admin        | Invite users and set roles                                                                                        |
 
 `/intake` and `/discharge` redirect to `/clinic`. The old `/volunteer-home` page was removed; volunteers now land on `/clinic` after signing in, and old links redirect there. Old `.html` URLs (for example `/records.html`) redirect to their React routes.
 
@@ -135,15 +133,15 @@ GitHub Actions run a build check on every pull request and push to `main`, plus 
 
 ### Environment variables (Vercel)
 
-| Variable | Used by |
-| --- | --- |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | React app (public by design; protected by RLS) |
-| `VITE_VET_LICENSE_VALBUENA` | Certificate generation |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Serverless functions (never expose to the browser) |
-| `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET` | Email sending and webhook verification |
-| `CRON_SECRET` | Authorizes the scheduled reminder run |
-| `DEEPL_API_KEY` | Certificate translation |
-| `SITE_URL` | Where invite links land |
+| Variable                                      | Used by                                            |
+| --------------------------------------------- | -------------------------------------------------- |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | React app (public by design; protected by RLS)     |
+| `VITE_VET_LICENSE_VALBUENA`                   | Certificate generation                             |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`   | Serverless functions (never expose to the browser) |
+| `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`     | Email sending and webhook verification             |
+| `CRON_SECRET`                                 | Authorizes the scheduled reminder run              |
+| `DEEPL_API_KEY`                               | Certificate translation                            |
+| `SITE_URL`                                    | Where invite links land                            |
 
 ---
 
