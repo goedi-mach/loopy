@@ -11,16 +11,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/goedi-mach/pawkit.git"
+    "url": "git+https://github.com/goedi-mach/loopy.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/goedi-mach/pawkit/issues"
+    "url": "https://github.com/goedi-mach/loopy/issues"
   },
-  "homepage": "https://github.com/goedi-mach/pawkit#readme",
+  "homepage": "https://github.com/goedi-mach/loopy#readme",
   "dependencies": {
     "svix": "^1.96.1"
   }
