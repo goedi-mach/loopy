@@ -83,7 +83,7 @@ export default function SetPassword() {
 
   return (
     <div className="card">
-      <div className="logo">🐾 Pawkit</div>
+      <div className="logo">🐾 Loopy</div>
       <div className="subtitle">People Helping Pets</div>
 
       {status === 'loading' && <div className="loading">Verifying your link…</div>}

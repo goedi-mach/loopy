@@ -1,8 +1,8 @@
-# Pawkit — People Helping Pets
+# Loopy — People Helping Pets
 
 Clinic management web app for [People Helping Pets](https://peoplehelpingpets.org), a Chicago nonprofit that runs free bilingual (English/Spanish) vaccine clinics for cats and dogs in underserved neighborhoods.
 
-Pawkit covers the whole clinic day and what comes after: client and pet registration, vaccine and microchip logging, rabies certificates, event close-out, follow-up and reminder emails, and reporting.
+Loopy covers the whole clinic day and what comes after: client and pet registration, vaccine and microchip logging, rabies certificates, event close-out, follow-up and reminder emails, and reporting.
 
 ---
 
@@ -147,7 +147,7 @@ GitHub Actions run a build check on every pull request and push to `main`, plus 
 
 ## Previous version
 
-Pawkit began as a vanilla HTML/CSS/JavaScript site (one page per tool, `config.js` generated at build time). It was replaced by the React app in October 2026. The last version of that site is preserved in the Git tag **`live-before-migration`**.
+Loopy began as a vanilla HTML/CSS/JavaScript site (one page per tool, `config.js` generated at build time). It was replaced by the React app in October 2026. The last version of that site is preserved in the Git tag **`live-before-migration`**.
 
 To use it as a fallback you would need more than the code. The old pages talked to the database as the anonymous role, and that access was closed on Oct 24, 2026. A rollback means re-creating the old anonymous policies on `clients`, `pets`, and `vaccinations`, and restoring the old build variables (`SUPABASE_ANON_KEY`, `VET_LICENSE_VALBUENA`). Only do that deliberately, since it reopens public read access to client data.
 

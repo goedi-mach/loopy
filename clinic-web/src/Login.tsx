@@ -96,7 +96,7 @@ export default function Login() {
   if (destination) {
     return (
       <div className="login-card">
-        <h1>🐾 Pawkit</h1>
+        <h1>🐾 Loopy</h1>
         <p className="login-subtitle">Signed in (local test)</p>
         <p className="login-note">
           In the real app you would now be sent to <strong>{destination}</strong>.
@@ -108,7 +108,7 @@ export default function Login() {
 
   return (
     <div className="login-card">
-      <h1>🐾 Pawkit</h1>
+      <h1>🐾 Loopy</h1>
       <p className="login-subtitle">People Helping Pets — Chicago</p>
       <form onSubmit={handleSubmit}>
         <div className="login-field">
