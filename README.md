@@ -1,4 +1,4 @@
-# Loopy — People Helping Pets
+# Loopy &#x1F43E;
 
 Clinic management web app for [People Helping Pets](https://peoplehelpingpets.org), a Chicago nonprofit that runs free bilingual (English/Spanish) vaccine clinics for cats and dogs in underserved neighborhoods.
 
