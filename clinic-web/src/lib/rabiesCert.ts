@@ -1,8 +1,11 @@
 import { PDFDocument, PDFName, PDFString } from 'pdf-lib'
 import type { Client, Pet, Vaccination } from '../types'
+import { request } from './api'
 
 const TEMPLATES = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/templates`
 const LICENSE = import.meta.env.VITE_VET_LICENSE_VALBUENA
+// The signature lives in a private bucket and is fetched with the signed-in user's token.
+const SIGNATURE_PATH = '/storage/v1/object/authenticated/signatures/ana_signature.png'
 
 export interface CertResult {
   bytes: Uint8Array
@@ -137,8 +140,7 @@ export async function buildRabiesCert(r: Vaccination, pet: Pet, client: Client):
   setText("Veterinarian's address", 'People Helping Pets, Chicago IL', 8)
 
   try {
-    const sig = await fetch(`${TEMPLATES}/ana_signature.png`)
-    if (!sig.ok) throw new Error('missing')
+    const sig = await request(SIGNATURE_PATH)
     const type = sig.headers.get('content-type') || ''
     const bytes = await sig.arrayBuffer()
     const img = type.includes('jpeg') || type.includes('jpg') ? await pdfDoc.embedJpg(bytes) : await pdfDoc.embedPng(bytes)

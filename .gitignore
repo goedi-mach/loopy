@@ -5,3 +5,5 @@ ana_signature.png
 certificates/
 node_modules/
 .env*
+# Keep the example env files tracked
+!.env.example

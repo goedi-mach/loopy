@@ -1,5 +1,8 @@
 # Loopy &#x1F43E;
 
+[![Build check](https://github.com/goedi-mach/loopy/actions/workflows/build-check.yml/badge.svg)](https://github.com/goedi-mach/loopy/actions/workflows/build-check.yml)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+
 Clinic management web app for [People Helping Pets](https://peoplehelpingpets.org), a Chicago nonprofit that runs free bilingual (English/Spanish) vaccine clinics for cats and dogs in underserved neighborhoods.
 
 Loopy covers the whole clinic day and what comes after: client and pet registration, vaccine and microchip logging, rabies certificates, event close-out, follow-up and reminder emails, and reporting.
@@ -36,7 +39,7 @@ api/                 Vercel serverless functions
 supabase/
   migrations/          schema changes, in order
   schema.sql           schema snapshot (see note under Database)
-docs/                  user guide PDF, update log, feedback notes
+docs/                  architecture notes
 .github/workflows/     build check, Supabase keep-alive
 vercel.json            build settings, redirects, SPA rewrite, cron
 package.json           root dependencies for the serverless functions (svix)
@@ -97,7 +100,7 @@ RLS is enabled on every table.
 
 ### Storage
 
-A public bucket named `templates` holds `RabiesVacCert.pdf` (the NASPHV Form 51 template) and `ana_signature.png` (the veterinarian signature). Both are fetched by the browser when a certificate is generated.
+A public bucket named `templates` holds the NASPHV Form 51 certificate template and the assets used in emails (logo and take-home sheets). The browser fetches the template when a certificate is generated. A separate **private** bucket named `signatures` holds the veterinarian signature image; signed-in users can read it (see `supabase/migrations/20261026000000_private_signatures_bucket.sql`), and nobody else can.
 
 ---
 
@@ -111,7 +114,7 @@ npm install
 npm run dev
 ```
 
-Create `clinic-web/.env.local` (gitignored):
+Copy `clinic-web/.env.example` to `clinic-web/.env.local` (gitignored) and fill it in:
 
 ```
 VITE_SUPABASE_URL=https://<project-ref>.supabase.co
@@ -132,6 +135,8 @@ Pushing to `main` deploys through Vercel. `vercel.json` installs and builds `cli
 GitHub Actions run a build check on every pull request and push to `main`, plus a twice-weekly keep-alive ping so the free-tier Supabase project doesn't pause.
 
 ### Environment variables (Vercel)
+
+See [`.env.example`](.env.example) for a copy-paste template.
 
 | Variable                                      | Used by                                            |
 | --------------------------------------------- | -------------------------------------------------- |
@@ -158,3 +163,19 @@ To use it as a fallback you would need more than the code. The old pages talked 
 - Registration allows up to 3 pets per visit.
 - Validation is mostly client-side; the database and `register_visit` enforce the essentials.
 - Barcode scanning for vaccine vials, annual renewal reminders, and spay clinic support are planned but not built yet.
+
+---
+
+## Architecture
+
+A short diagram of how the browser, Supabase, the serverless functions, Resend and DeepL fit together is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+---
+
+## License
+
+Loopy is licensed under the [GNU Affero General Public License v3.0](LICENSE). In short: you can use and modify it, but if you run a modified version as a network service, you must offer its source code to the people using that service.
+
+## Security
+
+Please report vulnerabilities privately; see [SECURITY.md](SECURITY.md). Don't open a public issue for security problems.
