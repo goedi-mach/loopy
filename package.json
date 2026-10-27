@@ -18,6 +18,6 @@
   },
   "homepage": "https://github.com/goedi-mach/loopy#readme",
   "dependencies": {
-    "svix": "^1.96.1"
+    "svix": "^2.9.0"
   }
 }
