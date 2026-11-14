@@ -1,0 +1,25 @@
+.conn-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0.7rem 1rem;
+  text-align: center;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #fff;
+}
+
+.conn-banner.offline { background: #b3261e; }
+.conn-banner.online { background: #1e7b3a; }
+
+.conn-banner-es {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+/* Never print the banner on records or certificates */
+@media print {
+  .conn-banner { display: none; }
+}

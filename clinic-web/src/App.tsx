@@ -15,6 +15,7 @@ import BatchCerts from './BatchCerts'
 import MergeClients from './MergeClients'
 import UserManagement from './UserManagement'
 import Reminders from './Reminders'
+import ConnectionBanner from './components/ConnectionBanner'
 
 // Old invite/reset links point at /set-password.html. Keep the "#access_token=…" part when redirecting.
 function SetPasswordRedirect() {
@@ -25,6 +26,7 @@ function SetPasswordRedirect() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ConnectionBanner />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<div className="login-page"><Login /></div>} />

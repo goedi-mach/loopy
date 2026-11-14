@@ -16,10 +16,23 @@ export function authHeaders(): Record<string, string> {
 // or '/storage/v1/object/pet-photos/abc.jpg'. Returns the raw Response so callers
 // can read headers or send files. Handles an expired session in one place.
 export async function request(path: string, init: RequestInit = {}): Promise<Response> {
-  const res = await fetch(`${SUPABASE_URL}${path}`, {
-    ...init,
-    headers: { ...authHeaders(), ...(init.headers as Record<string, string>) },
-  })
+  let res: Response
+  try {
+    res = await fetch(`${SUPABASE_URL}${path}`, {
+      ...init,
+      headers: { ...authHeaders(), ...(init.headers as Record<string, string>) },
+    })
+  } catch {
+    // fetch only throws when the request never reached the server (no Wi-Fi, no signal)
+    window.dispatchEvent(new Event('loopy:offline'))
+    const saving = init.method && init.method !== 'GET'
+    throw new Error(
+      saving
+        ? 'No connection — this was NOT saved. Try again when the connection is back.'
+        : 'No connection — could not load. Try again when the connection is back.'
+    )
+  }
+  window.dispatchEvent(new Event('loopy:online'))
 
   if (res.status === 401) {
     clearSession()
