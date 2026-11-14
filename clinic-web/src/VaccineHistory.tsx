@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { sbDelete, sbGet, sbPatch } from './lib/api'
 import { buildRabiesCert, certFilename, saveCertFile } from './lib/rabiesCert'
 import type { Client, Pet, Vaccination } from './types'
+import ChangeHistory from './ChangeHistory'
 
 const REQUIRED_VAX: Record<string, string[]> = {
   dog: ['Rabies', 'DAPP', 'Lepto'],
@@ -250,9 +251,11 @@ export default function VaccineHistory({ pet, client, editable, refreshKey = 0 }
                   ))}
                   {due.length === 0 && <div className="empty-state">No required vaccines defined for this species.</div>}
                 </div>
-              )}
+                            )}
             </div>
           )}
+
+          {editable && <ChangeHistory petId={pet.id} refreshKey={refreshKey + localKey} />}
         </div>
       )}
     </div>
