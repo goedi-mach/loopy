@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ClinicNav from './components/ClinicNav';
 import ReminderTemplates from './ReminderTemplates';
 import ReminderUpcoming from './ReminderUpcoming';
@@ -20,7 +21,9 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function Reminders() {
-  const [tab, setTab] = useState<Tab>('templates');
+  const [params] = useSearchParams();
+  const startTab = TABS.find(t => t.id === params.get('tab'))?.id ?? 'templates';
+  const [tab, setTab] = useState<Tab>(startTab);
 
   return (
     <div className="intake">

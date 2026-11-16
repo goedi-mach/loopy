@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { sbGet } from './lib/api';
 import { apiPost } from './reminderApi';
 
@@ -32,6 +33,7 @@ function fmt(d: string, long = false) {
 }
 
 export default function ReminderPostClinic() {
+  const [params] = useSearchParams();
   const [events, setEvents] = useState<Ev[] | null>(null);
   const [eventId, setEventId] = useState('');
   const [testClientId, setTestClientId] = useState('');
@@ -49,7 +51,8 @@ export default function ReminderPostClinic() {
       try {
         const ev = await sbGet<Ev[]>('events?select=id,event_date,location,clinic_type,completed&order=event_date.desc,id.desc&limit=30');
         setEvents(ev);
-        if (ev.length) setEventId(ev[0].id);
+        const match = ev.find(e => e.id === params.get('event'));
+        if (ev.length) setEventId((match ?? ev[0]).id);
       } catch (e: any) {
         setEvents([]);
         setMsg({ type: 'error', text: 'Could not load clinics: ' + (e.message || e) });
