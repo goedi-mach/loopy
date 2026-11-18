@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import DeferVaccines from './DeferVaccines'
 import MicrochipLog from './MicrochipLog'
 import VaccineHistory from './VaccineHistory'
 import VaccineLog from './VaccineLog'
@@ -25,6 +26,7 @@ export default function DischargePanel({ pet, client, onLogged, onPetChanged }: 
           await onLogged()
         }}
       />
+      <DeferVaccines pet={pet} refreshKey={refreshKey} onSaved={() => setRefreshKey((k) => k + 1)} />
       <VaccineHistory pet={pet} client={client} editable refreshKey={refreshKey} />
     </>
   )
