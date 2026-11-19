@@ -55,6 +55,16 @@ export interface Vaccination {
   exp_date: string | null
 }
 
+export interface VaccineDeferral {
+  id: string
+  pet_id: string
+  vaccine: string
+  note: string | null
+  deferred_on: string
+  resolved_on: string | null
+  cleared_manually: boolean
+}
+
 export interface VaccineLot {
   id: string
   vaccine_type: string

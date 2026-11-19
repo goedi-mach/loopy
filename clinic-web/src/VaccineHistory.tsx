@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { sbDelete, sbGet, sbPatch } from './lib/api'
 import { buildRabiesCert, certFilename, saveCertFile } from './lib/rabiesCert'
-import type { Client, Pet, Vaccination } from './types'
+import { todayStr } from './lib/dates'
+import type { Client, Pet, Vaccination, VaccineDeferral } from './types'
 import ChangeHistory from './ChangeHistory'
 
 const REQUIRED_VAX: Record<string, string[]> = {
@@ -47,6 +48,7 @@ export default function VaccineHistory({ pet, client, editable, refreshKey = 0 }
   const [records, setRecords] = useState<Vaccination[] | null>(null)
   const [error, setError] = useState('')
   const [due, setDue] = useState<DueRow[] | null>(null)
+  const [deferrals, setDeferrals] = useState<VaccineDeferral[]>([])
   const [localKey, setLocalKey] = useState(0)
   const [editing, setEditing] = useState<Vaccination | null>(null)
   const [edit, setEdit] = useState({ lot: '', tag: '', date: '', next: '' })
@@ -55,6 +57,7 @@ export default function VaccineHistory({ pet, client, editable, refreshKey = 0 }
   // New pet: clear everything
   useEffect(() => {
     setRecords(null)
+    setDeferrals([])
     setDue(null)
     setEditing(null)
     setError('')
@@ -77,11 +80,41 @@ export default function VaccineHistory({ pet, client, editable, refreshKey = 0 }
     }
   }, [pet.id, refreshKey, localKey])
 
+  // Vaccines the vet asked to give at a later clinic (still open)
+  useEffect(() => {
+    let cancelled = false
+    sbGet<VaccineDeferral[]>(`vaccine_deferrals?pet_id=eq.${pet.id}&resolved_on=is.null&order=deferred_on.asc`)
+      .then((rows) => {
+        if (cancelled) return
+        setDeferrals(rows)
+        setDue(null)
+      })
+      .catch(() => {
+        if (!cancelled) setDeferrals([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [pet.id, refreshKey, localKey])
+
+  async function clearDeferral(d: VaccineDeferral) {
+    if (!confirm(`Remove the "give at next clinic" flag for ${d.vaccine}?`)) return
+    try {
+      const rows = await sbPatch(`vaccine_deferrals?id=eq.${d.id}`, { resolved_on: todayStr(), cleared_manually: true })
+      if (!rows.length) throw new Error('Could not remove the flag')
+      setLocalKey((k) => k + 1)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not remove the flag')
+    }
+  }
+
   function checkDue() {
     if (!records) return
     const required = REQUIRED_VAX[pet.species || ''] || []
     const today = todayNumber()
     const rows: DueRow[] = required.map((base) => {
+      const flag = deferrals.find((d) => d.vaccine === base)
+      if (flag) return { base, tag: 'due-now', label: `⏭ Vet asked to give this visit (flagged ${fmt(flag.deferred_on)})` }
       const latest = records.find((r) => (r.vaccine_name || '').startsWith(base))
       if (!latest) return { base, tag: 'due-never', label: 'Never given — needs initial dose' }
       if (!latest.next_due) {
@@ -164,6 +197,24 @@ export default function VaccineHistory({ pet, client, editable, refreshKey = 0 }
         <div className="card-body">
           {error && <div className="empty-state error">Error: {error}</div>}
           {!records && !error && <div className="empty-state">Loading…</div>}
+
+          {deferrals.length > 0 && (
+            <div className="defer-banner">
+              <div className="defer-banner-title">⏭ Vet asked to give at this visit</div>
+              {deferrals.map((d) => (
+                <div key={d.id} className="defer-row">
+                  <strong>{d.vaccine}</strong>
+                  <span className="defer-meta">
+                    flagged {fmt(d.deferred_on)}
+                    {d.note ? ` — ${d.note}` : ''}
+                  </span>
+                  {editable && (
+                    <button type="button" className="pill-btn" title="Remove this flag" onClick={() => clearDeferral(d)}>✕</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           {records && records.length === 0 && (
             <div className="empty-state">No vaccines on record for {pet.name}.</div>
           )}
