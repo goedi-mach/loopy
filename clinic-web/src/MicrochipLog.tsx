@@ -80,7 +80,7 @@ export default function MicrochipLog({ pet, onChanged }: Props) {
             </div>
           ) : (
             <>
-              <p className="field-note" style={{ marginTop: 0 }}>Was a microchip implanted today?</p>
+              <p className="field-note" style={{ marginTop: 0, marginBottom: '0.75rem' }}>Was a microchip implanted today?</p>
               <div className="chip-choice">
                 <button
                   type="button"
