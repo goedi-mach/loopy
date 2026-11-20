@@ -100,6 +100,13 @@ export default function StaffHome() {
               <div className="sh-tile-sub">Invite users & manage roles</div>
             </Link>
           )}
+          {isAdmin && (
+            <Link to="/tools/settings" className="sh-tile">
+              <div className="sh-tile-icon">⚙️</div>
+              <div className="sh-tile-label">Settings</div>
+              <div className="sh-tile-sub">Organization name, logo & colors</div>
+            </Link>
+          )}
         </div>
 
         <div className="sh-section">Clinic Events</div>

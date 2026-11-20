@@ -1,8 +1,8 @@
 .intake {
-  --navy: #1a3a8f;
-  --navy-dark: #122a6e;
-  --navy-light: #dce6f9;
-  --navy-mid: #4a6cc0;
+  --navy: var(--brand-primary, #1a3a8f);
+  --navy-dark: var(--brand-primary-dark, #122a6e);
+  --navy-light: var(--brand-primary-light, #dce6f9);
+  --navy-mid: var(--brand-primary-mid, #4a6cc0);
   --green: #2d8a5e;
   --green-light: #d4f0e4;
   --amber: #d97706;
@@ -204,9 +204,9 @@
 .intake .badge-archived { background: #e5e7eb; color: #6b7280; }
 /* ── Stage 2: client detail ── */
 .intake {
-  --coral: #f28b82;
-  --coral-light: #fde8e6;
-  --coral-dark: #d96b62;
+  --coral: var(--brand-accent, #f28b82);
+  --coral-light: var(--brand-accent-light, #fde8e6);
+  --coral-dark: var(--brand-accent-dark, #d96b62);
 }
 .intake .card + .card { margin-top: 1.25rem; }
 .intake .client-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }

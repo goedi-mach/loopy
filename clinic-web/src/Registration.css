@@ -1,10 +1,10 @@
 .registration {
-  --navy: #1a3a8f;
-  --navy-dark: #122a6e;
-  --navy-light: #dce6f9;
-  --coral: #f28b82;
-  --coral-light: #fde8e6;
-  --coral-dark: #d96b62;
+  --navy: var(--brand-primary, #1a3a8f);
+  --navy-dark: var(--brand-primary-dark, #122a6e);
+  --navy-light: var(--brand-primary-light, #dce6f9);
+  --coral: var(--brand-accent, #f28b82);
+  --coral-light: var(--brand-accent-light, #fde8e6);
+  --coral-dark: var(--brand-accent-dark, #d96b62);
   --amber: #d97706;
   --text: #1a1a2e;
   --text-muted: #5a6380;

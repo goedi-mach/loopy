@@ -14,6 +14,7 @@ import StaffHome from './StaffHome'
 import BatchCerts from './BatchCerts'
 import MergeClients from './MergeClients'
 import UserManagement from './UserManagement'
+import OrgSettingsPage from './OrgSettings'
 import Reminders from './Reminders'
 import ConnectionBanner from './components/ConnectionBanner'
 
@@ -124,6 +125,16 @@ export default function App() {
             <RequireAuth>
               <RequireRole roles={['staff', 'admin']}>
                 <Reminders />
+              </RequireRole>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/tools/settings"
+          element={
+            <RequireAuth>
+              <RequireRole roles={['admin']}>
+                <OrgSettingsPage />
               </RequireRole>
             </RequireAuth>
           }

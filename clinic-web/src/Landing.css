@@ -1,5 +1,5 @@
 .landing {
-  --coral: #f28b82;
+  --coral: var(--brand-accent, #f28b82);
   --white: #ffffff;
   background: var(--white);
   overflow-x: hidden;

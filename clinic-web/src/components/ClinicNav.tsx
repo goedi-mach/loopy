@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { clearSession, getRole } from '../lib/auth'
+import { useSettings } from '../lib/settings'
 
-type Active = 'clinic' | 'records' | 'reports' | 'staff' | 'batch' | 'merge' | 'users' | 'reminders'
+type Active = 'clinic' | 'records' | 'reports' | 'staff' | 'batch' | 'merge' | 'users' | 'reminders' | 'settings'
 
 const TITLES: Record<Active, string> = {
   clinic: 'Clinic',
@@ -12,10 +13,12 @@ const TITLES: Record<Active, string> = {
   merge: 'Merge Tool',
   users: 'Users',
   reminders: 'Reminders',
+  settings: 'Settings',
 }
 
 export default function ClinicNav({ active }: { active?: Active }) {
   const navigate = useNavigate()
+  const { settings } = useSettings()
   const email = localStorage.getItem('php_email')
   const isStaff = ['staff', 'admin'].includes(getRole() || '')
   const title = active ? TITLES[active] : 'Client Profile'
@@ -29,7 +32,7 @@ export default function ClinicNav({ active }: { active?: Active }) {
 
   return (
     <nav className="topnav">
-      <div className="topnav-brand">🐾 {title} — People Helping Pets</div>
+      <div className="topnav-brand">🐾 {title} — {settings.org_name}</div>
       <div className="topnav-right">
         {email && <div className="topnav-user">👋 {email}</div>}
         <Link to="/clinic" className={cls('clinic')}>🏥 Clinic</Link>
