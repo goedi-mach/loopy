@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { sbGet } from './lib/api'
+import { contactText, useSettings } from './lib/settings'
 import type { Client, Pet, Vaccination } from './types'
 import './PrintRecord.css'
 
@@ -14,7 +15,7 @@ const TEXT = {
     nextDueCol: 'Next Due', adminBy: 'Administered By', completed: 'Completed', rabiesTag: 'Rabies Tag #',
     noHistory: 'No vaccinations on record.', noNextDue: 'No upcoming vaccinations.', yes: 'Yes', no: 'No',
     yrs: 'yrs', mos: 'months', printed: 'Printed', locale: 'en-US',
-    footer: 'Thank you for keeping your pet healthy! Questions? Contact us at peoplehelpingpets.org',
+    thanks: 'Thank you for keeping your pet healthy!', questions: 'Questions? Contact us at',
     print: 'Print', loading: 'Loading…',
   },
   es: {
@@ -24,7 +25,7 @@ const TEXT = {
     nextDueCol: 'Próxima Dosis', adminBy: 'Administrado Por', completed: 'Completado', rabiesTag: '# de Placa Antirrábica',
     noHistory: 'Sin vacunas registradas.', noNextDue: 'Sin próximas vacunas.', yes: 'Sí', no: 'No',
     yrs: 'años', mos: 'meses', printed: 'Impreso', locale: 'es-MX',
-    footer: '¡Gracias por cuidar la salud de tu mascota! ¿Preguntas? Contáctanos en peoplehelpingpets.org',
+    thanks: '¡Gracias por cuidar la salud de tu mascota!', questions: '¿Preguntas? Contáctanos en',
     print: 'Imprimir', loading: 'Cargando…',
   },
 }
@@ -37,6 +38,9 @@ export default function PrintRecord() {
   const [params] = useSearchParams()
   const lang = params.get('lang') === 'es' ? 'es' : 'en'
   const t = TEXT[lang]
+  const { settings } = useSettings()
+  const contact = contactText(settings)
+  const footer = contact ? `${t.thanks} ${t.questions} ${contact}` : t.thanks
 
   const [client, setClient] = useState<Client | null>(null)
   const [pet, setPet] = useState<Pet | null>(null)
@@ -102,7 +106,7 @@ export default function PrintRecord() {
       </div>
 
       <div className="print-top">
-        <div className="print-org">🐾 People Helping Pets</div>
+        <div className="print-org">🐾 {settings.org_name}</div>
         <div className="print-owner">
           <strong>{client.name}</strong>
           {address && <div>{address}</div>}
@@ -150,7 +154,7 @@ export default function PrintRecord() {
         </div>
       ))}
 
-      <div className="print-footer">{t.footer}</div>
+      <div className="print-footer">{footer}</div>
     </div>
   )
 }

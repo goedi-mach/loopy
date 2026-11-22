@@ -215,7 +215,7 @@
 .intake .client-contact { font-size: 0.83rem; color: var(--text-muted); margin-top: 0.25rem; }
 .intake .lang-badge { font-size: 0.7rem; font-weight: 800; font-family: 'Nunito', sans-serif; padding: 0.15rem 0.5rem; border-radius: 999px; letter-spacing: 0.04em; }
 .intake .lang-es { background: #fef3c7; color: #92400e; }
-.intake .lang-en { background: #dce6f9; color: #1a3a8f; }
+.intake .lang-en { background: var(--navy-light); color: var(--navy); }
 .intake .client-buttons { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
 .intake .profile-link { font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 999px; border: 1.5px solid var(--navy); color: var(--navy); font-family: 'Nunito', sans-serif; font-weight: 700; text-decoration: none; }
 .intake .notes-btn { font-size: 1rem; padding: 0.4rem 0.6rem; border-radius: 999px; border: 1.5px solid #f0d97a; background: #fffbea; color: #92720a; cursor: pointer; }
@@ -509,7 +509,7 @@
 .intake .sh-success { background: var(--green-light, #e6f4ec); color: var(--green); font-weight: 700; font-size: 0.85rem; padding: 0.5rem 0.9rem; border-radius: 8px; margin-bottom: 0.75rem; }
 .sh-modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .sh-modal { background: white; border-radius: 16px; padding: 1.75rem; max-width: 460px; width: 92%; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); }
-.sh-modal-title { font-family: 'Nunito', sans-serif; font-size: 1.05rem; font-weight: 800; color: #1a3a8f; margin-bottom: 1.1rem; }
+.sh-modal-title { font-family: 'Nunito', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--navy); margin-bottom: 1.1rem; }
 .sh-modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
 .sh-modal-actions > * { flex: 1; }
 /* ── Staff home: close-out ── */
@@ -521,7 +521,7 @@
 .sh-waste-row { display: grid; grid-template-columns: 1fr 90px 36px; gap: 0.5rem; margin-bottom: 0.5rem; }
 .sh-waste-row select, .sh-waste-row input { padding: 0.5rem 0.65rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; background: white; min-width: 0; }
 .sh-waste-row button { border: 1.5px solid #e2e8f0; border-radius: 8px; background: none; color: #6b7280; cursor: pointer; }
-.sh-add-row { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.83rem; padding: 0.35rem 0.9rem; border-radius: 999px; border: 1.5px dashed #cbd5e1; background: none; color: #1a3a8f; cursor: pointer; margin-top: 0.25rem; }
+.sh-add-row { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.83rem; padding: 0.35rem 0.9rem; border-radius: 999px; border: 1.5px dashed #cbd5e1; background: none; color: var(--navy); cursor: pointer; margin-top: 0.25rem; }
 .sh-cancel { display: block; margin: 0.75rem auto 0; background: none; border: none; color: #6b7280; font-size: 0.8rem; text-decoration: underline; cursor: pointer; }
 /* ── Staff home: lots ── */
 .intake .sh-section-gap { margin-top: 1.75rem; }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import PasswordField from './components/PasswordField'
+import { useSettings } from './lib/settings'
 import './SetPassword.css'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -14,6 +15,7 @@ function readToken() {
 }
 
 export default function SetPassword() {
+  const { settings } = useSettings()
   const [status, setStatus] = useState<Status>('loading')
   const [token, setToken] = useState('')
   const [pwd1, setPwd1] = useState('')
@@ -84,7 +86,7 @@ export default function SetPassword() {
   return (
     <div className="card">
       <div className="logo">🐾 Loopy</div>
-      <div className="subtitle">People Helping Pets</div>
+      <div className="subtitle">{settings.org_name}</div>
 
       {status === 'loading' && <div className="loading">Verifying your link…</div>}
 

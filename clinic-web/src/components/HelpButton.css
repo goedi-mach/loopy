@@ -5,7 +5,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #1a3a8f;
+  background: var(--navy);
   color: white;
   border: none;
   font-size: 18px;
@@ -14,8 +14,8 @@
   z-index: 9997;
   box-shadow: 0 4px 14px rgba(26, 58, 143, 0.35);
 }
-.help-fab:hover { background: #122a6e; }
-.help-fab:focus-visible { outline: 3px solid #4a6cc0; outline-offset: 2px; }
+.help-fab:hover { background: var(--navy-dark); }
+.help-fab:focus-visible { outline: 3px solid var(--navy-mid); outline-offset: 2px; }
 
 .help-backdrop {
   position: fixed;
@@ -54,7 +54,7 @@
   flex: 1 1 auto;
   font-family: 'Nunito', sans-serif;
   font-weight: 800;
-  color: #1a3a8f;
+  color: var(--navy);
 }
 .help-lang { display: flex; border: 1.5px solid #c8d3ec; border-radius: 999px; overflow: hidden; }
 .help-lang button {
@@ -64,10 +64,10 @@
   font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #1a3a8f;
+  color: var(--navy);
   cursor: pointer;
 }
-.help-lang button.active { background: #1a3a8f; color: white; }
+.help-lang button.active { background: var(--navy); color: white; }
 .help-close {
   border: none;
   background: none;
@@ -81,7 +81,7 @@
 .help-body h3 {
   font-family: 'Nunito', sans-serif;
   font-size: 0.95rem;
-  color: #1a3a8f;
+  color: var(--navy);
   margin: 1rem 0 0.4rem;
 }
 .help-body p { margin: 0.3rem 0; }

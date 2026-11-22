@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PasswordField from './components/PasswordField'
+import { cityName, useSettings } from './lib/settings'
 import './Login.css'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -27,6 +28,7 @@ const REACT_ROUTES: Record<string, string> = {
 }
 
 export default function Login() {
+  const { settings } = useSettings()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -109,7 +111,10 @@ export default function Login() {
   return (
     <div className="login-card">
       <h1>🐾 Loopy</h1>
-      <p className="login-subtitle">People Helping Pets — Chicago</p>
+      <p className="login-subtitle">
+        {settings.org_name}
+        {cityName(settings) && <> — {cityName(settings)}</>}
+      </p>
       <form onSubmit={handleSubmit}>
         <div className="login-field">
           <label htmlFor="loginEmail">Email</label>
@@ -117,7 +122,7 @@ export default function Login() {
             id="loginEmail"
             type="email"
             value={email}
-            placeholder="you@peoplehelpingpets.org"
+            placeholder="you@example.org"
             autoComplete="username"
             onChange={(e) => setEmail(e.target.value)}
           />

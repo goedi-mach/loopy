@@ -78,6 +78,11 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
         primary_color: form.primary_color.toLowerCase(),
         accent_color: form.accent_color.toLowerCase(),
         default_language: form.default_language,
+        intro_en: blankToNull(form.intro_en),
+        intro_es: blankToNull(form.intro_es),
+        tagline_en: blankToNull(form.tagline_en),
+        tagline_es: blankToNull(form.tagline_es),
+        events_url: blankToNull(form.events_url),
         updated_at: new Date().toISOString(),
       })
       // An empty answer means the database refused the change (not an admin)
@@ -171,6 +176,38 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
                 <option value="en">English</option>
                 <option value="es">Español</option>
               </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="sh-section sh-section-gap">Public Home Page</div>
+      <div className="card">
+        <div className="card-body">
+          <div className="sh-row">
+            <div className="sh-field">
+              <label>Introduction (English)</label>
+              <textarea rows={3} value={form.intro_en || ''} placeholder="Free vaccine clinics for pets in our community…" onChange={(e) => set('intro_en', e.target.value)} />
+            </div>
+            <div className="sh-field">
+              <label>Introduction (Español)</label>
+              <textarea rows={3} value={form.intro_es || ''} placeholder="Clínicas de vacunas gratuitas para mascotas…" onChange={(e) => set('intro_es', e.target.value)} />
+            </div>
+          </div>
+          <div className="sh-row">
+            <div className="sh-field">
+              <label>Tagline (English)</label>
+              <input value={form.tagline_en || ''} placeholder="Helping Pets, Empowering Families" onChange={(e) => set('tagline_en', e.target.value)} />
+            </div>
+            <div className="sh-field">
+              <label>Tagline (Español)</label>
+              <input value={form.tagline_es || ''} placeholder="Ayudando Mascotas, Empoderando Familias" onChange={(e) => set('tagline_es', e.target.value)} />
+            </div>
+          </div>
+          <div className="sh-row">
+            <div className="sh-field">
+              <label>Upcoming clinics page (link)</label>
+              <input type="url" value={form.events_url || ''} placeholder="https://example.org/events" onChange={(e) => set('events_url', e.target.value)} />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { PDFDocument, PDFName, PDFString } from 'pdf-lib'
 import type { Client, Pet, Vaccination } from '../types'
 import { request } from './api'
+import { currentSettings } from './settings'
 
 const TEMPLATES = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/templates`
 const LICENSE = import.meta.env.VITE_VET_LICENSE_VALBUENA
@@ -137,7 +138,8 @@ export async function buildRabiesCert(r: Vaccination, pet: Pet, client: Client):
 
   // Veterinarian
   setText("Veterinarian's Name", 'Dr. Ana Valbuena', 9)
-  setText("Veterinarian's address", 'People Helping Pets, Chicago IL', 8)
+  const org = currentSettings()
+  setText("Veterinarian's address", [org.org_name, org.city_region].filter(Boolean).join(', '), 8)
 
   try {
     const sig = await request(SIGNATURE_PATH)
