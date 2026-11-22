@@ -17,11 +17,6 @@ export interface OrgSettings {
   primary_color: string
   accent_color: string
   default_language: 'en' | 'es'
-  intro_en: string | null
-  intro_es: string | null
-  tagline_en: string | null
-  tagline_es: string | null
-  events_url: string | null
 }
 
 // Used until the real settings arrive, and if they can't be loaded at all.
@@ -35,11 +30,6 @@ export const DEFAULT_SETTINGS: OrgSettings = {
   primary_color: '#1a3a8f',
   accent_color: '#f28b82',
   default_language: 'en',
-  intro_en: null,
-  intro_es: null,
-  tagline_en: null,
-  tagline_es: null,
-  events_url: null,
 }
 
 // Read with the public (anon) key on purpose: settings are public, and this way a

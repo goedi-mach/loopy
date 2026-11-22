@@ -13,10 +13,8 @@ const copy = {
     headingEm: 'together.',
     sub: 'Free vaccine clinics for pets in our community — because every pet deserves a healthy start.',
     register: 'Register Your Pet →',
-    clinics: 'See Upcoming Clinics',
     stripBold: 'All services are free of charge.',
     stripRest: ' No insurance needed. All are welcome.',
-    footerClinics: 'Upcoming Clinics',
   },
   es: {
     eyebrow: 'Gratuito · Bilingüe',
@@ -25,10 +23,8 @@ const copy = {
     headingEm: 'con amor.',
     sub: 'Clínicas de vacunas gratuitas para mascotas en nuestra comunidad — porque cada mascota merece un comienzo saludable.',
     register: 'Registra a tu Mascota →',
-    clinics: 'Ver Próximas Clínicas',
     stripBold: 'Todos los servicios son gratuitos.',
     stripRest: ' No se necesita seguro. Todos son bienvenidos.',
-    footerClinics: 'Próximas Clínicas',
   },
 }
 
@@ -39,11 +35,10 @@ export default function Landing() {
   const lang: Lang = picked ?? settings.default_language
   const setLang = setPicked
   const c = copy[lang]
-  // Organization-specific text from Settings, falling back to the generic text above
+  // A simple, generic home page: only the name, logo, city and website come from
+  // Settings. Organizations that want more can customize this page.
   const city = cityName(settings)
   const eyebrow = city ? `${c.eyebrow} · ${city}` : c.eyebrow
-  const intro = (lang === 'es' ? settings.intro_es : settings.intro_en) || c.sub
-  const tagline = lang === 'es' ? settings.tagline_es : settings.tagline_en
   const contact = contactText(settings)
 
   // Keep the page's language attribute in sync with the toggle
@@ -107,14 +102,9 @@ export default function Landing() {
               <br />
               {c.heading2} <em>{c.headingEm}</em>
             </h1>
-            <p className="hero-sub">{intro}</p>
+            <p className="hero-sub">{c.sub}</p>
             <div className="hero-ctas">
                 <Link to="/registration" className="btn-hero-primary">{c.register}</Link>
-              {settings.events_url && (
-                <a href={settings.events_url} className="btn-hero-secondary">
-                  {c.clinics}
-                </a>
-              )}
             </div>
           </div>
           <div className="hero-img">
@@ -133,20 +123,11 @@ export default function Landing() {
           <strong>{settings.org_name}</strong>
           {settings.city_region && <> — {settings.city_region}</>}
         </div>
-        <div>
-          {[
-            tagline && <span key="t">{tagline}</span>,
-            settings.events_url && <a key="e" href={settings.events_url}>{c.footerClinics}</a>,
-            settings.website_url && <a key="w" href={settings.website_url}>{contact}</a>,
-          ]
-            .filter(Boolean)
-            .map((part, i) => (
-              <span key={i}>
-                {i > 0 && <> &nbsp;·&nbsp; </>}
-                {part}
-              </span>
-            ))}
-        </div>
+        {settings.website_url && (
+          <div>
+            <a href={settings.website_url}>{contact}</a>
+          </div>
+        )}
       </footer>
     </div>
   )
