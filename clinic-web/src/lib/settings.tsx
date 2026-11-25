@@ -23,7 +23,7 @@ export interface OrgSettings {
 // Used until the real settings arrive, and if they can't be loaded at all.
 // The colors match the ones in index.css.
 export const DEFAULT_SETTINGS: OrgSettings = {
-  org_name: 'Loopy',
+  org_name: 'LoopVet',
   city_region: null,
   website_url: null,
   contact_email: null,
@@ -126,7 +126,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyTheme(settings)
-    document.title = `${settings.org_name} - Loopy`
+    document.title = `${settings.org_name} - LoopVet`
   }, [settings])
 
   return <SettingsContext.Provider value={{ settings, loaded, reload }}>{children}</SettingsContext.Provider>
