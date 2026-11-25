@@ -11,7 +11,7 @@ export default function ConnectionBanner() {
   const [justBack, setJustBack] = useState(false)
   const wasOffline = useRef(offline)
 
-  // Listen for the browser losing Wi-Fi, and for Loopy's own requests failing or succeeding
+  // Listen for the browser losing Wi-Fi, and for LoopVet's own requests failing or succeeding
   useEffect(() => {
     const down = () => setOffline(true)
     const up = () => setOffline(false)
