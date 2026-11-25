@@ -17,6 +17,10 @@ interface Msg {
 const errText = (err: unknown) => (err instanceof Error ? err.message : 'Something went wrong')
 const blankToNull = (v: string | null) => (v && v.trim() ? v.trim() : null)
 
+// Every time zone this browser knows, e.g. 'America/Chicago'
+const TIME_ZONES = Intl.supportedValuesOf('timeZone')
+const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone
+
 function SettingsForm({ initial }: { initial: OrgSettings }) {
   const { reload } = useSettings()
   const [form, setForm] = useState<OrgSettings>(initial)
@@ -79,6 +83,7 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
         primary_color: form.primary_color.toLowerCase(),
         accent_color: form.accent_color.toLowerCase(),
         default_language: form.default_language,
+        timezone: form.timezone,
         updated_at: new Date().toISOString(),
       })
       // An empty answer means the database refused the change (not an admin)
@@ -162,7 +167,7 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
         </div>
       </div>
 
-      <div className="sh-section sh-section-gap">Language</div>
+      <div className="sh-section sh-section-gap">Language &amp; Time Zone</div>
       <div className="card">
         <div className="card-body">
           <div className="sh-row">
@@ -173,7 +178,24 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
                 <option value="es">Español</option>
               </select>
             </div>
+            <div className="sh-field">
+              <label>Time zone</label>
+              <select value={form.timezone} onChange={(e) => set('timezone', e.target.value)}>
+                {!TIME_ZONES.includes(form.timezone) && <option value={form.timezone}>{form.timezone}</option>}
+                {TIME_ZONES.map((tz) => (
+                  <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+              {form.timezone !== deviceTimeZone() && (
+                <button type="button" className="btn-link" style={{ marginTop: '0.35rem', textAlign: 'left' }} onClick={() => set('timezone', deviceTimeZone())}>
+                  Use this device&apos;s time zone ({deviceTimeZone().replace(/_/g, ' ')})
+                </button>
+              )}
+            </div>
           </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            The time zone where your clinics happen. It decides the date recorded when someone registers and when reminder emails go out.
+          </p>
         </div>
       </div>
 

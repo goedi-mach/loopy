@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import { requireRole } from './_auth.js';
+import { orgToday } from './_org.js';
 
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -16,18 +17,15 @@ const esc = s => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-function chicagoToday() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
-}
-
 function addDays(ymd, n) {
   const [y, m, d] = ymd.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
 
-// Reminders go out for vaccinations due within a 3-day window around N weeks from today (Chicago).
-function getDateWindow(weeksOut) {
-  const today = chicagoToday();
+// Reminders go out for vaccinations due within a 3-day window around N weeks from today
+// (in the organization's time zone).
+async function getDateWindow(weeksOut) {
+  const today = await orgToday();
   const center = weeksOut * 7;
   return { start: addDays(today, center - 1), end: addDays(today, center + 1) };
 }
@@ -206,7 +204,7 @@ async function sendBatch(items) {
 
 // ─── PROCESS REMINDERS ─────────────────────────────────────────
 async function processReminders(weeksOut, sentField) {
-  const { start, end } = getDateWindow(weeksOut);
+  const { start, end } = await getDateWindow(weeksOut);
   const templateKey    = weeksOut === 2 ? 'reminder_2w' : 'reminder_1w';
   const stats = { found: 0, queued: 0, sent: 0, failed: 0, skipped: 0, claimedElsewhere: 0, logFailures: 0 };
 

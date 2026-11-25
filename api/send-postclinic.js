@@ -1,4 +1,5 @@
 import { requireRole } from './_auth.js';
+import { orgToday } from './_org.js';
 
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -19,11 +20,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const esc = s => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-// Today's date in Chicago as YYYY-MM-DD (not UTC).
-function chicagoToday() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
-}
 
 // ─── SUPABASE HELPERS ──────────────────────────────────────────
 async function sbFetch(path) {
@@ -255,7 +251,7 @@ export default async function handler(req, res) {
   const triggerEvent = isBooster ? 'post_booster' : 'post_clinic';
 
   try {
-    const today = chicagoToday();
+    const today = await orgToday();
 
     // Load main templates and active triggers in parallel
     const [tpl, triggers] = await Promise.all([
