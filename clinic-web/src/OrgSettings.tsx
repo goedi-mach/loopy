@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import ClinicNav from './components/ClinicNav'
-import { request, sbPatch } from './lib/api'
+import { request, sbPatch, sbPost } from './lib/api'
 import { DEFAULT_SETTINGS, logoSrc, useSettings, type OrgSettings } from './lib/settings'
+import { loadVets, signatureUrlPath, type Vet } from './lib/vets'
 import './Intake.css'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -183,6 +184,215 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
   )
 }
 
+// ── Veterinarians ──────────────────────────────────────────────
+
+const muted = { color: 'var(--text-muted)' }
+
+function VetRow({ vet, onChanged, setMsg }: { vet: Vet; onChanged: () => Promise<void>; setMsg: (m: Msg | null) => void }) {
+  const [name, setName] = useState(vet.name)
+  const [license, setLicense] = useState(vet.license_number || '')
+  const [busy, setBusy] = useState(false)
+  const [sigUrl, setSigUrl] = useState<string | null>(null)
+  const dirty = name.trim() !== vet.name || license.trim() !== (vet.license_number || '')
+
+  // The signature is in a private bucket, so load it with the admin's token to show a preview
+  useEffect(() => {
+    if (!vet.signature_path) return
+    let url = ''
+    let cancelled = false
+    request(signatureUrlPath(vet.signature_path))
+      .then((r) => r.blob())
+      .then((b) => {
+        if (cancelled) return
+        url = URL.createObjectURL(b)
+        setSigUrl(url)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+      if (url) URL.revokeObjectURL(url)
+    }
+  }, [vet.signature_path])
+
+  // Do one change, reload the list, and report the result
+  async function run(action: () => Promise<unknown>, success: string) {
+    setBusy(true)
+    setMsg(null)
+    try {
+      await action()
+      await onChanged()
+      setMsg({ type: 'success', text: success })
+    } catch (err) {
+      setMsg({ type: 'error', text: errText(err) })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function patch(data: Partial<Vet>) {
+    const rows = await sbPatch(`vets?id=eq.${vet.id}`, data)
+    if (!rows.length) throw new Error('Nothing was saved. Only admins can change vets.')
+  }
+
+  const save = () =>
+    run(() => patch({ name: name.trim(), license_number: license.trim() || null }), `Saved ${name.trim()}.`)
+
+  // Only one primary vet is allowed, so clear the current one first
+  const makePrimary = () =>
+    run(async () => {
+      await sbPatch('vets?is_primary=eq.true', { is_primary: false })
+      await patch({ is_primary: true, active: true })
+    }, `${vet.name} now signs rabies certificates.`)
+
+  const toggleActive = () =>
+    run(() => patch({ active: !vet.active }), vet.active ? `${vet.name} is no longer listed.` : `${vet.name} is listed again.`)
+
+  // Each upload gets a new file name; the certificate code only reads PNG or JPG
+  const uploadSignature = (file: File) =>
+    run(async () => {
+      if (!['image/png', 'image/jpeg'].includes(file.type)) throw new Error('The signature must be a PNG or JPG image.')
+      if (file.size > MAX_LOGO_BYTES) throw new Error('The signature image must be smaller than 1 MB.')
+      const fileName = `sig-${vet.id}-${Date.now()}.${file.type === 'image/png' ? 'png' : 'jpg'}`
+      await request(`/storage/v1/object/signatures/${fileName}`, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      })
+      await patch({ signature_path: fileName })
+    }, `Signature saved for ${vet.name}.`)
+
+  return (
+    <tr>
+      <td><input value={name} onChange={(e) => setName(e.target.value)} /></td>
+      <td><input value={license} placeholder="License #" onChange={(e) => setLicense(e.target.value)} /></td>
+      <td>
+        {sigUrl ? (
+          <img src={sigUrl} alt={`${vet.name} signature`} style={{ maxHeight: 32, maxWidth: 140, display: 'block', marginBottom: 4 }} />
+        ) : (
+          <div style={muted}>{vet.signature_path ? 'Uploaded' : 'None'}</div>
+        )}
+        <input
+          type="file"
+          accept="image/png,image/jpeg"
+          disabled={busy}
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            e.target.value = ''
+            if (f) uploadSignature(f)
+          }}
+        />
+      </td>
+      <td>{vet.is_primary ? <strong>Primary</strong> : vet.active ? 'Active' : <span style={muted}>Inactive</span>}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        {dirty && (
+          <button type="button" className="btn-outline" disabled={busy || !name.trim()} onClick={save}>Save</button>
+        )}{' '}
+        {!vet.is_primary && vet.active && (
+          <button type="button" className="btn-outline" disabled={busy} onClick={makePrimary}>Make primary</button>
+        )}{' '}
+        {!vet.is_primary && (
+          <button type="button" className="btn-outline" disabled={busy} onClick={toggleActive}>
+            {vet.active ? 'Deactivate' : 'Reactivate'}
+          </button>
+        )}
+      </td>
+    </tr>
+  )
+}
+
+function VetsSection() {
+  const [vets, setVets] = useState<Vet[] | null>(null)
+  const [loadError, setLoadError] = useState('')
+  const [msg, setMsg] = useState<Msg | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newLicense, setNewLicense] = useState('')
+
+  const refresh = useCallback(async () => {
+    try {
+      setVets(await loadVets(true))
+      setLoadError('')
+    } catch (err) {
+      setLoadError(errText(err))
+    }
+  }, [])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
+
+  async function addVet(e: FormEvent) {
+    e.preventDefault()
+    if (!newName.trim()) {
+      setMsg({ type: 'error', text: "Enter the vet's name." })
+      return
+    }
+    setAdding(true)
+    setMsg(null)
+    try {
+      // The first vet added becomes the primary vet
+      await sbPost('vets', {
+        name: newName.trim(),
+        license_number: newLicense.trim() || null,
+        is_primary: !vets?.some((v) => v.is_primary),
+      })
+      setMsg({ type: 'success', text: `Added ${newName.trim()}.` })
+      setNewName('')
+      setNewLicense('')
+      await refresh()
+    } catch (err) {
+      setMsg({ type: 'error', text: errText(err) })
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="sh-section sh-section-gap">Veterinarians</div>
+      {msg && <div className={msg.type === 'error' ? 'warning-bar' : 'sh-success'}>{msg.text}</div>}
+      <div className="card">
+        <div className="card-body">
+          <p style={{ ...muted, fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+            Active vets appear under “Administered By” when logging vaccines. The primary vet&apos;s name, license number
+            and signature go on every rabies certificate. Renaming a vet doesn&apos;t change vaccinations already logged.
+          </p>
+          {loadError && <div className="warning-bar">Error: {loadError}</div>}
+          {!vets && !loadError && <div className="state-msg">Loading vets…</div>}
+          {vets && vets.length > 0 && (
+            <div className="table-wrap">
+              <table className="rec-table">
+                <thead>
+                  <tr><th>Name</th><th>License #</th><th>Signature</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {vets.map((v) => (
+                    // The key changes after a save, so the row's inputs start from the saved values
+                    <VetRow key={`${v.id}|${v.name}|${v.license_number}`} vet={v} onChanged={refresh} setMsg={setMsg} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <form onSubmit={addVet} style={{ marginTop: '1rem' }}>
+            <div className="sh-row">
+              <div className="sh-field">
+                <label>New vet&apos;s name</label>
+                <input value={newName} placeholder="Dr. Jane Doe" onChange={(e) => setNewName(e.target.value)} />
+              </div>
+              <div className="sh-field">
+                <label>License #</label>
+                <input value={newLicense} onChange={(e) => setNewLicense(e.target.value)} />
+              </div>
+            </div>
+            <button type="submit" className="btn-primary" disabled={adding}>{adding ? 'Adding…' : 'Add Vet'}</button>
+          </form>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function OrgSettingsPage() {
   const { settings, loaded } = useSettings()
   return (
@@ -191,6 +401,7 @@ export default function OrgSettingsPage() {
       <div className="records-main">
         <div className="page-title">⚙️ Settings</div>
         {loaded ? <SettingsForm initial={settings} /> : <div className="state-msg">Loading settings…</div>}
+        <VetsSection />
       </div>
     </div>
   )

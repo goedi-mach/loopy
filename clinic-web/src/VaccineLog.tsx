@@ -3,6 +3,7 @@ import { sbGet, sbPost } from './lib/api'
 import { todayStr } from './lib/dates'
 import CertActions from './CertActions'
 import { DURATIONS, VACCINE_OPTIONS, calcNextDue } from './lib/vaccines'
+import { loadVets, type Vet } from './lib/vets'
 import type { Client, Pet, Vaccination, VaccineLot } from './types'
 
 const PRODUCT_BY_MFR: Record<string, string> = { MER: 'IMRAB 3', ELA: 'RABVAC 3' }
@@ -22,13 +23,25 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
   const [lot, setLot] = useState('')
   const [date, setDate] = useState(todayStr())
   const [nextDue, setNextDue] = useState('')
-  const [admin, setAdmin] = useState('Dr. Ana Valbuena')
+  const [vets, setVets] = useState<Vet[]>([])
+  const [admin, setAdmin] = useState('')
   const [tag, setTag] = useState('')
   const [colors, setColors] = useState(pet.colors_markings || '')
   const [dose, setDose] = useState('')
   const [msg, setMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [lastRabies, setLastRabies] = useState<Vaccination | null>(null)
+
+  // Active vets, primary first; the primary vet is picked by default
+  useEffect(() => {
+    loadVets()
+      .then((list) => {
+        const active = list.filter((v) => v.active)
+        setVets(active)
+        setAdmin((current) => current || active[0]?.name || '')
+      })
+      .catch(() => setVets([]))
+  }, [])
 
   useEffect(() => {
     sbGet<VaccineLot[]>('vaccine_inventory?active=eq.true&order=lot_number.asc')
@@ -197,7 +210,10 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
           <div className="form-field">
             <label>Administered By</label>
             <select value={admin} onChange={(e) => setAdmin(e.target.value)}>
-              <option value="Dr. Ana Valbuena">Dr. Ana Valbuena</option>
+              {vets.length === 0 && <option value="">No vets set up yet (an admin can add them in Settings)</option>}
+              {vets.map((v) => (
+                <option key={v.id} value={v.name}>{v.name}</option>
+              ))}
             </select>
           </div>
 

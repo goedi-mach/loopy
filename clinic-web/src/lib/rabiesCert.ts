@@ -2,11 +2,9 @@ import { PDFDocument, PDFName, PDFString } from 'pdf-lib'
 import type { Client, Pet, Vaccination } from '../types'
 import { request } from './api'
 import { currentSettings } from './settings'
+import { loadVets, signatureUrlPath } from './vets'
 
 const TEMPLATES = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/templates`
-const LICENSE = import.meta.env.VITE_VET_LICENSE_VALBUENA
-// The signature lives in a private bucket and is fetched with the signed-in user's token.
-const SIGNATURE_PATH = '/storage/v1/object/authenticated/signatures/ana_signature.png'
 
 export interface CertResult {
   bytes: Uint8Array
@@ -22,6 +20,10 @@ function fmtDate(iso: string | null) {
 
 export async function buildRabiesCert(r: Vaccination, pet: Pet, client: Client): Promise<CertResult> {
   const problems: string[] = []
+
+  // The primary vet signs every certificate; administered_by records who actually gave the shot
+  const vet = (await loadVets().catch(() => [])).find((v) => v.is_primary)
+  if (!vet) problems.push('No primary veterinarian is set up (Staff Home → Settings)')
 
   const tpl = await fetch(`${TEMPLATES}/RabiesVacCert.pdf`)
   if (!tpl.ok) throw new Error('Could not load the certificate template')
@@ -118,8 +120,8 @@ export async function buildRabiesCert(r: Vaccination, pet: Pet, client: Client):
   setText('Product Name', r.product_name, 9)
   setText('Vaccine Serial Number', r.lot_number, 9)
 
-  if (LICENSE) setText('License Number', LICENSE, 9)
-  else problems.push('Veterinarian license number is not configured (VITE_VET_LICENSE_VALBUENA)')
+  if (vet?.license_number) setText('License Number', vet.license_number, 9)
+  else if (vet) problems.push(`No license number is set for ${vet.name} (Staff Home → Settings)`)
 
   const man = (r.manufacturer || '').toUpperCase().padEnd(3, ' ')
   setText('Manufacturer', man[0])
@@ -137,18 +139,22 @@ export async function buildRabiesCert(r: Vaccination, pet: Pet, client: Client):
   setText('Next Vaccination Date', fmtDate(r.next_due), 9)
 
   // Veterinarian
-  setText("Veterinarian's Name", 'Dr. Ana Valbuena', 9)
+  if (vet) setText("Veterinarian's Name", vet.name, 9)
   const org = currentSettings()
   setText("Veterinarian's address", [org.org_name, org.city_region].filter(Boolean).join(', '), 8)
 
-  try {
-    const sig = await request(SIGNATURE_PATH)
-    const type = sig.headers.get('content-type') || ''
-    const bytes = await sig.arrayBuffer()
-    const img = type.includes('jpeg') || type.includes('jpg') ? await pdfDoc.embedJpg(bytes) : await pdfDoc.embedPng(bytes)
-    page.drawImage(img, { x: 370, y: 452, width: 175, height: 28 })
-  } catch {
-    problems.push('The veterinarian signature image could not be added')
+  // The signature lives in a private bucket and is fetched with the signed-in user's token
+  if (vet && !vet.signature_path) problems.push(`No signature is uploaded for ${vet.name} (Staff Home → Settings)`)
+  if (vet?.signature_path) {
+    try {
+      const sig = await request(signatureUrlPath(vet.signature_path))
+      const type = sig.headers.get('content-type') || ''
+      const bytes = await sig.arrayBuffer()
+      const img = type.includes('jpeg') || type.includes('jpg') ? await pdfDoc.embedJpg(bytes) : await pdfDoc.embedPng(bytes)
+      page.drawImage(img, { x: 370, y: 452, width: 175, height: 28 })
+    } catch {
+      problems.push('The veterinarian signature image could not be added')
+    }
   }
 
   form.flatten()

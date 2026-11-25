@@ -100,7 +100,11 @@ RLS is enabled on every table.
 
 ### Storage
 
-A public bucket named `templates` holds the NASPHV Form 51 certificate template and the assets used in emails (logo and take-home sheets). The browser fetches the template when a certificate is generated. A separate **private** bucket named `signatures` holds the veterinarian signature image; signed-in users can read it (see `supabase/migrations/20261026000000_private_signatures_bucket.sql`), and nobody else can.
+A public bucket named `templates` holds the NASPHV Form 51 certificate template and the assets used in emails (logo and take-home sheets). The browser fetches the template when a certificate is generated. A separate **private** bucket named `signatures` holds veterinarian signature images; signed-in users can read them, and only admins can upload (see `supabase/migrations/20261026000000_private_signatures_bucket.sql` and `20261122000000_vets.sql`). A public `branding` bucket holds the logo uploaded on the Settings page.
+
+### Organization settings and vets
+
+The organization's name, contact details, logo, colors and default language live in the one-row `org_settings` table. Veterinarians live in the `vets` table: active vets are listed under "Administered By", and the primary vet's name, license number and signature go on rabies certificates. Admins edit both on the Settings page (`/tools/settings`); nothing about a specific clinic is built into the code.
 
 ---
 
@@ -119,7 +123,6 @@ Copy `clinic-web/.env.example` to `clinic-web/.env.local` (gitignored) and fill 
 ```
 VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<anon key>
-VITE_VET_LICENSE_VALBUENA=<license number shown on certificates>
 ```
 
 Use the **dev** Supabase project's values for local work. Other scripts: `npm run build` (type-check and build), `npm run lint`, `npm run preview`.
@@ -141,7 +144,6 @@ See [`.env.example`](.env.example) for a copy-paste template.
 | Variable                                      | Used by                                            |
 | --------------------------------------------- | -------------------------------------------------- |
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | React app (public by design; protected by RLS)     |
-| `VITE_VET_LICENSE_VALBUENA`                   | Certificate generation                             |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`   | Serverless functions (never expose to the browser) |
 | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`     | Email sending and webhook verification             |
 | `CRON_SECRET`                                 | Authorizes the scheduled reminder run              |
