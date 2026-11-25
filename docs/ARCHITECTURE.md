@@ -1,6 +1,6 @@
 # Architecture
 
-Loopy is a React single-page app talking to Supabase, plus a small set of serverless functions for anything that needs a secret key.
+LoopVet is a React single-page app talking to Supabase, plus a small set of serverless functions for anything that needs a secret key.
 
 ```mermaid
 flowchart LR
