@@ -1,11 +1,11 @@
-# Loopy &#x1F43E;
+# LoopVet &#x1F43E;
 
 [![Build check](https://github.com/goedi-mach/loopy/actions/workflows/build-check.yml/badge.svg)](https://github.com/goedi-mach/loopy/actions/workflows/build-check.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 Clinic management web app for [People Helping Pets](https://peoplehelpingpets.org), a Chicago nonprofit that runs free bilingual (English/Spanish) vaccine clinics for cats and dogs in underserved neighborhoods.
 
-Loopy covers the whole clinic day and what comes after: client and pet registration, vaccine and microchip logging, rabies certificates, event close-out, follow-up and reminder emails, and reporting.
+LoopVet covers the whole clinic day and what comes after: client and pet registration, vaccine and microchip logging, rabies certificates, event close-out, follow-up and reminder emails, and reporting.
 
 ---
 
@@ -154,7 +154,7 @@ See [`.env.example`](.env.example) for a copy-paste template.
 
 ## Previous version
 
-Loopy began as a vanilla HTML/CSS/JavaScript site (one page per tool, `config.js` generated at build time). It was replaced by the React app in October 2026. The last version of that site is preserved in the Git tag **`live-before-migration`**.
+LoopVet began as a vanilla HTML/CSS/JavaScript site (one page per tool, `config.js` generated at build time). It was replaced by the React app in October 2026. The last version of that site is preserved in the Git tag **`live-before-migration`**.
 
 To use it as a fallback you would need more than the code. The old pages talked to the database as the anonymous role, and that access was closed on Oct 24, 2026. A rollback means re-creating the old anonymous policies on `clients`, `pets`, and `vaccinations`, and restoring the old build variables (`SUPABASE_ANON_KEY`, `VET_LICENSE_VALBUENA`). Only do that deliberately, since it reopens public read access to client data.
 
@@ -176,7 +176,7 @@ A short diagram of how the browser, Supabase, the serverless functions, Resend a
 
 ## License
 
-Loopy is licensed under the [GNU Affero General Public License v3.0](LICENSE). In short: you can use and modify it, but if you run a modified version as a network service, you must offer its source code to the people using that service.
+LoopVet is licensed under the [GNU Affero General Public License v3.0](LICENSE). In short: you can use and modify it, but if you run a modified version as a network service, you must offer its source code to the people using that service.
 
 ## Security
 

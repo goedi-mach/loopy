@@ -1,6 +1,6 @@
 # clinic-web
 
-The Loopy front end: React 19 + TypeScript, built with Vite.
+The LoopVet front end: React 19 + TypeScript, built with Vite.
 
 See the [root README](../README.md) for what the app does, how it's deployed, and the environment variables it needs.
 

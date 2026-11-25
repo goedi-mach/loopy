@@ -85,7 +85,7 @@ export default function SetPassword() {
 
   return (
     <div className="card">
-      <div className="logo">🐾 Loopy</div>
+      <div className="logo">🐾 LoopVet</div>
       <div className="subtitle">{settings.org_name}</div>
 
       {status === 'loading' && <div className="loading">Verifying your link…</div>}

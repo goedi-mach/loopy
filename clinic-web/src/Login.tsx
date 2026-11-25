@@ -98,7 +98,7 @@ export default function Login() {
   if (destination) {
     return (
       <div className="login-card">
-        <h1>🐾 Loopy</h1>
+        <h1>🐾 LoopVet</h1>
         <p className="login-subtitle">Signed in (local test)</p>
         <p className="login-note">
           In the real app you would now be sent to <strong>{destination}</strong>.
@@ -110,7 +110,7 @@ export default function Login() {
 
   return (
     <div className="login-card">
-      <h1>🐾 Loopy</h1>
+      <h1>🐾 LoopVet</h1>
       <p className="login-subtitle">
         {settings.org_name}
         {cityName(settings) && <> — {cityName(settings)}</>}

@@ -1,6 +1,6 @@
 # Security Policy
 
-Loopy handles contact details for pet owners and records for community clinics, so we take security reports seriously.
+LoopVet handles contact details for pet owners and records for community clinics, so we take security reports seriously.
 
 ## Reporting a vulnerability
 
