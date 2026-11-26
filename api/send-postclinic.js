@@ -1,16 +1,10 @@
 import { requireRole } from './_auth.js';
-import { orgToday } from './_org.js';
+import { chipRegisterUrl, emailFooter, emailHeader, fromAddress, loadOrg, orgTemplateVars, orgToday } from './_org.js';
 
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY       = process.env.RESEND_API_KEY;
-const FROM_EMAIL           = 'reminders@peoplehelpingpets.org';
-
-const REACTION_DOC_EN = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/VaccineTakeHome_ENG.pdf';
-const REACTION_DOC_ES = 'https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/VacunasHojaInfo_ESP.pdf';
-const SNIP_LINK       = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf';
-const LOWCOST_LINK    = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf';
-const WEBSITE_LINK    = 'https://peoplehelpingpets.org';
+// Sender, logo, links and footer come from the Settings page (see _org.js).
 
 const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -198,7 +192,7 @@ function buildDueDates(pets, vaccinations, today) {
 }
 
 // ─── SEND EMAIL (BATCH) ────────────────────────────────────────
-async function sendBatch(items) {
+async function sendBatch(items, from) {
   const res = await fetch('https://api.resend.com/emails/batch', {
     method: 'POST',
     headers: {
@@ -206,7 +200,7 @@ async function sendBatch(items) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(items.map(item => ({
-      from:    FROM_EMAIL,
+      from,
       to:      item.to,
       subject: item.subject,
       html:    item.html,
@@ -252,6 +246,10 @@ export default async function handler(req, res) {
 
   try {
     const today = await orgToday();
+    const org   = await loadOrg();
+    const orgVars = orgTemplateVars(org).html;
+    // Checked before anything is built, so a missing sender address fails right away
+    const from = preview ? null : fromAddress(org);
 
     // Load main templates and active triggers in parallel
     const [tpl, triggers] = await Promise.all([
@@ -365,25 +363,26 @@ export default async function handler(req, res) {
         : false;
 
       // Build chip_links for any trigger templates that need {{chip_links}}
+      // Without a registry link in Settings, list the chip numbers only
       const chipLinks = clientPets
         .filter(p => p.microchip_number)
-        .map(p =>
-          `<li><strong>${esc(p.name)}:</strong> <a href="https://nano.fitracking.com/register/chip?id=${encodeURIComponent(p.microchip_number)}&petId=" style="color:#1a3a8f;">Register chip ${esc(p.microchip_number)}</a></li>`
-        ).join('');
+        .map(p => {
+          const url = chipRegisterUrl(org, p.microchip_number);
+          const chip = url
+            ? `<a href="${esc(url)}" style="color:${org.primary_color};">Register chip ${esc(p.microchip_number)}</a>`
+            : `Chip ${esc(p.microchip_number)}`;
+          return `<li><strong>${esc(p.name)}:</strong> ${chip}</li>`;
+        }).join('');
 
       const baseVars = {
+        ...orgVars,
         owner_name:             firstName,
         clinic_date:            clinicDate.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }),
         clinic_date_es:         clinicDate.toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }),
-        reaction_doc_en:        `<a href="${REACTION_DOC_EN}" style="color:#1a3a8f;">Vaccine Take-Home Information (English)</a>`,
-        reaction_doc_es:        `<a href="${REACTION_DOC_ES}" style="color:#1a3a8f;">Información sobre Vacunas (Español)</a>`,
         pet_due_dates_en:       dueDates.en,
         pet_due_dates_es:       dueDates.es,
         next_booster_clinic:    nextBooster ? nextBooster.en : 'TBD — stay tuned for announcements',
         next_booster_clinic_es: nextBooster ? nextBooster.es : 'por anunciar — estén atentos',
-        website_link:           `<a href="${WEBSITE_LINK}" style="color:#1a3a8f;">peoplehelpingpets.org</a>`,
-        snip_link:              `<a href="${SNIP_LINK}" style="color:#1a3a8f;">View the resource list (PDF)</a>`,
-        lowcost_link:           `<a href="${LOWCOST_LINK}" style="color:#1a3a8f;">View the resource list (PDF)</a>`,
         chip_links:             chipLinks,
       };
 
@@ -417,24 +416,20 @@ export default async function handler(req, res) {
 <!DOCTYPE html>
 <html>
 <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:1.5rem;color:#1a1a2e;">
-  <img src="https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/php-logo.png"
-       alt="People Helping Pets" style="height:60px;margin-bottom:1.5rem;" />
+  ${emailHeader(org)}
 
-  <h2 style="color:#1a3a8f;">${enHeading}</h2>
+  <h2 style="color:${org.primary_color};">${enHeading}</h2>
   <p style="white-space:pre-line;">${enBody}</p>
   ${extraBlocksEn}
 
   <hr style="border:none;border-top:2px solid #dce6f9;margin:1.5rem 0;">
 
-  <h2 style="color:#1a3a8f;">${esHeading}</h2>
+  <h2 style="color:${org.primary_color};">${esHeading}</h2>
   <p style="white-space:pre-line;">${esBody}</p>
   ${extraBlocksEs}
 
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0;">
-  <p style="font-size:12px;color:#888;">
-    People Helping Pets · Chicago, IL ·
-    <a href="${WEBSITE_LINK}" style="color:#888;">peoplehelpingpets.org</a>
-  </p>
+  ${emailFooter(org)}
 </body>
 </html>`;
 
@@ -478,7 +473,7 @@ export default async function handler(req, res) {
             subject: item.subject,
             html:    item.html,
             tags:    item.tags,
-          })));
+          })), from);
           sent += chunk.length;
 
           // Record who was emailed. If a log write fails, count it so staff are warned

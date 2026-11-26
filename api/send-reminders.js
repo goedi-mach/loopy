@@ -1,14 +1,12 @@
 import { timingSafeEqual } from 'node:crypto';
 import { requireRole } from './_auth.js';
-import { orgToday } from './_org.js';
+import { emailFooter, emailHeader, fromAddress, loadOrg, orgTemplateVars, orgToday } from './_org.js';
 
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY       = process.env.RESEND_API_KEY;
-const FROM_EMAIL           = 'reminders@peoplehelpingpets.org';
 
-const WEBSITE_LINK = 'https://peoplehelpingpets.org';
-const SNIP_LINK    = 'https://www.chicago.gov/content/dam/city/depts/cacc/PDFiles/CACC%20Resource%20List.pdf';
+// Sender, logo, links and footer come from the Settings page (see _org.js).
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -177,7 +175,7 @@ function buildTriggerBlock(tplEn, tplEs, vars, includeChipList) {
 }
 
 // ─── SEND EMAIL (BATCH) ─────────────────────────────────────────
-async function sendBatch(items) {
+async function sendBatch(items, from) {
   const res = await fetch('https://api.resend.com/emails/batch', {
     method: 'POST',
     headers: {
@@ -185,7 +183,7 @@ async function sendBatch(items) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(items.map(item => ({
-      from:    FROM_EMAIL,
+      from,
       to:      item.to,
       subject: item.subject,
       html:    item.html,
@@ -204,6 +202,10 @@ async function sendBatch(items) {
 
 // ─── PROCESS REMINDERS ─────────────────────────────────────────
 async function processReminders(weeksOut, sentField) {
+  // A missing sender address stops the run here, before any reminder is claimed
+  const org  = await loadOrg();
+  const from = fromAddress(org);
+  const orgVars = orgTemplateVars(org);
   const { start, end } = await getDateWindow(weeksOut);
   const templateKey    = weeksOut === 2 ? 'reminder_2w' : 'reminder_1w';
   const stats = { found: 0, queued: 0, sent: 0, failed: 0, skipped: 0, claimedElsewhere: 0, logFailures: 0 };
@@ -295,8 +297,7 @@ async function processReminders(weeksOut, sentField) {
       due_date:    dueDate,
       clinic_date_line_en,
       clinic_date_line_es,
-      snip_link:    `<a href="${SNIP_LINK}" style="color:#1a3a8f;">View the resource list (PDF)</a>`,
-      website_link: `<a href="${WEBSITE_LINK}" style="color:#1a3a8f;">peoplehelpingpets.org</a>`,
+      ...orgVars.html,
       chip_links:   '',  // not applicable for reminders
     };
     // Plain-text version for the subject line.
@@ -307,8 +308,7 @@ async function processReminders(weeksOut, sentField) {
       due_date:   dueDate,
       clinic_date_line_en,
       clinic_date_line_es,
-      snip_link:    SNIP_LINK,
-      website_link: WEBSITE_LINK,
+      ...orgVars.text,
       chip_links:   '',
     };
 
@@ -343,8 +343,7 @@ async function processReminders(weeksOut, sentField) {
 <!DOCTYPE html>
 <html>
 <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:1.5rem;color:#1a1a2e;">
-  <img src="https://lzfhdzklfmmxbfmyscfl.supabase.co/storage/v1/object/public/templates/php-logo.png"
-       alt="People Helping Pets" style="height:60px;margin-bottom:1.5rem;" />
+  ${emailHeader(org)}
 
   <p style="white-space:pre-line;">${fill(enTpl.body, htmlVars)}</p>
   ${extraBlocksEn}
@@ -355,10 +354,7 @@ async function processReminders(weeksOut, sentField) {
   ${extraBlocksEs}
 
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0;">
-  <p style="font-size:12px;color:#888;">
-    People Helping Pets · Chicago, IL ·
-    <a href="${WEBSITE_LINK}" style="color:#888;">peoplehelpingpets.org</a>
-  </p>
+  ${emailFooter(org)}
 </body>
 </html>`;
 
@@ -391,7 +387,7 @@ async function processReminders(weeksOut, sentField) {
         subject: item.subject,
         html:    item.html,
         tags:    item.tags,
-      })));
+      })), from);
       stats.sent += mine.length;
 
       const logged = await Promise.all(mine.map((item, idx) =>

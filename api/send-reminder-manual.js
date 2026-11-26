@@ -1,9 +1,9 @@
 import { requireRole } from './_auth.js';
+import { fromAddress, loadOrg, orgTemplateVars } from './_org.js';
 
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY       = process.env.RESEND_API_KEY;
-const FROM_EMAIL           = 'reminders@peoplehelpingpets.org';
 
 const ID_RE    = /^[\w-]{1,64}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -110,7 +110,10 @@ export default async function handler(req, res) {
           : ' Please keep an eye out for our upcoming Booster Clinic announcements.')
       : '';
 
-    const vars = { owner_name: ownerName, pet_name: petName, vaccine, due_date: dueDate, clinic_date_line: clinicDateLine };
+    // Sender and links come from the Settings page (see _org.js)
+    const org  = await loadOrg();
+    const from = fromAddress(org);
+    const vars = { ...orgTemplateVars(org).text, owner_name: ownerName, pet_name: petName, vaccine, due_date: dueDate, clinic_date_line: clinicDateLine };
 
     const suffix = isBooster ? '_booster' : '';
     const [enTpl, esTpl] = await Promise.all([
@@ -128,7 +131,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: FROM_EMAIL,
+        from,
         to: client.email.trim(),
         subject,
         text: body,

@@ -18,6 +18,12 @@ export interface OrgSettings {
   accent_color: string
   default_language: 'en' | 'es'
   timezone: string // IANA name, e.g. 'America/Chicago'; used for "today" on the server
+  // Emails (used by the serverless email functions)
+  email_from: string | null // sender address; its domain must be verified in Resend
+  resources_url: string | null // spay/neuter & low-cost care resource list
+  take_home_en_url: string | null // after-vaccine take-home sheet, English
+  take_home_es_url: string | null // after-vaccine take-home sheet, Spanish
+  microchip_register_url: string | null // chip registration link; {chip} = the chip number
 }
 
 // Used until the real settings arrive, and if they can't be loaded at all.
@@ -32,6 +38,11 @@ export const DEFAULT_SETTINGS: OrgSettings = {
   accent_color: '#f28b82',
   default_language: 'en',
   timezone: 'UTC',
+  email_from: null,
+  resources_url: null,
+  take_home_en_url: null,
+  take_home_es_url: null,
+  microchip_register_url: null,
 }
 
 // Read with the public (anon) key on purpose: settings are public, and this way a

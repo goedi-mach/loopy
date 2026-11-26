@@ -8,6 +8,8 @@ import './Intake.css'
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const HEX = /^#[0-9a-fA-F]{6}$/
 const MAX_LOGO_BYTES = 1024 * 1024 // 1 MB
+const MAX_PDF_BYTES = 5 * 1024 * 1024 // 5 MB
+const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/
 
 interface Msg {
   type: 'error' | 'success'
@@ -61,10 +63,46 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
     }
   }
 
+  // Take-home sheets are stored next to the logo, in the public branding bucket
+  async function uploadPdf(field: 'take_home_en_url' | 'take_home_es_url', file: File) {
+    if (file.type !== 'application/pdf') {
+      setMsg({ type: 'error', text: 'The take-home sheet must be a PDF.' })
+      return
+    }
+    if (file.size > MAX_PDF_BYTES) {
+      setMsg({ type: 'error', text: 'The take-home sheet must be smaller than 5 MB.' })
+      return
+    }
+    setUploading(true)
+    setMsg(null)
+    try {
+      const name = `${field === 'take_home_en_url' ? 'take-home-en' : 'take-home-es'}-${Date.now()}.pdf`
+      await request(`/storage/v1/object/branding/${name}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/pdf' },
+        body: file,
+      })
+      set(field, `${SUPABASE_URL}/storage/v1/object/public/branding/${name}`)
+      setMsg({ type: 'success', text: 'PDF uploaded. Click Save Settings to start using it.' })
+    } catch (err) {
+      setMsg({ type: 'error', text: 'PDF upload failed: ' + errText(err) })
+    } finally {
+      setUploading(false)
+    }
+  }
+
   async function save(e: FormEvent) {
     e.preventDefault()
     if (!form.org_name.trim()) {
       setMsg({ type: 'error', text: 'Organization name is required.' })
+      return
+    }
+    if (form.email_from?.trim() && !EMAIL_RE.test(form.email_from.trim())) {
+      setMsg({ type: 'error', text: 'The "From" address doesn\'t look like an email address.' })
+      return
+    }
+    if (form.microchip_register_url?.trim() && !form.microchip_register_url.includes('{chip}')) {
+      setMsg({ type: 'error', text: 'The microchip registration link needs {chip} where the chip number goes.' })
       return
     }
     if (!HEX.test(form.primary_color) || !HEX.test(form.accent_color)) {
@@ -84,6 +122,11 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
         accent_color: form.accent_color.toLowerCase(),
         default_language: form.default_language,
         timezone: form.timezone,
+        email_from: blankToNull(form.email_from),
+        resources_url: blankToNull(form.resources_url),
+        take_home_en_url: blankToNull(form.take_home_en_url),
+        take_home_es_url: blankToNull(form.take_home_es_url),
+        microchip_register_url: blankToNull(form.microchip_register_url),
         updated_at: new Date().toISOString(),
       })
       // An empty answer means the database refused the change (not an admin)
@@ -195,6 +238,53 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
             The time zone where your clinics happen. It decides the date recorded when someone registers and when reminder emails go out.
+          </p>
+        </div>
+      </div>
+
+      <div className="sh-section sh-section-gap">Emails</div>
+      <div className="card">
+        <div className="card-body">
+          <div className="sh-row">
+            <div className="sh-field">
+              <label>“From” address</label>
+              <input type="email" value={form.email_from || ''} placeholder="reminders@example.org" onChange={(e) => set('email_from', e.target.value)} />
+            </div>
+            <div className="sh-field">
+              <label>Spay/neuter &amp; low-cost care resources (link)</label>
+              <input type="url" value={form.resources_url || ''} placeholder="https://…" onChange={(e) => set('resources_url', e.target.value)} />
+            </div>
+          </div>
+          <div className="sh-row">
+            {(['take_home_en_url', 'take_home_es_url'] as const).map((field) => (
+              <div className="sh-field" key={field}>
+                <label>After-vaccine take-home sheet ({field === 'take_home_en_url' ? 'English' : 'Español'})</label>
+                <input type="url" value={form[field] || ''} placeholder="https://… or upload a PDF" onChange={(e) => set(field, e.target.value)} />
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  disabled={uploading}
+                  style={{ marginTop: '0.35rem' }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    e.target.value = ''
+                    if (f) uploadPdf(field, f)
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="sh-row">
+            <div className="sh-field">
+              <label>Microchip registration link</label>
+              <input value={form.microchip_register_url || ''} placeholder="https://registry.example.com/register?chip={chip}" onChange={(e) => set('microchip_register_url', e.target.value)} />
+            </div>
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            The “From” address&apos;s domain must be verified in your email service (Resend). Emails use the name, logo,
+            website and main color above. In the microchip link, <code>{'{chip}'}</code> is replaced with each pet&apos;s chip
+            number; leave it empty to list the chip numbers without a link. Email templates can also use{' '}
+            <code>{'{{org_name}}'}</code>.
           </p>
         </div>
       </div>
