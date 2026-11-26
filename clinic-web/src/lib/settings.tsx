@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { DEFAULT_WAIVER_EN, DEFAULT_WAIVER_ES } from './waiver'
 
 // Organization settings: name, branding and defaults, stored in the org_settings table
 // (one row). Every page reads them through useSettings(), so nothing about a specific
@@ -24,6 +25,9 @@ export interface OrgSettings {
   take_home_en_url: string | null // after-vaccine take-home sheet, English
   take_home_es_url: string | null // after-vaccine take-home sheet, Spanish
   microchip_register_url: string | null // chip registration link; {chip} = the chip number
+  // Waiver wording; see lib/waiver.ts
+  waiver_en: string
+  waiver_es: string
 }
 
 // Used until the real settings arrive, and if they can't be loaded at all.
@@ -43,6 +47,8 @@ export const DEFAULT_SETTINGS: OrgSettings = {
   take_home_en_url: null,
   take_home_es_url: null,
   microchip_register_url: null,
+  waiver_en: DEFAULT_WAIVER_EN,
+  waiver_es: DEFAULT_WAIVER_ES,
 }
 
 // Read with the public (anon) key on purpose: settings are public, and this way a

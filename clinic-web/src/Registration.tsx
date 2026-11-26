@@ -191,7 +191,7 @@ export default function Registration() {
   }
 
   const pet = pets[active]
-  const waiver = waiverText(waiverLang, settings.org_name)
+  const waiver = waiverText(waiverLang, settings)
 
   return (
     <div className="registration">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { sbGet } from './lib/api'
 import { saveCertFile } from './lib/rabiesCert'
 import { buildWaiverPdf } from './lib/waiverPdf'
+import type { WaiverSnapshot } from './lib/waiver'
 import type { Client } from './types'
 
 interface Visit {
@@ -54,9 +55,9 @@ export default function Attendance({ client }: { client: Client }) {
   async function downloadWaiver(v: Visit) {
     setBusyId(v.id)
     try {
-      const rows = await sbGet<Array<{ event_date: string | null; waiver_signature: string | null; waiver_signed_at: string | null }>>(
-        `clients?id=eq.${v.id}&select=event_date,waiver_signature,waiver_signed_at`
-      )
+      const rows = await sbGet<
+        Array<{ event_date: string | null; waiver_signature: string | null; waiver_signed_at: string | null; waiver_text: WaiverSnapshot | null }>
+      >(`clients?id=eq.${v.id}&select=event_date,waiver_signature,waiver_signed_at,waiver_text`)
       const row = rows[0]
       if (!row?.waiver_signature) throw new Error('No signature is saved for this visit')
       const bytes = await buildWaiverPdf({ ...row, waiver_signature: row.waiver_signature }, client)

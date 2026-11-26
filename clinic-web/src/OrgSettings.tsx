@@ -5,6 +5,7 @@ import VaccineTypesSettings from './VaccineTypesSettings'
 import { request, sbPatch, sbPost } from './lib/api'
 import { DEFAULT_SETTINGS, logoSrc, useSettings, type OrgSettings } from './lib/settings'
 import { loadVets, signatureUrlPath, type Vet } from './lib/vets'
+import { DEFAULT_WAIVER_EN, DEFAULT_WAIVER_ES } from './lib/waiver'
 import './Intake.css'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -107,6 +108,10 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
       setMsg({ type: 'error', text: 'The microchip registration link needs {chip} where the chip number goes.' })
       return
     }
+    if (!form.waiver_en.trim() || !form.waiver_es.trim()) {
+      setMsg({ type: 'error', text: 'The waiver needs wording in both English and Spanish (or restore the default).' })
+      return
+    }
     if (!HEX.test(form.primary_color) || !HEX.test(form.accent_color)) {
       setMsg({ type: 'error', text: 'Colors must look like #1a3a8f.' })
       return
@@ -129,6 +134,8 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
         take_home_en_url: blankToNull(form.take_home_en_url),
         take_home_es_url: blankToNull(form.take_home_es_url),
         microchip_register_url: blankToNull(form.microchip_register_url),
+        waiver_en: form.waiver_en.trim(),
+        waiver_es: form.waiver_es.trim(),
         updated_at: new Date().toISOString(),
       })
       // An empty answer means the database refused the change (not an admin)
@@ -241,6 +248,41 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
             The time zone where your clinics happen. It decides the date recorded when someone registers and when reminder emails go out.
           </p>
+        </div>
+      </div>
+
+      <div className="sh-section sh-section-gap">Waiver</div>
+      <div className="card">
+        <div className="card-body">
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+            The liability waiver people sign when they register. Leave a blank line between paragraphs.{' '}
+            <code>{'{{org_name}}'}</code> is replaced with your organization&apos;s name. Changes apply to new signatures
+            only: every signature keeps the exact wording it was signed under, and its waiver PDF prints that wording.
+            Have your own legal advisor review the wording.
+          </p>
+          <div className="sh-row">
+            {(
+              [
+                ['waiver_en', 'English', DEFAULT_WAIVER_EN],
+                ['waiver_es', 'Español', DEFAULT_WAIVER_ES],
+              ] as const
+            ).map(([field, label, fallback]) => (
+              <div className="sh-field" key={field}>
+                <label>{label}</label>
+                <textarea rows={14} value={form[field]} onChange={(e) => set(field, e.target.value)} />
+                {form[field] !== fallback && (
+                  <button
+                    type="button"
+                    className="btn-link"
+                    style={{ marginTop: '0.35rem', textAlign: 'left' }}
+                    onClick={() => confirm(`Replace the ${label} wording with the default?`) && set(field, fallback)}
+                  >
+                    Restore the default wording
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

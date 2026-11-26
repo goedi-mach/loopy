@@ -1,12 +1,13 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 import type { Client } from '../types'
 import { currentSettings } from './settings'
-import { waiverText } from './waiver'
+import { DEFAULT_WAIVER_EN, DEFAULT_WAIVER_ES, fillOrgName, toParagraphs, type WaiverSnapshot } from './waiver'
 
 export interface WaiverVisit {
   event_date: string | null
   waiver_signature: string
   waiver_signed_at: string | null
+  waiver_text?: WaiverSnapshot | null // the wording that was signed (see lib/waiver.ts)
 }
 
 const fmtDate = (iso: string | null) => {
@@ -69,7 +70,13 @@ export async function buildWaiverPdf(visit: WaiverVisit, client: Client): Promis
     y -= 12
   }
 
-  const org = currentSettings().org_name
+  // Print the wording that was signed. Records from before wording was saved with the
+  // signature fall back to the current wording.
+  const settings = currentSettings()
+  const signed = visit.waiver_text
+  const org = signed?.org || settings.org_name
+  const en = toParagraphs(fillOrgName(signed?.en || settings.waiver_en || DEFAULT_WAIVER_EN, org))
+  const es = toParagraphs(fillOrgName(signed?.es || settings.waiver_es || DEFAULT_WAIVER_ES, org))
   draw(org, 16, navy, bold)
   y -= 2
   draw('Liability Waiver & Consent Form / Exoneración de Responsabilidad', 10, gray)
@@ -83,12 +90,12 @@ export async function buildWaiverPdf(visit: WaiverVisit, client: Client): Promis
 
   heading('Liability Waiver & Consent — English')
   y -= 4
-  waiverText('en', org).forEach(paragraph)
+  en.forEach(paragraph)
   y -= 8
   rule()
   heading('Exoneración de Responsabilidad y Consentimiento — Español')
   y -= 4
-  waiverText('es', org).forEach(paragraph)
+  es.forEach(paragraph)
   y -= 8
   rule()
 

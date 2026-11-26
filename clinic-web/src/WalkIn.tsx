@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import SignaturePad from 'signature_pad'
 import { sbGet, sbPost } from './lib/api'
 import { emptyPet, formToPayload, type PetFormValues } from './lib/petForm'
+import { useSettings } from './lib/settings'
+import { waiverSnapshot } from './lib/waiver'
 import PetFields from './PetFields'
 import type { Client } from './types'
 
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export default function WalkIn({ onSaved, onUseExisting, onClose }: Props) {
+  const { settings } = useSettings()
   const [c, setC] = useState({ name: '', phone: '', email: '', street: '', city: '', state: '', zip: '' })
   const [pet, setPet] = useState<PetFormValues>(emptyPet)
   const [dupes, setDupes] = useState<Client[]>([])
@@ -94,6 +97,8 @@ export default function WalkIn({ onSaved, onUseExisting, onClose }: Props) {
           event_date: todayStr(),
           waiver_signature: sig,
           waiver_signed_at: sig ? new Date().toISOString() : null,
+          // The exact wording being signed, so the waiver PDF always shows it
+          waiver_text: sig ? waiverSnapshot(settings) : null,
         })
         if (!rows.length) throw new Error('Could not save the client')
         client = rows[0]
