@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { sbGet, sbPost } from './lib/api'
-import { VACCINE_OPTIONS } from './lib/vaccines'
+import { typesForSpecies, useVaccineTypes } from './lib/vaccines'
 import type { Pet, VaccineDeferral } from './types'
 
 interface Props {
@@ -42,7 +42,8 @@ export default function DeferVaccines({ pet, refreshKey = 0, onSaved }: Props) {
     }
   }, [pet.id, refreshKey])
 
-  const choices = (VACCINE_OPTIONS[pet.species || ''] || []).map((o) => o.label)
+  const types = useVaccineTypes()
+  const choices = typesForSpecies(types || [], pet.species || '').map((o) => o.label)
 
   function toggle(vaccine: string) {
     setMsg(null)

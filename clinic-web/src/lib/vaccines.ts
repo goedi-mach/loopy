@@ -1,8 +1,11 @@
-export interface VaccineOption {
-  label: string
-  inventoryKey: string
-  isRabies: boolean
-}
+import { useEffect, useState } from 'react'
+import { sbGet } from './api'
+
+// Vaccine types live in the vaccine_types table (one row per vaccine, e.g. DAPP).
+// • key: stored on vaccine lots (vaccine_inventory.vaccine_type); never changes
+// • label: shown everywhere and saved at the start of each vaccination's name
+//   ("DAPP 1 Year"). Pages match a pet's history by this first word, so a label
+//   should not be renamed once vaccines have been logged with it.
 
 export interface Duration {
   label: string
@@ -11,38 +14,55 @@ export interface Duration {
   usda?: '1yr' | '3yr'
 }
 
-export const VACCINE_OPTIONS: Record<string, VaccineOption[]> = {
-  dog: [
-    { label: 'DAPP', inventoryKey: 'dapp', isRabies: false },
-    { label: 'Lepto', inventoryKey: 'dapp_lepto', isRabies: false },
-    { label: 'Rabies', inventoryKey: 'rabies', isRabies: true },
-  ],
-  cat: [
-    { label: 'FVRCP', inventoryKey: 'fvrcp', isRabies: false },
-    { label: 'Rabies', inventoryKey: 'rabies', isRabies: true },
-  ],
+export interface VaccineType {
+  key: string
+  label: string
+  species: string[] // 'dog', 'cat'
+  is_rabies: boolean // shows the rabies-certificate fields
+  durations: Duration[]
+  sort_order: number
+  active: boolean
 }
 
-export const DURATIONS: Record<string, Duration[]> = {
-  rabies: [
-    { label: '1 Year', unit: 'years', amount: 1, usda: '1yr' },
-    { label: '3 Year', unit: 'years', amount: 3, usda: '3yr' },
-  ],
-  dapp: [
-    { label: '4 Weeks', unit: 'weeks', amount: 4 },
-    { label: '1 Year', unit: 'months', amount: 12 },
-    { label: '3 Year', unit: 'months', amount: 36 },
-  ],
-  dapp_lepto: [
-    { label: '4 Weeks', unit: 'weeks', amount: 4 },
-    { label: '1 Year', unit: 'months', amount: 12 },
-  ],
-  fvrcp: [
-    { label: '4 Weeks', unit: 'weeks', amount: 4 },
-    { label: '1 Year', unit: 'months', amount: 12 },
-    { label: '3 Year', unit: 'months', amount: 36 },
-  ],
+const COLUMNS = 'key,label,species,is_rabies,durations,sort_order,active'
+
+// Kept for a minute so every card on a page doesn't ask the database again
+let cache: { at: number; list: Promise<VaccineType[]> } | null = null
+
+// All vaccine types (active and inactive), in display order. Pass fresh = true after a change.
+export function loadVaccineTypes(fresh = false): Promise<VaccineType[]> {
+  if (fresh || !cache || Date.now() - cache.at > 60_000) {
+    const list = sbGet<VaccineType[]>(`vaccine_types?select=${COLUMNS}&order=sort_order.asc,label.asc`)
+    cache = { at: Date.now(), list }
+    list.catch(() => {
+      cache = null
+    })
+  }
+  return cache.list
 }
+
+// The vaccine types for a page: null while loading, [] if they couldn't be loaded
+export function useVaccineTypes(): VaccineType[] | null {
+  const [types, setTypes] = useState<VaccineType[] | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    loadVaccineTypes()
+      .then((t) => {
+        if (!cancelled) setTypes(t)
+      })
+      .catch(() => {
+        if (!cancelled) setTypes([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+  return types
+}
+
+// Active vaccines given to this species, in display order
+export const typesForSpecies = (types: VaccineType[], species: string) =>
+  types.filter((t) => t.active && t.species.includes(species))
 
 function iso(d: Date) {
   const mm = String(d.getMonth() + 1).padStart(2, '0')

@@ -1,9 +1,8 @@
 import { useRef, useState } from 'react'
 import type { ClinicEvent } from './EventsCard'
 import { sbPatch, sbPost } from './lib/api'
+import { useVaccineTypes } from './lib/vaccines'
 import './Intake.css'
-
-const VACCINES = ['Rabies', 'DAPP', 'Lepto', 'FVRCP']
 
 interface WasteRow {
   key: number
@@ -18,6 +17,8 @@ interface Props {
 }
 
 export default function CloseOutDialog({ ev, onClose, onDone }: Props) {
+  // Waste can be recorded for any active vaccine
+  const vaccines = (useVaccineTypes() || []).filter((t) => t.active).map((t) => t.label)
   const nextKey = useRef(2)
   const wasteSaved = useRef(false) // so a retry never saves the same waste twice
   const [rows, setRows] = useState<WasteRow[]>([{ key: 1, vaccine: '', doses: '' }])
@@ -76,7 +77,7 @@ export default function CloseOutDialog({ ev, onClose, onDone }: Props) {
           <div key={r.key} className="sh-waste-row">
             <select value={r.vaccine} onChange={(e) => update(r.key, { vaccine: e.target.value })}>
               <option value="">— Vaccine —</option>
-              {VACCINES.map((v) => (
+              {vaccines.map((v) => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>

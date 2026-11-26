@@ -4,11 +4,8 @@ import { buildRabiesCert, certFilename, saveCertFile } from './lib/rabiesCert'
 import { todayStr } from './lib/dates'
 import type { Client, Pet, Vaccination, VaccineDeferral } from './types'
 import ChangeHistory from './ChangeHistory'
+import { typesForSpecies, useVaccineTypes } from './lib/vaccines'
 
-const REQUIRED_VAX: Record<string, string[]> = {
-  dog: ['Rabies', 'DAPP', 'Lepto'],
-  cat: ['Rabies', 'FVRCP'],
-}
 const DUE_GRACE_DAYS = 30
 
 interface DueRow {
@@ -45,6 +42,7 @@ interface Props {
 
 export default function VaccineHistory({ pet, client, editable, refreshKey = 0 }: Props) {
   const [open, setOpen] = useState(true)
+  const vaccineTypes = useVaccineTypes()
   const [records, setRecords] = useState<Vaccination[] | null>(null)
   const [error, setError] = useState('')
   const [due, setDue] = useState<DueRow[] | null>(null)
@@ -110,7 +108,8 @@ export default function VaccineHistory({ pet, client, editable, refreshKey = 0 }
 
   function checkDue() {
     if (!records) return
-    const required = REQUIRED_VAX[pet.species || ''] || []
+    // Every active vaccine for this species is checked
+    const required = typesForSpecies(vaccineTypes || [], pet.species || '').map((t) => t.label)
     const today = todayNumber()
     const rows: DueRow[] = required.map((base) => {
       const flag = deferrals.find((d) => d.vaccine === base)

@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react'
 import { sbGet, sbPost } from './lib/api'
 import { todayStr } from './lib/dates'
 import CertActions from './CertActions'
-import { DURATIONS, VACCINE_OPTIONS, calcNextDue } from './lib/vaccines'
+import { calcNextDue, typesForSpecies, useVaccineTypes } from './lib/vaccines'
 import { loadVets, type Vet } from './lib/vets'
 import type { Client, Pet, Vaccination, VaccineLot } from './types'
-
-const PRODUCT_BY_MFR: Record<string, string> = { MER: 'IMRAB 3', ELA: 'RABVAC 3' }
 
 interface Props {
   pet: Pet
@@ -61,11 +59,12 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
     setLastRabies(null)
   }, [pet.id, pet.colors_markings])
 
-  const options = VACCINE_OPTIONS[pet.species || ''] || []
+  const types = useVaccineTypes()
+  const options = typesForSpecies(types || [], pet.species || '')
   const vax = vaxIdx === '' ? null : options[+vaxIdx]
-  const durations = vax ? DURATIONS[vax.inventoryKey] || [] : []
+  const durations = vax ? vax.durations : []
   const dur = durIdx === '' ? null : durations[+durIdx]
-  const lotChoices = vax ? lots.filter((l) => l.vaccine_type === vax.inventoryKey) : []
+  const lotChoices = vax ? lots.filter((l) => l.vaccine_type === vax.key) : []
   const selectedLot = lotChoices.find((l) => l.lot_number === lot) || null
   const expired = !!selectedLot?.exp_date && !!date && selectedLot.exp_date < date
   const mfr = (selectedLot?.manufacturer || '').toUpperCase()
@@ -80,7 +79,7 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
     setDurIdx('')
     setMsg(null)
     const v = value === '' ? null : options[+value]
-    const choices = v ? lots.filter((l) => l.vaccine_type === v.inventoryKey) : []
+    const choices = v ? lots.filter((l) => l.vaccine_type === v.key) : []
     setLot(choices.length === 1 ? choices[0].lot_number : '')
   }
 
@@ -107,17 +106,17 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
         administered_by: admin || null,
         exp_date: selectedLot?.exp_date || null,
       }
-      if (vax.isRabies) {
+      if (vax.is_rabies) {
         payload.rabies_tag_number = tag.trim() || null
         payload.colors_markings = colors.trim() || pet.colors_markings || null
-        payload.product_name = PRODUCT_BY_MFR[mfr] || null
+        payload.product_name = selectedLot?.product_name || null
         payload.manufacturer = mfr || null
         payload.usda_duration = dur.usda || null
         payload.dose_type = dose || null
       }
       const rows = await sbPost<Vaccination>('vaccinations', payload)
       if (!rows.length) throw new Error('The vaccine record was not saved')
-      setLastRabies(vax.isRabies ? rows[0] : null)
+      setLastRabies(vax.is_rabies ? rows[0] : null)
 
       setMsg({ type: 'success', text: `${name} logged for ${pet.name}!` })
       // Clear the vaccine fields but keep the date for the next one
@@ -154,7 +153,7 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
             <div className="form-field">
               <label>Vaccine Name *</label>
               <select value={vaxIdx} onChange={(e) => onVaxChange(e.target.value)}>
-                <option value="">— Select —</option>
+                <option value="">{types ? '— Select —' : 'Loading…'}</option>
                 {options.map((o, i) => (
                   <option key={o.label} value={i}>{o.label}</option>
                 ))}
@@ -217,7 +216,7 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
             </select>
           </div>
 
-          {vax?.isRabies && (
+          {vax?.is_rabies && (
             <div className="rabies-box">
               <div className="rabies-title">📋 NASPHV Form 51 — Rabies Certificate Fields</div>
               <div className="form-row">
@@ -233,7 +232,7 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
               <div className="form-row">
                 <div className="form-field">
                   <label>Vaccine Product Name</label>
-                  <input value={PRODUCT_BY_MFR[mfr] || ''} readOnly />
+                  <input value={selectedLot?.product_name || ''} readOnly />
                 </div>
                 <div className="form-field">
                   <label>Manufacturer (first 3 letters)</label>
@@ -241,10 +240,11 @@ export default function VaccineLog({ pet, client, onLogged }: Props) {
                 </div>
               </div>
               <p className="field-note">Product and manufacturer come from the selected lot. If either is wrong or blank, notify an admin.</p>
-              {selectedLot && !mfr && (
-                <p className="field-note warn">This lot has no manufacturer on record, so the product will be blank on the certificate.</p>
+              {selectedLot && (!mfr || !selectedLot.product_name) && (
+                <p className="field-note warn">
+                  This lot has no {!mfr ? 'manufacturer' : 'product name'} on record, so it will be blank on the certificate.
+                </p>
               )}
-              <p className="field-note">ℹ️ IMRAB is a killed (inactivated) vaccine.</p>
               <div className="form-row">
                 <div className="form-field">
                   <label>USDA License Duration</label>

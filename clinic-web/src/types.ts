@@ -72,6 +72,7 @@ export interface VaccineLot {
   lot_number: string
   active: boolean
   manufacturer: string | null
+  product_name: string | null // printed on rabies certificates, e.g. 'IMRAB 3'
   exp_date: string | null
 }
 

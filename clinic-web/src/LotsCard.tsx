@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { sbGet, sbGetAll, sbPatch, sbPost } from './lib/api'
 import { todayStr } from './lib/dates'
+import { useVaccineTypes } from './lib/vaccines'
 import './Intake.css'
 
 interface Lot {
@@ -9,6 +10,7 @@ interface Lot {
   label: string
   lot_number: string
   manufacturer: string | null
+  product_name: string | null
   active: boolean
   archived: boolean
   created_at: string
@@ -20,14 +22,7 @@ interface Msg {
   text: string
 }
 
-const VAX_LABELS: Record<string, string> = {
-  rabies: 'Rabies',
-  dapp: 'DAPP',
-  dapp_lepto: 'Lepto',
-  fvrcp: 'FVRCP',
-}
-
-const emptyForm = { type: '', lot: '', maker: '', exp: '' }
+const emptyForm = { type: '', lot: '', maker: '', product: '', exp: '' }
 
 const fmtDate = (d: string | null) =>
   d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
@@ -43,11 +38,16 @@ function monthsAgo(n: number) {
 const errText = (err: unknown, fallback = 'Something went wrong') => (err instanceof Error ? err.message : fallback)
 
 export default function LotsCard() {
+  // Vaccine names by key (inactive ones too, so old lots still show a name)
+  const vaccineTypes = useVaccineTypes()
+  const VAX_LABELS: Record<string, string> = Object.fromEntries((vaccineTypes || []).map((t) => [t.key, t.label]))
+  const activeTypes = (vaccineTypes || []).filter((t) => t.active)
   const [lots, setLots] = useState<Lot[] | null>(null)
   const [loadError, setLoadError] = useState('')
   const [showArchived, setShowArchived] = useState(false)
   const [msg, setMsg] = useState<Msg | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const formIsRabies = !!vaccineTypes?.find((t) => t.key === form.type)?.is_rabies
   const [saving, setSaving] = useState(false)
   const [sweeping, setSweeping] = useState(false)
 
@@ -111,11 +111,13 @@ export default function LotsCard() {
   async function save() {
     const lot = form.lot.trim()
     const maker = form.maker.trim().toUpperCase() || null
+    const product = form.product.trim() || null
     const bad = (text: string) => setMsg({ type: 'error', text })
     if (!form.type) return bad('Please select a vaccine type.')
     if (!lot) return bad('Please enter a lot number.')
     if (!form.exp) return bad('Please enter an expiration date.')
     if (form.exp < todayStr()) return bad('This lot is already expired.')
+    if (formIsRabies && !product) return bad('Please enter the product name (it is printed on rabies certificates).')
 
     setSaving(true)
     try {
@@ -126,6 +128,7 @@ export default function LotsCard() {
       if (existing.length) {
         await sbPatch(`vaccine_inventory?id=eq.${existing[0].id}`, {
           manufacturer: maker,
+          product_name: product,
           active: true,
           archived: false,
           deactivated_at: null,
@@ -137,6 +140,7 @@ export default function LotsCard() {
           label: VAX_LABELS[form.type],
           lot_number: lot,
           manufacturer: maker,
+          product_name: product,
           active: true,
           exp_date: form.exp,
         })
@@ -222,7 +226,7 @@ export default function LotsCard() {
           <div className="table-wrap">
             <table className="rec-table">
               <thead>
-                <tr><th>Vaccine</th><th>Lot #</th><th>Manufacturer</th><th>Expires</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Vaccine</th><th>Lot #</th><th>Manufacturer</th><th>Product</th><th>Expires</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {lots.map((l) => (
@@ -230,6 +234,7 @@ export default function LotsCard() {
                     <td><strong>{VAX_LABELS[l.vaccine_type] || l.vaccine_type}</strong></td>
                     <td className="sh-mono">{l.lot_number}</td>
                     <td className="sh-mono">{l.manufacturer || '—'}</td>
+                    <td>{l.product_name || '—'}</td>
                     <td>
                       {fmtDate(l.exp_date)}
                       {l.active && l.exp_date && l.exp_date < today && <span className="sh-pill bad">Expired</span>}
@@ -260,8 +265,8 @@ export default function LotsCard() {
               <label>Vaccine Type</label>
               <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                 <option value="">— Select —</option>
-                {Object.entries(VAX_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                {activeTypes.map((t) => (
+                  <option key={t.key} value={t.key}>{t.label}</option>
                 ))}
               </select>
             </div>
@@ -286,6 +291,14 @@ export default function LotsCard() {
               <input type="date" value={form.exp} onChange={(e) => setForm({ ...form, exp: e.target.value })} />
             </div>
           </div>
+          {formIsRabies && (
+            <div className="sh-row">
+              <div className="sh-field">
+                <label>Product Name * (printed on rabies certificates)</label>
+                <input type="text" value={form.product} placeholder="e.g. IMRAB 3" onChange={(e) => setForm({ ...form, product: e.target.value })} />
+              </div>
+            </div>
+          )}
           <button type="button" className="btn-primary" disabled={saving} onClick={save}>
             {saving ? 'Saving…' : 'Save Lot'}
           </button>
