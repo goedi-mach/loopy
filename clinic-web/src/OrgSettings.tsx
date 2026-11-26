@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import ClinicNav from './components/ClinicNav'
+import SignatureDialog from './components/SignatureDialog'
 import { request, sbPatch, sbPost } from './lib/api'
 import { DEFAULT_SETTINGS, logoSrc, useSettings, type OrgSettings } from './lib/settings'
 import { loadVets, signatureUrlPath, type Vet } from './lib/vets'
@@ -305,6 +306,7 @@ function VetRow({ vet, onChanged, setMsg }: { vet: Vet; onChanged: () => Promise
   const [license, setLicense] = useState(vet.license_number || '')
   const [busy, setBusy] = useState(false)
   const [sigUrl, setSigUrl] = useState<string | null>(null)
+  const [drawing, setDrawing] = useState(false)
   const dirty = name.trim() !== vet.name || license.trim() !== (vet.license_number || '')
 
   // The signature is in a private bucket, so load it with the admin's token to show a preview
@@ -383,16 +385,34 @@ function VetRow({ vet, onChanged, setMsg }: { vet: Vet; onChanged: () => Promise
         ) : (
           <div style={muted}>{vet.signature_path ? 'Uploaded' : 'None'}</div>
         )}
-        <input
-          type="file"
-          accept="image/png,image/jpeg"
-          disabled={busy}
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            e.target.value = ''
-            if (f) uploadSignature(f)
-          }}
-        />
+        <button type="button" className="btn-outline" disabled={busy} onClick={() => setDrawing(true)}>
+          ✍️ {vet.signature_path ? 'Redraw' : 'Draw signature'}
+        </button>
+        <label style={{ display: 'block', marginTop: '0.35rem', fontSize: '0.8rem', ...muted }}>
+          or upload an image:
+          <input
+            type="file"
+            accept="image/png,image/jpeg"
+            disabled={busy}
+            style={{ display: 'block', marginTop: '0.2rem' }}
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              e.target.value = ''
+              if (f) uploadSignature(f)
+            }}
+          />
+        </label>
+        {drawing && (
+          <SignatureDialog
+            title={`Signature for ${vet.name}`}
+            onCancel={() => setDrawing(false)}
+            onSave={(png) => {
+              setDrawing(false)
+              // Saved the same way as an uploaded image
+              uploadSignature(new File([png], 'signature.png', { type: 'image/png' }))
+            }}
+          />
+        )}
       </td>
       <td>{vet.is_primary ? <strong>Primary</strong> : vet.active ? 'Active' : <span style={muted}>Inactive</span>}</td>
       <td style={{ whiteSpace: 'nowrap' }}>
