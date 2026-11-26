@@ -251,7 +251,7 @@ export default function ReportExtras({ range, events }: { range: Range | null; e
                       {d.list.map(([zip, count]) => (
                         <div key={zip} className="rep-zip-row">
                           <span className="mono">{zip}</span>
-                          <div className="rep-bar-track"><div className="rep-bar-fill" style={{ width: `${(count / d.list[0][1]) * 100}%`, background: '#1a3a8f' }} /></div>
+                          <div className="rep-bar-track"><div className="rep-bar-fill" style={{ width: `${(count / d.list[0][1]) * 100}%`, background: 'var(--navy)' }} /></div>
                           <strong>{count}</strong>
                           <span className="muted small">{pct(count, d.total)}%</span>
                         </div>

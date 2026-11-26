@@ -3,7 +3,9 @@
 [![Build check](https://github.com/goedi-mach/loopy/actions/workflows/build-check.yml/badge.svg)](https://github.com/goedi-mach/loopy/actions/workflows/build-check.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
-Clinic management web app for [People Helping Pets](https://peoplehelpingpets.org), a Chicago nonprofit that runs free bilingual (English/Spanish) vaccine clinics for cats and dogs in underserved neighborhoods.
+Open-source clinic management web app for community vaccine clinics, shelters and nonprofits. Built for and used by [People Helping Pets](https://peoplehelpingpets.org), a Chicago nonprofit that runs free bilingual (English/Spanish) vaccine clinics for cats and dogs in underserved neighborhoods.
+
+Each organization sets itself up in the app: name, logo, colors, time zone, veterinarians, vaccines, waiver wording and email settings all live on the admin **Settings** page, not in the code.
 
 LoopVet covers the whole clinic day and what comes after: client and pet registration, vaccine and microchip logging, rabies certificates, event close-out, follow-up and reminder emails, and reporting.
 

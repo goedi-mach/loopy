@@ -35,7 +35,8 @@ interface Row {
 type Tab = 'lot' | 'staff'
 
 const SELECT = 'id,vaccine_name,date_given,lot_number,administered_by,pets(id,name,species,client_id,clients(id,name))'
-const BAR_COLORS = ['#1a3a8f', '#f28b82', '#2d8a5e', '#d97706', '#7c3aed', '#4a6cc0', '#d96b62']
+// The first colors follow the main and accent colors from Settings
+const BAR_COLORS = ['var(--navy)', 'var(--coral)', '#2d8a5e', '#d97706', '#7c3aed', 'var(--navy-mid)', 'var(--coral-dark)']
 
 function toRow(v: LookupVax): Row {
   return {

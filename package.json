@@ -1,7 +1,7 @@
 {
   "name": "loopy",
   "version": "1.0.0",
-  "description": "Internal web tools for running free vaccine clinics. Built for [People Helping Pets](https://peoplehelpingpets.org), a Chicago-based nonprofit providing bilingual vaccine clinics for cats and dogs in underserved neighborhoods.",
+  "description": "Open-source clinic management web app for community vaccine clinics: registration, vaccine logging, rabies certificates, reminders and reporting.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

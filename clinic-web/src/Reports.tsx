@@ -40,7 +40,8 @@ interface Result {
   perDate: PerDate[]
 }
 
-const BAR_COLORS = ['#1a3a8f', '#f28b82', '#2d8a5e', '#d97706', '#7c3aed', '#4a6cc0', '#d96b62']
+// The first colors follow the main and accent colors from Settings
+const BAR_COLORS = ['var(--navy)', 'var(--coral)', '#2d8a5e', '#d97706', '#7c3aed', 'var(--navy-mid)', 'var(--coral-dark)']
 
 function Donut({ segs }: { segs: { label: string; count: number; color: string }[] }) {
   const total = segs.reduce((s, x) => s + x.count, 0)
@@ -59,7 +60,7 @@ function Donut({ segs }: { segs: { label: string; count: number; color: string }
               const el = (
                 <circle
                   key={s.label}
-                  cx="60" cy="60" r={r} fill="none" stroke={s.color} strokeWidth="20"
+                  cx="60" cy="60" r={r} fill="none" style={{ stroke: s.color }} strokeWidth="20"
                   strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-offset}
                   transform="rotate(-90 60 60)"
                 />
@@ -269,8 +270,8 @@ export default function Reports() {
               ) : (
                 <Donut
                   segs={[
-                    { label: 'Dogs', count: result.species.dog, color: '#1a3a8f' },
-                    { label: 'Cats', count: result.species.cat, color: '#f28b82' },
+                    { label: 'Dogs', count: result.species.dog, color: 'var(--navy)' },
+                    { label: 'Cats', count: result.species.cat, color: 'var(--coral)' },
                     ...(result.species.other ? [{ label: 'Other', count: result.species.other, color: '#d97706' }] : []),
                   ]}
                 />

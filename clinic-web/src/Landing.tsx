@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import HeroArt from './components/HeroArt'
 import { cityName, contactText, logoSrc, useSettings } from './lib/settings'
 import './Landing.css'
 
@@ -108,7 +109,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="hero-img">
-            <img src="/hero.png" alt="" />
+            <HeroArt />
           </div>
         </div>
       </section>

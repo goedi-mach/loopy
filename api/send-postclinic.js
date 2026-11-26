@@ -409,7 +409,7 @@ export default async function handler(req, res) {
       const esHeading = fill(tpl[`${prefix}_es`]?.subject, baseVars);
       const esBody    = fill(tpl[`${prefix}_es`]?.body,    baseVars);
       // The subject line is plain text, so it gets the unescaped name and no line breaks.
-      const subject   = fill(tpl[`${prefix}_subject`]?.subject, { ...baseVars, owner_name: rawFirstName })
+      const subject   = fill(tpl[`${prefix}_subject`]?.subject, { ...baseVars, owner_name: rawFirstName, org_name: org.org_name })
         .replace(/[\r\n]+/g, ' ');
 
       const html = `
