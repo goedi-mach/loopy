@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import ClinicNav from './components/ClinicNav'
 import SignatureDialog from './components/SignatureDialog'
+import VaccineTypesSettings from './VaccineTypesSettings'
 import { request, sbPatch, sbPost } from './lib/api'
 import { DEFAULT_SETTINGS, logoSrc, useSettings, type OrgSettings } from './lib/settings'
 import { loadVets, signatureUrlPath, type Vet } from './lib/vets'
@@ -534,6 +535,7 @@ export default function OrgSettingsPage() {
         <div className="page-title">⚙️ Settings</div>
         {loaded ? <SettingsForm initial={settings} /> : <div className="state-msg">Loading settings…</div>}
         <VetsSection />
+        <VaccineTypesSettings />
       </div>
     </div>
   )

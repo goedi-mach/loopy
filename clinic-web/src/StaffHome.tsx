@@ -104,7 +104,7 @@ export default function StaffHome() {
             <Link to="/tools/settings" className="sh-tile">
               <div className="sh-tile-icon">⚙️</div>
               <div className="sh-tile-label">Settings</div>
-              <div className="sh-tile-sub">Organization, branding & vets</div>
+              <div className="sh-tile-sub">Organization, vets & vaccines</div>
             </Link>
           )}
         </div>
