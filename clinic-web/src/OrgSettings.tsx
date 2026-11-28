@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ClinicNav from './components/ClinicNav'
 import SignatureDialog from './components/SignatureDialog'
 import VaccineTypesSettings from './VaccineTypesSettings'
@@ -26,7 +27,7 @@ const blankToNull = (v: string | null) => (v && v.trim() ? v.trim() : null)
 const TIME_ZONES = Intl.supportedValuesOf('timeZone')
 const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone
 
-function SettingsForm({ initial }: { initial: OrgSettings }) {
+function SettingsForm({ initial, tab }: { initial: OrgSettings; tab: Tab }) {
   const { reload } = useSettings()
   const [form, setForm] = useState<OrgSettings>(initial)
   const [saving, setSaving] = useState(false)
@@ -150,9 +151,12 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
   }
 
   return (
-    <form onSubmit={save}>
+    // Stays mounted on every tab, so unsaved changes survive switching tabs
+    tab === 'medical' ? null : <form onSubmit={save}>
       {msg && <div className={msg.type === 'error' ? 'warning-bar' : 'sh-success'}>{msg.text}</div>}
 
+      {tab === 'org' && (
+        <>
       <div className="sh-section">Organization</div>
       <div className="card">
         <div className="card-body">
@@ -251,7 +255,11 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
         </div>
       </div>
 
-      <div className="sh-section sh-section-gap">Waiver</div>
+        </>
+      )}
+      {tab === 'comms' && (
+        <>
+      <div className="sh-section">Waiver</div>
       <div className="card">
         <div className="card-body">
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
@@ -333,6 +341,8 @@ function SettingsForm({ initial }: { initial: OrgSettings }) {
         </div>
       </div>
 
+        </>
+      )}
       <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }} disabled={saving || uploading}>
         {saving ? 'Saving…' : 'Save Settings'}
       </button>
@@ -524,7 +534,7 @@ function VetsSection() {
 
   return (
     <>
-      <div className="sh-section sh-section-gap">Veterinarians</div>
+      <div className="sh-section">Veterinarians</div>
       {msg && <div className={msg.type === 'error' ? 'warning-bar' : 'sh-success'}>{msg.text}</div>}
       <div className="card">
         <div className="card-body">
@@ -568,16 +578,48 @@ function VetsSection() {
   )
 }
 
+type Tab = 'org' | 'medical' | 'comms'
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'org', label: '🏢 Organization' },
+  { id: 'medical', label: '🩺 Medical' },
+  { id: 'comms', label: '✉️ Communication' },
+]
+
 export default function OrgSettingsPage() {
   const { settings, loaded } = useSettings()
+  // The tab is kept in the address (?tab=medical), so a link can open the right one
+  const [params, setParams] = useSearchParams()
+  const tab: Tab = TABS.find((t) => t.id === params.get('tab'))?.id ?? 'org'
   return (
     <div className="intake">
       <ClinicNav active="settings" />
       <div className="records-main">
         <div className="page-title">⚙️ Settings</div>
-        {loaded ? <SettingsForm initial={settings} /> : <div className="state-msg">Loading settings…</div>}
-        <VetsSection />
-        <VaccineTypesSettings />
+        <div className="rm-tabs">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={'rm-tab' + (tab === t.id ? ' active' : '')}
+              onClick={() => setParams({ tab: t.id }, { replace: true })}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {tab !== 'medical' && (
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+            Save Settings saves the Organization and Communication tabs together.
+          </p>
+        )}
+        {loaded ? <SettingsForm initial={settings} tab={tab} /> : <div className="state-msg">Loading settings…</div>}
+        {tab === 'medical' && (
+          <>
+            <VetsSection />
+            <VaccineTypesSettings />
+          </>
+        )}
       </div>
     </div>
   )
