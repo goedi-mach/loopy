@@ -13,6 +13,12 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const HEX = /^#[0-9a-fA-F]{6}$/
 const MAX_LOGO_BYTES = 1024 * 1024 // 1 MB
 const MAX_PDF_BYTES = 5 * 1024 * 1024 // 5 MB
+// The two waiver languages, edited one at a time on the Communication tab
+const WAIVER_LANGS = [
+  { field: 'waiver_en', label: 'English', fallback: DEFAULT_WAIVER_EN },
+  { field: 'waiver_es', label: 'Español', fallback: DEFAULT_WAIVER_ES },
+] as const
+
 const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/
 
 interface Msg {
@@ -33,6 +39,7 @@ function SettingsForm({ initial, tab }: { initial: OrgSettings; tab: Tab }) {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [msg, setMsg] = useState<Msg | null>(null)
+  const [waiverLang, setWaiverLang] = useState<'waiver_en' | 'waiver_es'>('waiver_en')
 
   function set<K extends keyof OrgSettings>(key: K, value: OrgSettings[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -268,29 +275,51 @@ function SettingsForm({ initial, tab }: { initial: OrgSettings; tab: Tab }) {
             only: every signature keeps the exact wording it was signed under, and its waiver PDF prints that wording.
             Have your own legal advisor review the wording.
           </p>
-          <div className="sh-row">
-            {(
-              [
-                ['waiver_en', 'English', DEFAULT_WAIVER_EN],
-                ['waiver_es', 'Español', DEFAULT_WAIVER_ES],
-              ] as const
-            ).map(([field, label, fallback]) => (
-              <div className="sh-field" key={field}>
-                <label>{label}</label>
-                <textarea rows={14} value={form[field]} onChange={(e) => set(field, e.target.value)} />
-                {form[field] !== fallback && (
-                  <button
-                    type="button"
-                    className="btn-link"
-                    style={{ marginTop: '0.35rem', textAlign: 'left' }}
-                    onClick={() => confirm(`Replace the ${label} wording with the default?`) && set(field, fallback)}
-                  >
-                    Restore the default wording
-                  </button>
-                )}
-              </div>
+          {/* One language at a time, full width */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            {WAIVER_LANGS.map((l) => (
+              <button
+                key={l.field}
+                type="button"
+                className={waiverLang === l.field ? 'btn-primary' : 'btn-outline'}
+                style={{ padding: '0.35rem 1rem', fontSize: '0.85rem', marginTop: 0 }}
+                onClick={() => setWaiverLang(l.field)}
+              >
+                {l.label}
+              </button>
             ))}
           </div>
+          {WAIVER_LANGS.filter((l) => l.field === waiverLang).map((l) => (
+            <div key={l.field}>
+              <textarea
+                aria-label={`Waiver wording (${l.label})`}
+                rows={18}
+                value={form[l.field]}
+                onChange={(e) => set(l.field, e.target.value)}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  font: 'inherit',
+                  fontSize: '0.9rem',
+                  lineHeight: 1.5,
+                  padding: '0.6rem 0.75rem',
+                  border: '1.5px solid var(--border)',
+                  borderRadius: 8,
+                  resize: 'vertical',
+                }}
+              />
+              {form[l.field] !== l.fallback && (
+                <button
+                  type="button"
+                  className="btn-link"
+                  style={{ marginTop: '0.35rem', textAlign: 'left' }}
+                  onClick={() => confirm(`Replace the ${l.label} wording with the default?`) && set(l.field, l.fallback)}
+                >
+                  Restore the default {l.label} wording
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
